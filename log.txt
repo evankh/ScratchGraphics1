@@ -1,0 +1,18 @@
+Version: 4.5
+Version: 4.5
+Failed to open file test.fs
+Failed to open file mvp.vs
+Failed to open file test.fs
+Failed to open file mvp.vs
+Mouse enters window
+Window moved to (0, 0)
+Mouse exits window
+Mouse enters window
+Mouse exits window
+Mouse enters window
+Mouse exits window
+Mouse enters window
+Left mouse button pressed at (749, 79)
+Left mouse button lifted at (749, 79)
+Mouse exits window
+Close Window
