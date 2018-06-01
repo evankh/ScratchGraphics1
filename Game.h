@@ -38,6 +38,10 @@ private:
 	PostProcessingPipeline mMenuPost;
 	//StateMachine<GameState> mStateMachine;
 	bool mIsMenuActive = false;
+	void loadShaders();
+	void loadGeometry();
+	void loadMenu();
+	void loadPostProcessing();
 public:
 	static Game& getInstance();
 	void init();
@@ -46,6 +50,7 @@ public:
 	void render();
 	void resize(unsigned int width, unsigned int height);
 	void loadLevel();
+	void reloadAll();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME__

@@ -1,9 +1,11 @@
 #include "Geometry.h"
-#include "Program.h"
-#include "Camera.h"
+//#include "Program.h"
+//#include "Camera.h"
+#include "ServiceLocator.h"
 #include "GL/glew.h"
 #include <cassert>
 #include <fstream>
+#include <string>
 
 const unsigned int ATTRIB_SIZES[16] = {
 	3,
@@ -44,11 +46,95 @@ Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtri
 		mVertexSize += ATTRIB_SIZES[(int)attrib];
 }
 
-Geometry::Geometry(const char* filename) {
+Geometry::Geometry(const char* filename) :Geometry() {
 	// Load a .OBJ file into the internal Geometry format
+	// Good idea to wrap file reads in a Service like with writes?
 	std::ifstream in(filename);
 	if (in.good()) {
+		// First pass: find number of vertices
+		bool hasNormals = false, hasTexcoords = false;
+		std::string buffer;
+		for (std::getline(in, buffer); !in.eof(); std::getline(in, buffer)) {
+			if (buffer.substr(0, 2) == "v ")
+				mNumVerts++;
+			if (buffer.substr(0, 2) == "vn")
+				hasNormals = true;
+			if (buffer.substr(0, 2) == "vt")
+				hasTexcoords = true;
+			if (buffer.substr(0, 2) == "f ")
+				mNumTris++;
+		}
+		in.seekg(0, SEEK_SET);
+		float* allPositionData = new float[mNumVerts * 3];
+		int posIter = 0, normIter = 0, texIter = 0;
+		float* allNormalData = NULL;
+		if (hasNormals) allNormalData = new float[mNumVerts * 3];
+		float* allTexcoordData = NULL;
+		if (hasTexcoords) allTexcoordData = new float[mNumVerts * 2];
+		for (int lineNumber = 0; !in.eof(); lineNumber++) {
+			// Second pass: load data
+			/*char type = in.get();
+			switch (type) {
+			case '#':	// Comment
+				break;
+			case 'v':	// Vertex
+				char subtype = in.get();
+				switch (subtype) {
+				case ' ':
+					std::str
+					break;
+				case 't':
+					break;
+				case 'n':
+					break;
+				default:
+					ServiceLocator::getLoggingService().error("Unexpected character on line " + line, subtype);
+					break;
+				}
+				break;
+			case 'f':	// Face
+				break;
+			default:
+				ServiceLocator::getLoggingService().error("Unexpected character on line " + line, type);
+				break;
+			}*/
 
+			std::string token;
+			std::getline(in, token, ' ');
+			in.ignore(1, ' ');
+			if (token == "v") {
+				// There will be 3 floats here
+				in >> allPositionData[posIter++];
+				in >> allPositionData[posIter++];
+				in >> allPositionData[posIter++];
+			} else if (token == "vn") {
+				// There will be 3 floats here
+				in >> allNormalData[normIter++];
+				in >> allNormalData[normIter++];
+				in >> allNormalData[normIter++];
+			} else if (token == "vt") {
+				// There will be 3 floats here
+				in >> allTexcoordData[texIter++];
+				in >> allTexcoordData[texIter++];
+			} else if (token == "f") {
+				// Format: f v/vt/vn v/vt/vn v/vt/vn [v/vt/vn]
+				std::string vertex;
+				for (int v = 0; v < 4; v++) {
+					std::getline(in, vertex, ' ');
+					int vert, tex, norm;
+					in >> vert;
+					in.ignore(1, '/');
+					if (hasTexcoords)
+						in >> tex;
+					in.ignore(1, '/');
+					if (hasNormals)
+						in >> norm;
+					// Fuck it, I need more sleep for this.
+				}
+			} else {
+				ServiceLocator::getLoggingService().error("Unexpected token at line" + lineNumber, token);
+			}
+		}
 	}
 }
 
@@ -105,7 +191,7 @@ void Geometry::cleanup() {
 	}*/
 }
 
-#include "glm/gtc/type_ptr.hpp"
+//#include "glm/gtc/type_ptr.hpp"
 
 void Geometry::render() {
 	/*if (mDisplay) {

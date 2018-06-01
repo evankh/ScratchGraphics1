@@ -28,6 +28,7 @@ Window::~Window() {
 
 void Window::enableDrawing() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, mWidth, mHeight);
 }
 
 void Window::resize(unsigned int width, unsigned int height) {

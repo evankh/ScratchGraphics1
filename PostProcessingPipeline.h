@@ -11,19 +11,19 @@ private:
 	unsigned int mWindowHeight;
 	FrameBuffer* mInputFB;
 	FrameBuffer* mOutputFB;
-	std::vector<FrameBuffer*> mIntermediateFBs;
-	std::vector<Program*> mProcessingStages;
+	std::vector<std::pair<Program*, FrameBuffer*>> mProcessingStages;
 	std::vector<std::pair<int, float*>> mKernels;
 public:
 	PostProcessingPipeline();
 	~PostProcessingPipeline();
 	void init(unsigned int width, unsigned int height);
-	void attach(Program* program);
-	void attach(Program* program, int size, float* kernel);	// Or I suppose other types of data, but now it's just kernels
+	void attach(Program* program, float relativeSize = 1.0f);
+	void attach(Program* program, int size, float* kernel, float relativeSize = 1.0f);	// Or I suppose other types of data, but now it's just kernels
 	void process();
 	void draw();
 	void resize(unsigned int width, unsigned int height);
 	void enableDrawing();
+	void clear();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_POST_PROCESSING_PIPELINE__

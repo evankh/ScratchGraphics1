@@ -1,17 +1,24 @@
 What's next:
-- Support for smaller (downsampled) framebuffers (will probably need to complicate the processing function a bit, and add more intFBs)
-- Some actually useful shaders (lighting, textures)
+Graphics:
 - Importing OBJ files
 - Implement a Texture class (FrameBuffers not included)
 - Add a NamedContainer for Textures
 - Importing images
-- HUD isn't being drawn on the first loop
 - Better layout system for HUD
 - Text display
-- Handle errors more cleanly (file not found, compilation failed)
-- Figure out how I'm going to do menus (state machine, state enum, stack?)
-- I expect I will have to muck about in Geometry to add a Vertex struct
-- EventListener, EventGenerator, EventQueue
+- Add a multisampled FBO as the input to a Postprocessing Pipeline (for antialiasing)
+- Find ways to improve locality of some of the rendering code (e.g. less pointers)
+- Add a Vertex struct to Geometry?
+- Settings: Multisampling
+Game:
+- EventListener, EventGenerator, EventQueue?
 - Hooking that up to mouse input
-- Some sort of AunI (mostly just to make sure Components are working)
+- Some actually interesting update methods
+- Figure out how I'm going to do menus (state machine, state enum, stack?)
 - Creation/deletion of GameObjects through Events?
+- Some sort of A(un)I (mostly just to make sure Components are working)
+- Subclassing GameObject (first MenuObject, then who knows?) (Is it possible for a member variable to become static in a subclass?)
+Bugs:
+- HUD isn't being drawn on the first loop
+- Handle errors more cleanly (file not found, compilation failed)
+- Reloading doesn't preserve window size

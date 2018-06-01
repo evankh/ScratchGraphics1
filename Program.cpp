@@ -6,6 +6,7 @@
 Program::Program() {
 	mHandle = glCreateProgram();
 	mVS = NULL;
+	mGS = NULL;
 	mFS = NULL;
 }
 
@@ -13,12 +14,27 @@ Program::Program(Shader* vs, Shader* fs) {
 	mHandle = glCreateProgram();
 	mVS = vs;
 	mFS = fs;
-	glAttachShader(mHandle, mVS->mHandle);
-	glAttachShader(mHandle, mFS->mHandle);
+	if (mVS) glAttachShader(mHandle, mVS->mHandle);
+	if (mFS) glAttachShader(mHandle, mFS->mHandle);
 	link();
 	validate();
-	glDetachShader(mHandle, mVS->mHandle);
-	glDetachShader(mHandle, mFS->mHandle);
+	if (mVS) glDetachShader(mHandle, mVS->mHandle);
+	if (mFS) glDetachShader(mHandle, mFS->mHandle);
+}
+
+Program::Program(Shader* vs, Shader* gs, Shader* fs) {
+	mHandle = glCreateProgram();
+	mVS = vs;
+	mGS = gs;
+	mFS = fs;
+	if (mVS) glAttachShader(mHandle, mVS->mHandle);
+	if (mGS) glAttachShader(mHandle, mGS->mHandle);
+	if (mFS) glAttachShader(mHandle, mFS->mHandle);
+	link();
+	validate();
+	if (mVS) glDetachShader(mHandle, mVS->mHandle);
+	if (mGS) glDetachShader(mHandle, mGS->mHandle);
+	if (mFS) glDetachShader(mHandle, mFS->mHandle);
 }
 
 // Deprecated

@@ -13,6 +13,8 @@ public:
 	~Window();
 	void enableDrawing();	// Enables drawing to the default (window) FrameBuffer
 	void resize(unsigned int width, unsigned int height);
+	unsigned int getWidth() const { return mWidth; };
+	unsigned int getHeight() const { return mHeight; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_WINDOW__

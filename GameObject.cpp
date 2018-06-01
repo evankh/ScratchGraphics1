@@ -10,13 +10,12 @@ GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* p
 }
 
 GameObject::~GameObject() {
-	if (mGeometry) delete mGeometry;
-	if (mDisplay) delete mDisplay;
 	if (mPhysicsComponent) delete mPhysicsComponent;
 	if (mInputComponent) delete mInputComponent;
 }
 
 void GameObject::update(float dt) {
+	rotate(glm::vec3(0, 0, 1), dt * 90.0f);
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
 }
 
@@ -26,7 +25,9 @@ void GameObject::render(Camera* c) {
 	if (mDisplay) {
 		mDisplay->use();
 		glm::mat4 mvp = c->getViewProjectionMatrix() * mPhysicsComponent->getModelMatrix();
-		mDisplay->sendUniform("mvp", glm::value_ptr(mvp));
+		//mDisplay->sendUniform("mvp", glm::value_ptr(mvp));
+		mDisplay->sendUniform("m", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
+		mDisplay->sendUniform("vp", glm::value_ptr(c->getViewProjectionMatrix()));
 	}
 	if (mGeometry) mGeometry->render();
 }

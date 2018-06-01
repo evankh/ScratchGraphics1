@@ -9,8 +9,10 @@ float magicQuadData[20] = { -1.0f,-1.0f,0.0f, 0.0f,0.0f, 1.0f,-1.0f,0.0f, 1.0f,0
 unsigned int magicQuadFaces[6] = { 0,1,2, 2,1,3 };
 Geometry FrameBuffer::sMagicQuad = Geometry(4, magicQuadData, 2, magicQuadFaces, { A_POSITION,A_TEXCOORD0 });
 
-FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale) {
+FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale = 1.0f) {
 	mRelativeScale = scale;
+	mWidth = (int)(mRelativeScale * windowWidth);
+	mHeight = (int)(mRelativeScale * windowHeight);
 	glGenFramebuffers(1, &mHandle);
 
 	// Attach the typical images to it: Color, Depth
@@ -21,13 +23,13 @@ FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, fl
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)(mRelativeScale * windowWidth), (int)(mRelativeScale * windowHeight), 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	glGenTextures(1, &mDepthTextureHandle);
 	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, (int)(mRelativeScale * windowWidth), (int)(mRelativeScale * windowHeight), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, mWidth, mHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorTextureHandle, 0);
@@ -61,6 +63,7 @@ FrameBuffer::~FrameBuffer() {
 void FrameBuffer::setActive() {
 	glBindFramebuffer(GL_FRAMEBUFFER, mHandle);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glViewport(0, 0, mWidth, mHeight);
 }
 
 void FrameBuffer::draw() {
@@ -74,9 +77,11 @@ void FrameBuffer::draw() {
 }
 
 void FrameBuffer::resize(unsigned int width, unsigned int height) {
+	mWidth = (int)(mRelativeScale * width);
+	mHeight = (int)(mRelativeScale * height);
 	glBindTexture(GL_TEXTURE_2D, mColorTextureHandle);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)(width * mRelativeScale), (int)(height * mRelativeScale), 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, (int)(width * mRelativeScale), (int)(height * mRelativeScale), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, mWidth, mHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -8,10 +8,12 @@ class Program {
 private:
 	unsigned int mHandle;
 	Shader* mVS;
+	Shader* mGS;
 	Shader* mFS;
 public:
 	Program();
 	Program(Shader* vs, Shader* fs);
+	Program(Shader* vs, Shader* gs, Shader* fs);
 	Program(char* vsFilepath, char* fsFilepath);
 	~Program();
 	void attach(Shader* vs, Shader* fs);

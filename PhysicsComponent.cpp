@@ -29,6 +29,10 @@ void PhysicsComponent::translate(glm::vec3 dxyz) {
 	mModelMatrix = glm::translate(mModelMatrix, dxyz);
 }
 
+void PhysicsComponent::rotate(glm::vec3 axis, float degrees) {
+	mModelMatrix = glm::rotate(mModelMatrix, glm::radians(degrees), axis);
+}
+
 void PhysicsComponent::scale(glm::vec3 scale) {
 	mModelMatrix = glm::scale(mModelMatrix, scale);
 }

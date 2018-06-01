@@ -17,6 +17,7 @@ public:
 	~PhysicsComponent();
 	void update(float dt);
 	void translate(glm::vec3 dxyz);
+	void rotate(glm::vec3 axis, float degrees);
 	void scale(glm::vec3 scale);
 	glm::mat4& getModelMatrix();
 	glm::mat4& getInverseModelMatrix();

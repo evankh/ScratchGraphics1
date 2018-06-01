@@ -87,16 +87,28 @@ std::ostream& operator<<(std::ostream& out, glm::mat4 matrix) {
 	return out;
 }
 */
+
 void game_resize_wrapper(int width, int height) {
 	Game::getInstance().resize(width, height);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	Game::getInstance().render();
+	glutSwapBuffers();
 }
+
+void game_keydown_wrapper(unsigned char key, int mouse_x, int mouse_y) {
+	if (key == 'r') {
+		Game::getInstance().reloadAll();
+	}
+}
+
 void gameLoop(int value) {
-	glutTimerFunc(1000, gameLoop, 0);
+	glutTimerFunc(10, gameLoop, 0);
 	Game::getInstance().update(0.01f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	Game::getInstance().render();
 	glutSwapBuffers();
 }
+
 int GL_TEST_MAIN(int argc, char* argv[]) {
 #pragma region initGL
 	glutInit(&argc, argv);
@@ -140,7 +152,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glutCloseFunc(testCloseWindow);
 		glutReshapeFunc(game_resize_wrapper);
 		glutPositionFunc(testPositionWindow);
-		glutKeyboardFunc(testKeyboard);
+		glutKeyboardFunc(game_keydown_wrapper);
 		glutKeyboardUpFunc(testKeyboardUp);
 		glutMouseFunc(testMouseButton);
 		glutMotionFunc(testMouseMove);
@@ -154,6 +166,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_MULTISAMPLE);
 		//glEnable(GL_FRAMEBUFFER_SRGB);
 		//Not so sure about this one
 		glActiveTexture(GL_TEXTURE0);

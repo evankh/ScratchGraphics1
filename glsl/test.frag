@@ -2,9 +2,9 @@
 
 out vec4 fragColor;
 
-in vec4 pass_color;
+in vec3 pass_color;
 
 void main() {
-	fragColor.rgb = pow(pass_color.rgb, vec3(2.2));
+	fragColor.rgb = pow(pass_color, vec3(2.2));
 	fragColor.a = 1.0;
 }

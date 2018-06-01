@@ -19,6 +19,7 @@ public:
 	void update(float dt);
 	void render(Camera* c);
 	void translate(glm::vec3 dxyz) { mPhysicsComponent->translate(dxyz); };
+	void rotate(glm::vec3 axis, float degrees) { mPhysicsComponent->rotate(axis, degrees); };
 	void scale(glm::vec3 scale) { mPhysicsComponent->scale(scale); };
 };
 

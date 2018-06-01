@@ -6,8 +6,9 @@ layout (binding = 0) uniform sampler2D color_buffer;
 layout (binding = 1) uniform sampler2D depth_buffer;
 
 out vec4 fragColor;
+out float fragDepth;
 
 void main() {
-	fragColor = vec4(1.0f) - texture(color_buffer, pass_texcoord);
+	fragColor = 1.0f - texture(color_buffer, pass_texcoord);
 	fragColor.w = 1.0f;
 }
