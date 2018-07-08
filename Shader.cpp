@@ -7,7 +7,7 @@ Shader::Shader(char* filepath, unsigned int type) {
 	mFilepath = filepath;
 	mType = type;
 	// Read file
-	std::ifstream in(mFilepath);
+	/*std::ifstream in(mFilepath);
 	if (in.good()) {
 		int count = 0;
 		while (!in.eof()) {
@@ -19,10 +19,15 @@ Shader::Shader(char* filepath, unsigned int type) {
 		in.seekg(0);
 		in.read(allText, count);
 		in.close();
-		allText[count - 1] = '\0';
+		allText[count - 1] = '\0';*/
+	FileService& file = ServiceLocator::getFileService(mFilepath);
+	if (file.good()) {
+		std::string allText = file.getAll();
+		const char* paininmyass = allText.data();
+		int size = allText.size();
 		// Move to GPU
 		mHandle = glCreateShader(mType);
-		glShaderSource(mHandle, 1, &allText, &count);
+		glShaderSource(mHandle, 1, &paininmyass, &size);
 		glCompileShader(mHandle);
 		int status;
 		glGetShaderiv(mHandle, GL_COMPILE_STATUS, &status);
@@ -32,13 +37,12 @@ Shader::Shader(char* filepath, unsigned int type) {
 			if (length) {
 				char* log = new char[length];
 				glGetShaderInfoLog(mHandle, length, &length, log);
-				ServiceLocator::getLoggingService().error("Shader compilation failed", log);
+				ServiceLocator::getLoggingService().fileError(mFilepath, 0, "Shader compilation failed", log);
 				delete[] log;
 			}
 			glDeleteShader(mHandle);
 			mHandle = 0;
 		}
-		delete[] allText;
 	}
 	else {
 		ServiceLocator::getLoggingService().error("Failed to open file", filepath);

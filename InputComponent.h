@@ -1,18 +1,18 @@
 #ifndef __EKH_SCRATCH_GRPAHICS_1_INPUT_COMPONENT__
 #define __EKH_SCRATCH_GRAPHICS_1_INPUT_COMPONENT__
 
-#include "EventQueue.h"
+#include "Event System\EventQueue.h"
+#include "Event System\Receiver.h"
 
 class InputComponent {
 
 };
 
-class KeyboardInputComponent :public InputComponent {
+class KeyboardInputComponent :public InputComponent, public Receiver {
 private:
-	static EventQueue sKeyboardEvents;
+	EventQueue mKeyboardEvents;
 public:
-	static void queueEvent(char key, int x, int y);
-
+	virtual void handle(Event event);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_INPUT_COMPONENT__

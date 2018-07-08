@@ -104,7 +104,7 @@ void Program::sendUniform(const char* name, float value) {
 	if (handle != -1) glUniform1f(handle, value);
 }
 
-void Program::sendUniform(const char* name, float* matrix) {
+void Program::sendUniform(const char* name, const float* matrix) {
 	unsigned int handle = glGetUniformLocation(mHandle, name);
 	if (handle != -1) glUniformMatrix4fv(handle, 1, GL_FALSE, matrix);
 }

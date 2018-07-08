@@ -10,6 +10,7 @@
 #include "Program.h"
 #include "Camera.h"
 #include "ServiceLocator.h"
+#include "KeyboardHandler.h"
 
 #include <iostream>
 #include <vector>
@@ -96,9 +97,11 @@ void game_resize_wrapper(int width, int height) {
 }
 
 void game_keydown_wrapper(unsigned char key, int mouse_x, int mouse_y) {
-	if (key == 'r') {
-		Game::getInstance().reloadAll();
-	}
+	KeyboardHandler::handlePress(key, mouse_x, mouse_y);
+}
+
+void game_keyup_wrapper(unsigned char key, int mouse_x, int mouse_y) {
+	KeyboardHandler::handleRelease(key, mouse_x, mouse_y);
 }
 
 void gameLoop(int value) {
@@ -286,6 +289,26 @@ int SHADER_TEST_MAIN(int argc, char* argv[]) {
 	Program program(&vs, &fs);
 	program.link();
 	program.validate();
+	system("pause");
+	return 0;
+}
+
+struct Vortex {
+	int x, y, z;
+};
+
+int OBJ_TEST_MAIN(int argc, char* argv[]) {
+	ServiceLocator::provideLoggingService(new ConsoleLoggingService);
+	FileService& file = ServiceLocator::getFileService("obj/spaceship.obj");
+	char buffer[100];
+	char* t1 = new char;
+	file.extract("\\Sd", &t1);
+	for (int i = 0; i < 25; i++)
+		file.in.getline(buffer, 100);
+	char* target = new char;
+	file.extract("\\S/", &target);
+	file.close();
+	Geometry test("obj/spaceship.obj");
 	system("pause");
 	return 0;
 }

@@ -22,7 +22,7 @@ public:
 	// I'm wondering if maybe subclassing for each type of uniforms is the right way to go? Should something else be sending uniforms?
 	void use();
 	void sendUniform(const char* name, float value);
-	void sendUniform(const char* name, float* matrix);
+	void sendUniform(const char* name, const float* matrix);
 	void sendUniform(const char* name, int size, float* value);
 };
 

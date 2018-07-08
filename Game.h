@@ -2,13 +2,11 @@
 #define __EKH_SCRATCH_GRAPHICS_1_GAME__
 
 #include "Camera.h"
-//#include "GameObject.h"
 class GameObject;
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
 class Program;
-//#include "StateMachine.h"
-//#include "Window.h"
+#include "Event System\Receiver.h"
 class Window;
 
 #include <map>
@@ -19,7 +17,7 @@ enum GameState {
 	EKH_MENU_STATE
 };
 
-class Game {
+class Game :public Receiver {
 private:
 	Game();
 	~Game();
@@ -27,8 +25,6 @@ private:
 	OrthoCamera* mScreenCamera;
 	PerspCamera* mSceneCamera;
 	// I guess I could also do a std::vector<Camera> & a Camera* active...
-	//std::map<std::string, Program*> mShaderPrograms;
-	//std::map<std::string, Geometry*> mDebugUsefulGeometries;	// And can/should expand on this later to cache OBJ files so as to only read them once...
 	NamedContainer<Shader*> mShaders = NamedContainer<Shader*>(NULL);
 	NamedContainer<Program*> mPrograms = NamedContainer<Program*>(NULL);
 	NamedContainer<Geometry*> mGeometries = NamedContainer<Geometry*>(NULL);
@@ -36,7 +32,6 @@ private:
 	PostProcessingPipeline mGameObjectsPost;
 	std::vector<GameObject*> mHUDItems;
 	PostProcessingPipeline mMenuPost;
-	//StateMachine<GameState> mStateMachine;
 	bool mIsMenuActive = false;
 	void loadShaders();
 	void loadGeometry();
@@ -51,6 +46,7 @@ public:
 	void resize(unsigned int width, unsigned int height);
 	void loadLevel();
 	void reloadAll();
+	virtual void handle(Event event);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME__

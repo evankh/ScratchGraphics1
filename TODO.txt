@@ -11,14 +11,16 @@ Graphics:
 - Add a Vertex struct to Geometry?
 - Settings: Multisampling
 Game:
+- VERY IMPORTANT: unregistering receivers
+- Sound
 - EventListener, EventGenerator, EventQueue?
 - Hooking that up to mouse input
 - Some actually interesting update methods
 - Figure out how I'm going to do menus (state machine, state enum, stack?)
 - Creation/deletion of GameObjects through Events?
-- Some sort of A(un)I (mostly just to make sure Components are working)
+- Some sort of A(un)I (mostly just to make sure Components are working) (maybe boids?)
 - Subclassing GameObject (first MenuObject, then who knows?) (Is it possible for a member variable to become static in a subclass?)
+- Procedural geometry, procedural textures (starting with Perlin Noise, nice & easy)
 Bugs:
 - HUD isn't being drawn on the first loop
 - Handle errors more cleanly (file not found, compilation failed)
-- Reloading doesn't preserve window size

@@ -1,8 +1,0 @@
-#ifndef __EKH_SCRATCH_GRAPHICS_1_EVENT_QUEUE__
-#define __EKH_SCRATCH_GRAPHICS_1_EVENT_QUEUE__
-
-class EventQueue {
-
-};
-
-#endif//__EKH_SCRATCH_GRAPHICS_1_EVENT_QUEUE__

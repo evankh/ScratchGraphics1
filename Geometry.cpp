@@ -49,92 +49,88 @@ Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtri
 Geometry::Geometry(const char* filename) :Geometry() {
 	// Load a .OBJ file into the internal Geometry format
 	// Good idea to wrap file reads in a Service like with writes?
-	std::ifstream in(filename);
+	// First was a dud that sorta works:
+	/*std::ifstream in(filename);
 	if (in.good()) {
 		// First pass: find number of vertices
-		bool hasNormals = false, hasTexcoords = false;
+		int numNormals = 0, numTexcoords = 0;
 		std::string buffer;
 		for (std::getline(in, buffer); !in.eof(); std::getline(in, buffer)) {
 			if (buffer.substr(0, 2) == "v ")
 				mNumVerts++;
 			if (buffer.substr(0, 2) == "vn")
-				hasNormals = true;
+				numNormals++;
 			if (buffer.substr(0, 2) == "vt")
-				hasTexcoords = true;
+				numTexcoords++;
 			if (buffer.substr(0, 2) == "f ")
 				mNumTris++;
 		}
-		in.seekg(0, SEEK_SET);
+		in.clear();
+		in.seekg(0, in.beg);
 		float* allPositionData = new float[mNumVerts * 3];
 		int posIter = 0, normIter = 0, texIter = 0;
 		float* allNormalData = NULL;
-		if (hasNormals) allNormalData = new float[mNumVerts * 3];
+		if (numNormals) allNormalData = new float[numNormals * 3];
 		float* allTexcoordData = NULL;
-		if (hasTexcoords) allTexcoordData = new float[mNumVerts * 2];
+		if (numTexcoords) allTexcoordData = new float[numTexcoords * 2];
 		for (int lineNumber = 0; !in.eof(); lineNumber++) {
 			// Second pass: load data
-			/*char type = in.get();
-			switch (type) {
-			case '#':	// Comment
-				break;
-			case 'v':	// Vertex
-				char subtype = in.get();
-				switch (subtype) {
-				case ' ':
-					std::str
-					break;
-				case 't':
-					break;
-				case 'n':
-					break;
-				default:
-					ServiceLocator::getLoggingService().error("Unexpected character on line " + line, subtype);
-					break;
-				}
-				break;
-			case 'f':	// Face
-				break;
-			default:
-				ServiceLocator::getLoggingService().error("Unexpected character on line " + line, type);
-				break;
-			}*/
 
 			std::string token;
 			std::getline(in, token, ' ');
-			in.ignore(1, ' ');
 			if (token == "v") {
 				// There will be 3 floats here
 				in >> allPositionData[posIter++];
 				in >> allPositionData[posIter++];
 				in >> allPositionData[posIter++];
+				in.ignore(1, '\n');
 			} else if (token == "vn") {
 				// There will be 3 floats here
 				in >> allNormalData[normIter++];
 				in >> allNormalData[normIter++];
 				in >> allNormalData[normIter++];
+				in.ignore(1, '\n');
 			} else if (token == "vt") {
 				// There will be 3 floats here
 				in >> allTexcoordData[texIter++];
 				in >> allTexcoordData[texIter++];
+				in.ignore(1, '\n');
 			} else if (token == "f") {
 				// Format: f v/vt/vn v/vt/vn v/vt/vn [v/vt/vn]
 				std::string vertex;
-				for (int v = 0; v < 4; v++) {
-					std::getline(in, vertex, ' ');
+				for (int v = 0; v < 4 && in.peek() != '\n'; v++) {
 					int vert, tex, norm;
 					in >> vert;
 					in.ignore(1, '/');
-					if (hasTexcoords)
+					if (numTexcoords)
 						in >> tex;
 					in.ignore(1, '/');
-					if (hasNormals)
+					if (numNormals)
 						in >> norm;
-					// Fuck it, I need more sleep for this.
 				}
+				std::getline(in, token);
+			} else if (token == "#") {
+				// Comment, nothing to do here
+				std::getline(in, token);
+			} else if (token == "") {
+				// Blank line, no need to register an error
+				std::getline(in, token);
 			} else {
-				ServiceLocator::getLoggingService().error("Unexpected token at line" + lineNumber, token);
+				ServiceLocator::getLoggingService().fileError(filename, lineNumber, "Unexpected token", token);
+				getline(in, token);
 			}
 		}
+	}
+	else {
+		ServiceLocator::getLoggingService().error("Unable to open file", filename);
+	}*/
+	// Using the new extract function:
+	FileService& file = ServiceLocator::getFileService(filename);
+	if (file.good()) {
+		// First pass to count vertices
+		
+	} else {
+		ServiceLocator::getLoggingService().error("Unable to open file", filename);
 	}
 }
 
@@ -150,8 +146,6 @@ Geometry::Geometry(const char* filename) :Geometry() {
 
 Geometry::~Geometry() {
 	cleanup();
-	glDeleteBuffers(2, (unsigned int*)&mHandles);
-	glDeleteVertexArrays(1, &mHandles.vaoHandle);
 }
 
 void Geometry::transfer() {
@@ -179,7 +173,7 @@ void Geometry::transfer() {
 }
 
 void Geometry::cleanup() {
-	// For now, objects won't be managing their own data, so that we can give the same geometry to multiple objects
+	// Objects won't be managing their own CPU-side data, so that we can give the same geometry to multiple objects
 	// Actually, should they ever be? I'm not certain. It seems like we might often want to reuse geometry data , i.e. for particles
 	/*if (mVertexData) {
 		delete[] mVertexData;
@@ -189,6 +183,10 @@ void Geometry::cleanup() {
 		delete[] mTriData;
 		mTriData = NULL;
 	}*/
+	if (mHandles.good) {
+		glDeleteBuffers(2, (unsigned int*)&mHandles);
+		glDeleteVertexArrays(1, &mHandles.vaoHandle);
+	}
 }
 
 //#include "glm/gtc/type_ptr.hpp"
