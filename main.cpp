@@ -97,7 +97,11 @@ void game_resize_wrapper(int width, int height) {
 }
 
 void game_keydown_wrapper(unsigned char key, int mouse_x, int mouse_y) {
-	KeyboardHandler::handlePress(key, mouse_x, mouse_y);
+	// Temporary hard break
+	if (key == 27)
+		glutLeaveMainLoop();
+	else
+		KeyboardHandler::handlePress(key, mouse_x, mouse_y);
 }
 
 void game_keyup_wrapper(unsigned char key, int mouse_x, int mouse_y) {
@@ -106,8 +110,9 @@ void game_keyup_wrapper(unsigned char key, int mouse_x, int mouse_y) {
 
 void gameLoop(int value) {
 	glutTimerFunc(10, gameLoop, 0);
+	KeyboardHandler::dispatchAll();
 	Game::getInstance().update(0.01f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 	Game::getInstance().render();
 	glutSwapBuffers();
 }

@@ -14,6 +14,8 @@ Game::Game() {
 	// ?
 	// I guess this would be the spot for the initialization of everything: Loading assets, starting services, initializing rendering, etc.
 	mWindow = new Window(800, 600, "Game owns this window");
+	KeyboardHandler::registerReceiver('r', this);
+	KeyboardHandler::registerReceiver(27, this);
 }
 
 void Game::init() {
@@ -29,7 +31,7 @@ void Game::init() {
 	loadMenu();
 	loadPostProcessing();
 
-	KeyboardHandler::registerReceiver('r', this);
+	//KeyboardHandler::registerReceiver('r', this);
 }
 
 void Game::loadShaders() {
@@ -84,7 +86,7 @@ void Game::loadGeometry() {
 	// First we would need to load a file containing main menu information, then game saves, then data about the levels, then depending on the save selected, load a particular level...
 	// For now, automatically load one level, the debug level
 //	loadLevel();
-	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), new KeyboardInputComponent()));
+	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), NULL));
 	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), NULL));
 	mGameObjects.back()->translate(glm::vec3(0.0f, 0.0f, 1.0f));
 	mGameObjects.back()->scale(glm::vec3(0.5f));
@@ -129,10 +131,12 @@ void Game::cleanup() {
 	mShaders.clear_delete();
 	delete mSceneCamera;
 	delete mScreenCamera;
+	//KeyboardHandler::unregisterReceiver(this);
 }
 
 Game::~Game() {
 	delete mWindow;
+	KeyboardHandler::unregisterReceiver(this);
 }
 
 Game& Game::getInstance() {
@@ -141,15 +145,12 @@ Game& Game::getInstance() {
 }
 
 void Game::update(float dt) {
-	// Poll for inputs
-	KeyboardHandler::dispatchAll();
 	// Handle events
 	for (auto object : mGameObjects) {
 		object->update(dt);
 	}
 }
 
-#include "glm\gtc\type_ptr.hpp"
 void Game::render() {
 	// A broad sketch of the rendering process follows:
 	//  - clear the various framebuffers and fill with an appropriate background
@@ -187,8 +188,6 @@ void Game::render() {
 //			item.render(mScreenCamera);
 //		}
 	}
-	mPrograms.get("debug_flat")->use();
-	mPrograms.get("debug_flat")->sendUniform("m", glm::value_ptr(glm::mat4()));
 }
 
 void Game::resize(unsigned int width, unsigned int height) {
@@ -209,8 +208,14 @@ void Game::reloadAll() {
 void Game::handle(Event event) {
 	switch (event.mType) {
 	case EKH_EVENT_KEY_PRESSED:
-		if (event.mData.keyboard.key == 'r')
+		switch (event.mData.keyboard.key) {
+		case 'r':
 			reloadAll();
+			break;
+		case 27:
+			// Pause / unpause
+			break;
+		}
 		break;
 	}
 }

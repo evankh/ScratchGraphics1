@@ -46,7 +46,7 @@ public:
 	void resize(unsigned int width, unsigned int height);
 	void loadLevel();
 	void reloadAll();
-	virtual void handle(Event event);
+	virtual void handle(const Event event);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME__
