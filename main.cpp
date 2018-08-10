@@ -161,7 +161,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glutReshapeFunc(game_resize_wrapper);
 		glutPositionFunc(testPositionWindow);
 		glutKeyboardFunc(game_keydown_wrapper);
-		glutKeyboardUpFunc(testKeyboardUp);
+		glutKeyboardUpFunc(game_keyup_wrapper);
 		glutMouseFunc(testMouseButton);
 		glutMotionFunc(testMouseMove);
 		glutPassiveMotionFunc(testMouseMove);

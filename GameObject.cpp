@@ -15,6 +15,7 @@ GameObject::~GameObject() {
 }
 
 void GameObject::update(float dt) {
+	if (mInputComponent) mInputComponent->update(/*mState*/);
 	rotate(glm::vec3(0, 0, 1), dt * 90.0f);
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
 }

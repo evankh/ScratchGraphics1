@@ -87,7 +87,7 @@ void Game::loadGeometry() {
 	// For now, automatically load one level, the debug level
 //	loadLevel();
 	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), NULL));
-	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), NULL));
+	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), new KeyboardInputComponent(4,"wasd")));
 	mGameObjects.back()->translate(glm::vec3(0.0f, 0.0f, 1.0f));
 	mGameObjects.back()->scale(glm::vec3(0.5f));
 }
