@@ -6,4 +6,9 @@ public:
 	virtual void handle(const Event event) = 0;
 };
 
+struct ReceiverNode {
+	Receiver* receiver;
+	ReceiverNode* next;
+};
+
 #endif//__EKH_SCRATCH_GRAPHICS_1_RECEIVER__

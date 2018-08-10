@@ -86,7 +86,8 @@ void Game::loadGeometry() {
 	// First we would need to load a file containing main menu information, then game saves, then data about the levels, then depending on the save selected, load a particular level...
 	// For now, automatically load one level, the debug level
 //	loadLevel();
-	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), NULL));
+	bool memoryleak[5] = { true, true, false, true, false };
+	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), new MouseInputComponent(memoryleak)));
 	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), new KeyboardInputComponent(4,"wasd")));
 	mGameObjects.back()->translate(glm::vec3(0.0f, 0.0f, 1.0f));
 	mGameObjects.back()->scale(glm::vec3(0.5f));

@@ -11,6 +11,7 @@
 #include "Camera.h"
 #include "ServiceLocator.h"
 #include "KeyboardHandler.h"
+#include "MouseHandler.h"
 
 #include <iostream>
 #include <vector>
@@ -108,9 +109,18 @@ void game_keyup_wrapper(unsigned char key, int mouse_x, int mouse_y) {
 	KeyboardHandler::handleRelease(key, mouse_x, mouse_y);
 }
 
+void game_mouse_wrapper(int button, int edge, int mouse_x, int mouse_y) {
+	MouseHandler::handleButton((MouseButton)button, edge, mouse_x, mouse_y);
+}
+
+void game_movement_wrapper(int mouse_x, int mouse_y) {
+	MouseHandler::handleMove(mouse_x, mouse_y);
+}
+
 void gameLoop(int value) {
 	glutTimerFunc(10, gameLoop, 0);
-	KeyboardHandler::dispatchAll();
+	KeyboardHandler::dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
+	MouseHandler::dispatchAll();
 	Game::getInstance().update(0.01f);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	Game::getInstance().render();
@@ -162,8 +172,8 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glutPositionFunc(testPositionWindow);
 		glutKeyboardFunc(game_keydown_wrapper);
 		glutKeyboardUpFunc(game_keyup_wrapper);
-		glutMouseFunc(testMouseButton);
-		glutMotionFunc(testMouseMove);
+		glutMouseFunc(game_mouse_wrapper);
+		glutMotionFunc(game_movement_wrapper);
 		glutPassiveMotionFunc(testMouseMove);
 		glutEntryFunc(testMouseEntry);
 #pragma endregion

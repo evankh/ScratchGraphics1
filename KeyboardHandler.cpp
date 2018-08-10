@@ -1,33 +1,12 @@
 #include "KeyboardHandler.h"
 
 bool KeyboardHandler::sKeyStatus[256];
-EventQueue KeyboardHandler::sKeyboardEvents = EventQueue();
-//std::map<char, std::list<Receiver*>> KeyboardHandler::sRegisteredReceivers = {};
+EventQueue KeyboardHandler::sEvents = EventQueue();
 ReceiverNode* KeyboardHandler::sRegisteredReceivers[256];
 
-void KeyboardHandler::handlePress(char key, int mouse_x, int mouse_y) {
-	sKeyStatus[key] = true;
-	KeyboardData data;
-	data.key = key;
-	data.mouse_x = mouse_y;
-	data.mouse_y = mouse_y;
-	sKeyboardEvents.push(Event(EKH_EVENT_KEY_PRESSED, &data));
-}
-
-void KeyboardHandler::handleRelease(char key, int mouse_x, int mouse_y) {
-	sKeyStatus[key] = false;
-	KeyboardData data;
-	data.key = key;
-	data.mouse_x = mouse_y;
-	data.mouse_y = mouse_y;
-	sKeyboardEvents.push(Event(EKH_EVENT_KEY_RELEASED, &data));
-}
-
 void KeyboardHandler::dispatchAll() {
-	while (!sKeyboardEvents.isEmpty()) {
-		Event event = sKeyboardEvents.pop();
-		/*for (Receiver* receiver : sRegisteredReceivers[event.mData.keyboard.key])
-			receiver->handle(event);*/
+	while (!sEvents.isEmpty()) {
+		Event event = sEvents.pop();
 		ReceiverNode* current = sRegisteredReceivers[event.mData.keyboard.key];
 		while (current) {
 			current->receiver->handle(event);
@@ -43,15 +22,14 @@ void KeyboardHandler::registerReceiver(char interested, Receiver* receiver) {
 }
 
 void KeyboardHandler::unregisterReceiver(Receiver* receiver) {
-	/*for (std::pair<char, std::list<Receiver*>> list : sRegisteredReceivers)
-		list.second.remove(receiver);	// For some reason doesn't remove the value, or rather, it does, but then it reappears once it goes back to the for-loop*/
 	for (int i = 0; i < 256; i++) {
 		if (sRegisteredReceivers[i]) {
 			if (sRegisteredReceivers[i]->receiver == receiver) {
 				auto temp = sRegisteredReceivers[i];
 				sRegisteredReceivers[i] = temp->next;
 				delete temp;
-			} else {
+			}
+			else {
 				ReceiverNode* current = sRegisteredReceivers[i];
 				while (current->next) {
 					if (current->next->receiver == receiver) {
@@ -64,4 +42,22 @@ void KeyboardHandler::unregisterReceiver(Receiver* receiver) {
 			}
 		}
 	}
+}
+
+void KeyboardHandler::handlePress(char key, int mouse_x, int mouse_y) {
+	sKeyStatus[key] = true;
+	KeyboardData data;
+	data.key = key;
+	data.mouse_x = mouse_y;
+	data.mouse_y = mouse_y;
+	sEvents.push(Event(EKH_EVENT_KEY_PRESSED, &data));
+}
+
+void KeyboardHandler::handleRelease(char key, int mouse_x, int mouse_y) {
+	sKeyStatus[key] = false;
+	KeyboardData data;
+	data.key = key;
+	data.mouse_x = mouse_y;
+	data.mouse_y = mouse_y;
+	sEvents.push(Event(EKH_EVENT_KEY_RELEASED, &data));
 }

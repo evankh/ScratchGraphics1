@@ -24,7 +24,7 @@ void testKeyboardUp(unsigned char key, int mouse_x, int mouse_y) {
 	ServiceLocator::getLoggingService().log("Key " + std::string(1, key) + " up at (" + std::to_string(mouse_x) + ", " + std::to_string(mouse_y) + ")");
 }
 void testMouseButton(int button, int edge, int mouse_x, int mouse_y) {
-	char* names[3] = { "Left", "Middle", "Right" };
+	char* names[13] = { "Left", "Middle", "Right", "Scroll up","Scroll down","3","4","5","6","7","8","9","0" };
 	ServiceLocator::getLoggingService().log(std::string(names[button]) + " mouse button " + ((edge == 0) ? "pressed" : "lifted") + " at (" + std::to_string(mouse_x) + ", " + std::to_string(mouse_y) + ")");
 }
 void testMouseMove(int, int) {}

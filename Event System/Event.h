@@ -11,6 +11,8 @@ enum EventType {
 	EKH_EVENT_BUTTON_HELD
 };
 
+enum MouseButton;
+
 struct EventData {};
 
 struct KeyboardData :public EventData {
@@ -19,6 +21,8 @@ struct KeyboardData :public EventData {
 };
 
 struct MouseData :public EventData {
+	MouseButton button;
+	int edge;
 	int mouse_x, mouse_y;
 };
 

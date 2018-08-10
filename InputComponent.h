@@ -20,4 +20,14 @@ public:
 	virtual void update(/*StateObject& state*/);
 };
 
+class MouseInputComponent :public InputComponent, public Receiver {
+private:
+	EventQueue mMouseEvents;
+public:
+	MouseInputComponent(bool interested[5]);
+	~MouseInputComponent();
+	virtual void handle(const Event event);
+	virtual void update(/*StateObject& state*/);
+};
+
 #endif//__EKH_SCRATCH_GRAPHICS_1_INPUT_COMPONENT__
