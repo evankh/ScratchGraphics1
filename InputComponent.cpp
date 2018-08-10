@@ -5,11 +5,11 @@
 
 KeyboardInputComponent::KeyboardInputComponent(int numInterested, const char* interested) {
 	for (int i = 0; i < numInterested; i++)
-		KeyboardHandler::registerReceiver(interested[i], this);
+		KeyboardHandler::getInstance().registerReceiver(interested[i], this);
 }
 
 KeyboardInputComponent::~KeyboardInputComponent() {
-	KeyboardHandler::unregisterReceiver(this);
+	KeyboardHandler::getInstance().unregisterReceiver(this);
 }
 
 void KeyboardInputComponent::handle(Event event) {
@@ -25,11 +25,11 @@ void KeyboardInputComponent::update() {
 }
 
 MouseInputComponent::MouseInputComponent(bool interested[5]) {
-	MouseHandler::registerReceiver(interested, this);
+	MouseHandler::getInstance().registerReceiver(interested, this);
 }
 
 MouseInputComponent::~MouseInputComponent() {
-	MouseHandler::unregisterReceiver(this);
+	MouseHandler::getInstance().unregisterReceiver(this);
 }
 
 void MouseInputComponent::handle(Event event) {

@@ -1,9 +1,7 @@
 #ifndef __EKH_SCRATCH_GRPAHICS_1_MOUSE_HANDLER__
 #define __EKH_SCRATCH_GRAPHICS_1_MOUSE_HANDLER__
 
-#include "Event System\Event.h"
-#include "Event System\EventQueue.h"
-#include "Event System\Receiver.h"
+#include "Handler.h"
 
 enum MouseButton {
 	EKH_MOUSE_BUTTON_LEFT = 0,
@@ -15,24 +13,23 @@ enum MouseButton {
 	EKH_MOUSE_NUM_BUTTONS
 };
 
-class MouseHandler {
+class MouseHandler :public Handler {
 	friend void game_mouse_wrapper(int, int, int, int);
 	friend void game_movement_wrapper(int, int);
 private:
-	static bool sButtonStatus[EKH_MOUSE_NUM_BUTTONS];
-	static int sMousePosition[2];
-	static void handleButton(MouseButton button, int edge, int mouse_x, int mouse_y);
-	static void handleMove(int mouse_x, int mouse_y);
-	static EventQueue sEvents;
-	static ReceiverNode* sRegisteredReceivers[EKH_MOUSE_NUM_BUTTONS];
+	bool sButtonStatus[EKH_MOUSE_NUM_BUTTONS];
+	int sMousePosition[2];
+	void handleButton(MouseButton button, int edge, int mouse_x, int mouse_y);
+	void handleMove(int mouse_x, int mouse_y);
+	virtual int getIndexFrom(Event event) { return event.mData.mouse.button; };
+	virtual int getNumReceivers() { return EKH_MOUSE_NUM_BUTTONS; };
 public:
-	static bool getButtonStatus(MouseButton button) { return sButtonStatus[button]; };
-	static int getMouseX() { return sMousePosition[0]; };
-	static int getMouseY() { return sMousePosition[1]; };
-	static void dispatchAll();
-	static void registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Receiver* receiver);
-	static void registerReceiver(MouseButton button, Receiver* receiver);
-	static void unregisterReceiver(Receiver* receiver);
+	static MouseHandler& getInstance();
+	bool getButtonStatus(MouseButton button) { return sButtonStatus[button]; };
+	int getMouseX() { return sMousePosition[0]; };
+	int getMouseY() { return sMousePosition[1]; };
+	void registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Receiver* receiver);
+	void registerReceiver(MouseButton button, Receiver* receiver);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_MOUSE_HANDLER__

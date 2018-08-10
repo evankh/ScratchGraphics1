@@ -102,25 +102,25 @@ void game_keydown_wrapper(unsigned char key, int mouse_x, int mouse_y) {
 	if (key == 27)
 		glutLeaveMainLoop();
 	else
-		KeyboardHandler::handlePress(key, mouse_x, mouse_y);
+		KeyboardHandler::getInstance().handlePress(key, mouse_x, mouse_y);
 }
 
 void game_keyup_wrapper(unsigned char key, int mouse_x, int mouse_y) {
-	KeyboardHandler::handleRelease(key, mouse_x, mouse_y);
+	KeyboardHandler::getInstance().handleRelease(key, mouse_x, mouse_y);
 }
 
 void game_mouse_wrapper(int button, int edge, int mouse_x, int mouse_y) {
-	MouseHandler::handleButton((MouseButton)button, edge, mouse_x, mouse_y);
+	MouseHandler::getInstance().handleButton((MouseButton)button, edge, mouse_x, mouse_y);
 }
 
 void game_movement_wrapper(int mouse_x, int mouse_y) {
-	MouseHandler::handleMove(mouse_x, mouse_y);
+	MouseHandler::getInstance().handleMove(mouse_x, mouse_y);
 }
 
 void gameLoop(int value) {
 	glutTimerFunc(10, gameLoop, 0);
-	KeyboardHandler::dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
-	MouseHandler::dispatchAll();
+	KeyboardHandler::getInstance().dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
+	MouseHandler::getInstance().dispatchAll();
 	Game::getInstance().update(0.01f);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	Game::getInstance().render();

@@ -1,19 +1,9 @@
 #include "MouseHandler.h"
 
-bool MouseHandler::sButtonStatus[5];
-int MouseHandler::sMousePosition[2];
-EventQueue MouseHandler::sEvents = EventQueue();
-ReceiverNode* MouseHandler::sRegisteredReceivers[5];
-
-void MouseHandler::dispatchAll() {
-	while (!sEvents.isEmpty()) {
-		Event event = sEvents.pop();
-		ReceiverNode* current = sRegisteredReceivers[event.mData.mouse.button];
-		while (current) {
-			current->receiver->handle(event);
-			current = current->next;
-		}
-	}
+MouseHandler& MouseHandler::getInstance() {
+	static MouseHandler* sInstance = new MouseHandler;
+	if (!sInstance->sRegisteredReceivers) sInstance->sRegisteredReceivers = new ReceiverNode*[EKH_MOUSE_NUM_BUTTONS] {NULL};
+	return *sInstance;
 }
 
 // It thoroughly irks me to have to rewrite all of this code instead of using inheritance, but since everything has to be static and static doesn't play nice with inheritance... I really did try.
@@ -28,29 +18,6 @@ void MouseHandler::registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Rece
 void MouseHandler::registerReceiver(MouseButton button, Receiver* receiver) {
 	if (receiver)
 		sRegisteredReceivers[button] = new ReceiverNode{ receiver, sRegisteredReceivers[button] };
-}
-
-void MouseHandler::unregisterReceiver(Receiver* receiver) {
-	for (int i = 0; i < 5; i++) {
-		if (sRegisteredReceivers[i]) {
-			if (sRegisteredReceivers[i]->receiver == receiver) {
-				auto temp = sRegisteredReceivers[i];
-				sRegisteredReceivers[i] = temp->next;
-				delete temp;
-			}
-			else {
-				ReceiverNode* current = sRegisteredReceivers[i];
-				while (current->next) {
-					if (current->next->receiver == receiver) {
-						auto temp = current->next;
-						current->next = temp->next;
-						delete temp;
-					}
-					current = current->next;
-				}
-			}
-		}
-	}
 }
 
 void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int mouse_y) {

@@ -14,8 +14,8 @@ Game::Game() {
 	// ?
 	// I guess this would be the spot for the initialization of everything: Loading assets, starting services, initializing rendering, etc.
 	mWindow = new Window(800, 600, "Game owns this window");
-	KeyboardHandler::registerReceiver('r', this);
-	KeyboardHandler::registerReceiver(27, this);
+	KeyboardHandler::getInstance().registerReceiver('r', this);
+	KeyboardHandler::getInstance().registerReceiver(27, this);
 }
 
 void Game::init() {
@@ -137,7 +137,7 @@ void Game::cleanup() {
 
 Game::~Game() {
 	delete mWindow;
-	KeyboardHandler::unregisterReceiver(this);
+	KeyboardHandler::getInstance().unregisterReceiver(this);
 }
 
 Game& Game::getInstance() {
