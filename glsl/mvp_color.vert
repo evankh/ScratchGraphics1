@@ -1,4 +1,4 @@
-#version 450
+#version 100
 
 layout (location = 0) in vec4 position;
 layout (location = 3) in vec4 color;

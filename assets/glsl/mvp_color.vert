@@ -1,4 +1,4 @@
-#version 430
+#version 450
 
 layout (location = 0) in vec4 position;
 layout (location = 3) in vec4 color;
@@ -9,5 +9,5 @@ out vec3 pass_color;
 
 void main() {
 	gl_Position = mvp * position;
-	pass_color = vec3(1.0f);
+	pass_color = color.rgb;
 }

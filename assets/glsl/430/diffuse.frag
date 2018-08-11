@@ -1,4 +1,4 @@
-#version 430
+#version 150
 
 in vec3 pass_color_g;
 in vec3 pass_normal;
