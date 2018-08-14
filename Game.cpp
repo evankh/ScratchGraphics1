@@ -87,8 +87,8 @@ void Game::loadGeometry() {
 	// For now, automatically load one level, the debug level
 //	loadLevel();
 	bool memoryleak[5] = { true, true, false, true, false };
-	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), new MouseInputComponent(memoryleak)));
-	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(), new KeyboardInputComponent(4,"wasd")));
+	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(glm::vec3(0.0f, 0.0f, 1.0f), 90.0f), new MouseInputComponent(memoryleak)));
+	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(glm::vec3(0.0f, 0.0f, 1.0f), 45.0f), new KeyboardInputComponent(4,"wasd")));
 	mGameObjects.back()->translate(glm::vec3(0.0f, 0.0f, 1.0f));
 	mGameObjects.back()->scale(glm::vec3(0.5f));
 }
@@ -152,7 +152,7 @@ void Game::update(float dt) {
 	}
 }
 
-void Game::render() {
+void Game::render(float dt) {
 	// A broad sketch of the rendering process follows:
 	//  - clear the various framebuffers and fill with an appropriate background
 	//  - render all GameObjects to an intermediate FrameBuffer

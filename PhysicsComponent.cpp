@@ -6,6 +6,8 @@ PhysicsComponent::PhysicsComponent() {
 	mModelMatrix = glm::mat4(1.0f);
 	mVelocity = glm::vec3(0.0f);
 	mAcceleration = glm::vec3(0.0f);
+	mAxis = glm::vec3(0.0f);
+	mAngularVelocity = 0.0f;
 	mBounds = new Collisionless();
 }
 
@@ -13,6 +15,17 @@ PhysicsComponent::PhysicsComponent(glm::mat4 &mm) {
 	mModelMatrix = mm;
 	mVelocity = glm::vec3(0.0f);
 	mAcceleration = glm::vec3(0.0f);
+	mAxis = glm::vec3(0.0f);
+	mAngularVelocity = 0.0f;
+	mBounds = new Collisionless();
+}
+
+PhysicsComponent::PhysicsComponent(glm::vec3 axis, float aVel) {
+	mModelMatrix = glm::mat4(1.0f);
+	mVelocity = glm::vec3(0.0f);
+	mAcceleration = glm::vec3(0.0f);
+	mAxis = axis;
+	mAngularVelocity = aVel;
 	mBounds = new Collisionless();
 }
 
@@ -23,6 +36,7 @@ PhysicsComponent::~PhysicsComponent() {
 void PhysicsComponent::update(float dt) {
 	mVelocity += mAcceleration * dt;
 	translate(mVelocity * dt);
+	rotate(mAxis, mAngularVelocity * dt);
 }
 
 void PhysicsComponent::translate(glm::vec3 dxyz) {

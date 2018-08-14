@@ -16,16 +16,16 @@ GameObject::~GameObject() {
 
 void GameObject::update(float dt) {
 	if (mInputComponent) mInputComponent->update(/*mState*/);
-	rotate(glm::vec3(0, 0, 1), dt * 90.0f);
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
 }
 
 #include "glm\gtc\type_ptr.hpp"
+// Eventually sorting Objects for rendering based on their materials would save time on switching and let me take the stupid Camera out of here
 void GameObject::render(Camera* c) {
 	//if (mDisplay) mDisplay->use(c->getViewProjectionMatrix(), mPhysicsComponent->getModelMatrix());
 	if (mDisplay) {
 		mDisplay->use();
-		glm::mat4 mvp = c->getViewProjectionMatrix() * mPhysicsComponent->getModelMatrix();
+		//glm::mat4 mvp = c->getViewProjectionMatrix() * mPhysicsComponent->getModelMatrix();
 		//mDisplay->sendUniform("mvp", glm::value_ptr(mvp));
 		mDisplay->sendUniform("m", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 		mDisplay->sendUniform("vp", glm::value_ptr(c->getViewProjectionMatrix()));

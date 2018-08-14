@@ -10,10 +10,13 @@ private:
 	glm::mat4 mModelMatrix;
 	glm::vec3 mVelocity;
 	glm::vec3 mAcceleration;
+	glm::vec3 mAxis;
+	float mAngularVelocity;
 	Bounds* mBounds = NULL;
 public:
 	PhysicsComponent();
 	PhysicsComponent(glm::mat4 &mm);
+	PhysicsComponent(glm::vec3 axis, float aVel);	// For our debug rotating objects
 	~PhysicsComponent();
 	void update(float dt);
 	void translate(glm::vec3 dxyz);

@@ -42,7 +42,7 @@ public:
 	void init();
 	void cleanup();
 	void update(float dt);
-	void render();
+	void render(float dt);
 	void resize(unsigned int width, unsigned int height);
 	void loadLevel();
 	void reloadAll();

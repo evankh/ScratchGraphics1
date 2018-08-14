@@ -93,7 +93,7 @@ std::ostream& operator<<(std::ostream& out, glm::mat4 matrix) {
 void game_resize_wrapper(int width, int height) {
 	Game::getInstance().resize(width, height);
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	Game::getInstance().render();
+	Game::getInstance().render(0.0f);
 	glutSwapBuffers();
 }
 
@@ -117,13 +117,28 @@ void game_movement_wrapper(int mouse_x, int mouse_y) {
 	MouseHandler::getInstance().handleMove(mouse_x, mouse_y);
 }
 
+GLint64 getCurrentTime() {
+	GLint64 time;
+	glGetInteger64v(GL_TIMESTAMP, &time);
+	return time;
+}
+
 void gameLoop(int value) {
-	glutTimerFunc(10, gameLoop, 0);
-	KeyboardHandler::getInstance().dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
-	MouseHandler::getInstance().dispatchAll();
-	Game::getInstance().update(0.01f);
+	static GLint64 current, prev = getCurrentTime();
+	static float msPerFrame = 10.0f, lag = 0.0f;
+	glutTimerFunc((int)msPerFrame, gameLoop, 0);
+	current = getCurrentTime();
+	GLint64 elapsed = current - prev;
+	prev = current;
+	lag += elapsed / 1000000.0f;
+	while (lag > msPerFrame) {
+		KeyboardHandler::getInstance().dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
+		MouseHandler::getInstance().dispatchAll();
+		Game::getInstance().update(msPerFrame / 1000.0f);
+		lag -= msPerFrame;
+	}
 	glClear(GL_DEPTH_BUFFER_BIT);
-	Game::getInstance().render();
+	Game::getInstance().render(lag);
 	glutSwapBuffers();
 }
 
