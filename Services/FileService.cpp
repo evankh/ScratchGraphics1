@@ -52,15 +52,26 @@ bool FileService::extract(char* pattern, void* target) {
 			{
 				tok++;
 				int stringStart = in.tellg();
-				while (in.peek() != pattern[tok])
+				while (in.peek() != pattern[tok]) {
 					in.ignore(1);
+					if (in.peek() == EOF) {
+						in.seekg(pos, in.beg);
+						return false;
+					}
+				}
 				int stringEnd = in.tellg();
 				int length = stringEnd - stringStart;
 				in.seekg(stringStart, in.beg);
 				char* string = new char[(int)length + 1];
 				in.get(string, (int)length + 1);
 				*(char**)((char*)target + offset) = string;
+				offset += sizeof(char*);
+				in.ignore(1);
 			}
+				break;
+			case 'W':
+				while (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r' || in.peek() == '\n')
+					in.get();
 				break;
 			case '.':
 				in.get();
@@ -71,6 +82,8 @@ bool FileService::extract(char* pattern, void* target) {
 		}
 		else {
 			char buffer = in.get();
+			if (buffer == '\r')
+				buffer = in.get();	// Screw line endings
 			if (buffer != pattern[tok]) {
 				in.seekg(pos, in.beg);
 				return false;

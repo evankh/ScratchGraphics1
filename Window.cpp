@@ -36,3 +36,8 @@ void Window::resize(unsigned int width, unsigned int height) {
 	mHeight = height;
 	glViewport(0, 0, mWidth, mHeight);
 }
+
+void Window::rename(const char* title) {
+	mTitle = title;
+	glutSetWindowTitle(mTitle);
+}

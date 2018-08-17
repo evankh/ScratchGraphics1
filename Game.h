@@ -33,6 +33,8 @@ private:
 	std::vector<GameObject*> mHUDItems;
 	PostProcessingPipeline mMenuPost;
 	bool mIsMenuActive = false;
+	const std::string mAssetBasePath = "assets/";
+	const std::string mIndexFilename = "index.txt";
 	void loadShaders();
 	void loadGeometry();
 	void loadMenu();

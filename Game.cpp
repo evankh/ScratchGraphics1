@@ -3,6 +3,7 @@
 #include "KeyboardHandler.h"
 #include "Shader.h"
 #include "Window.h"
+#include "ServiceLocator.h"
 
 #include "cubedata_temp.h"
 #include "squaredata_temp.h"
@@ -26,12 +27,80 @@ void Game::init() {
 	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
 
-	loadShaders();
-	loadGeometry();
-	loadMenu();
-	loadPostProcessing();
-
-	//KeyboardHandler::registerReceiver('r', this);
+	FileService& index = ServiceLocator::getFileService(mAssetBasePath + mIndexFilename);
+	if (index.good()) {
+		// Generic game data
+		struct { char* title; int w, h; } window;
+		index.extract("\\S\n\\I \\I\n", &window);
+		mWindow->resize(window.w, window.h);
+		mWindow->rename(window.title);
+		// Loading asset directories
+		char* workingDirectory;
+		while (index.good()) {
+			if (index.extract("geometry:\"\\S\"\n", &workingDirectory)) {
+				ServiceLocator::getLoggingService().error("Found geometry asset path", mAssetBasePath + workingDirectory);
+				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				if (workingIndex.good()) {
+					// Extract the geometry data
+				}
+				else {
+					ServiceLocator::getLoggingService().error("Error opening geometry index", mAssetBasePath + workingDirectory + mIndexFilename);
+				}
+				delete workingDirectory;
+			} else if (index.extract("shaders:\"\\S\"\n", &workingDirectory)) {
+				ServiceLocator::getLoggingService().error("Found shader asset path", mAssetBasePath + workingDirectory);
+				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				if (workingIndex.good()) {
+					// Extract the shader data
+				}
+				else {
+					ServiceLocator::getLoggingService().error("Error opening shader index", mAssetBasePath + workingDirectory + mIndexFilename);
+				}
+				delete workingDirectory;
+			} else if(index.extract("post:\"\\S\"\n", &workingDirectory)) {
+				ServiceLocator::getLoggingService().error("Found postprocessing asset path", mAssetBasePath + workingDirectory);
+				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				if (workingIndex.good()) {
+					// Extract the postprocessing data
+				}
+				else {
+					ServiceLocator::getLoggingService().error("Error opening postprocessing index", mAssetBasePath + workingDirectory + mIndexFilename);
+				}
+				delete workingDirectory;
+				mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
+				mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
+			} else if (index.extract("levels:\"\\S\"\n", &workingDirectory)) {
+				ServiceLocator::getLoggingService().error("Found level asset path", mAssetBasePath + workingDirectory);
+				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				if (workingIndex.good()) {
+					// Extract the geometry data
+				}
+				else {
+					ServiceLocator::getLoggingService().error("Error opening levels index", mAssetBasePath + workingDirectory + mIndexFilename);
+				}
+				delete workingDirectory;
+			} else if (index.extract("textures:\"\\S\"\n", &workingDirectory)) {
+				ServiceLocator::getLoggingService().error("Found texture asset path", mAssetBasePath + workingDirectory);
+				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				if (workingIndex.good()) {
+					// Extract the geometry data
+				}
+				else {
+					ServiceLocator::getLoggingService().error("Error opening texture index", mAssetBasePath + workingDirectory + mIndexFilename);
+				}
+				delete workingDirectory;
+			}
+			else {
+				if (index.extract("\\S\n", &workingDirectory)) {
+					ServiceLocator::getLoggingService().error("Unrecognized string in index file", workingDirectory);
+					delete workingDirectory;
+				} else break;
+			}
+		}
+	} else {
+		ServiceLocator::getLoggingService().error("Could not open asset index file", mAssetBasePath + mIndexFilename);
+		// Hard quit I guess
+	}
 }
 
 void Game::loadShaders() {
