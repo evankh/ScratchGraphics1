@@ -20,6 +20,7 @@ std::string FileService::getAll() {
 }
 
 bool FileService::extract(char* pattern, void* target) {
+	in.clear();	// DEBUG
 	std::streamoff pos = in.tellg();
 	unsigned int offset = 0;
 	for (unsigned int tok = 0; pattern[tok] != '\0'; tok++) {
@@ -55,8 +56,17 @@ bool FileService::extract(char* pattern, void* target) {
 				while (in.peek() != pattern[tok]) {
 					in.ignore(1);
 					if (in.peek() == EOF) {
-						in.seekg(pos, in.beg);
-						return false;
+						if (!strictlyNecessary) {
+							*(char**)((char*)target + offset) = NULL;
+							in.clear();
+							in.ignore(1);
+							offset += sizeof(char*);
+							break;
+						}
+						else {
+							in.seekg(pos, in.beg);
+							return false;
+						}
 					}
 				}
 				int stringEnd = in.tellg();
@@ -90,5 +100,7 @@ bool FileService::extract(char* pattern, void* target) {
 			}
 		}
 	}
+	in.good();
+	in.clear();
 	return true;
 }

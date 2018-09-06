@@ -6,11 +6,11 @@
 class Shader {
 	friend class Program;
 private:
-	char* mFilepath;
+	const char* mFilepath;
 	unsigned int mType;
 	unsigned int mHandle;
 public:
-	Shader(char* filepath, unsigned int type);
+	Shader(const char* filepath, unsigned int type);
 	~Shader();
 	void reload();
 };

@@ -3,7 +3,7 @@
 #include "GL\glew.h"
 #include <fstream>
 
-Shader::Shader(char* filepath, unsigned int type) {
+Shader::Shader(const char* filepath, unsigned int type) {
 	mFilepath = filepath;
 	mType = type;
 	// Read file

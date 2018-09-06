@@ -18,8 +18,6 @@ public:
 	void clear_delete();
 };
 
-#endif//__EKH_SCRATCH_GRAPHICS_1_NAMED_CONTAINER__
-
 template<class Type>
 inline NamedContainer<Type>::NamedContainer(Type default) {
 	mDefault = default;
@@ -57,3 +55,5 @@ inline void NamedContainer<Type>::clear_delete() {
 		delete item.second;
 	mItems.clear();
 }
+
+#endif//__EKH_SCRATCH_GRAPHICS_1_NAMED_CONTAINER__

@@ -1,0 +1,5 @@
+Object "big_cube" geom:"cube" prog:"local_position_rainbow" pos:(0.0,0.0,0.0) rot:(0.0,0.0,1.0) ang:90.0
+Object "little_cube" geom:"cube" prog:"local_position_rainbow" pos:(0.0,0.0,1.0) rot:(0.0,0.0,1.0) ang:45.0 scl:0.5
+Object "rolling_cube" geom:"cube" prog:"local_position_rainbow" pos:(-1.0,0.0,0.0) vel:(-1.0f,0.0,0.0) rot:(0.0,-1.0,0.0) ang:30.0 scl:0.5
+Object "smart_cube" geom:"cube" prog:"local_position_rainbow" input:"wasd" pos:(0.0,-1.0,0.0) scl:0.5
+Object "gravity_cube" geom:"cube" prog:"local_position_rainbow" phys:"gravity" pos:(0.5,0.0,1.0) vel:(0.0,0.0,5.0) rot:(0.0,1.0,0.0) ang:45.0 scl:0.5

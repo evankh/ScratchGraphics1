@@ -4,29 +4,33 @@
 #include "Shader.h"
 #include "Window.h"
 #include "ServiceLocator.h"
+#include "Level.h"
 
 #include "cubedata_temp.h"
 #include "squaredata_temp.h"
 
-#include "GL\glew.h"
-#include "glm\gtc\matrix_transform.hpp"
+#include "GL\glew.h"	// I literally just need this for GL_VERTEX_SHADER, which is a bit annoying
+#include "glm\gtc\matrix_transform.hpp"	// And this one only for the mSceneCamera transforms, which should be done elsewhere
 
 Game::Game() {
 	// ?
 	// I guess this would be the spot for the initialization of everything: Loading assets, starting services, initializing rendering, etc.
-	mWindow = new Window(800, 600, "Game owns this window");
+//	mWindow = new Window(800, 600, "Game owns this window");
 	KeyboardHandler::getInstance().registerReceiver('r', this);
 	KeyboardHandler::getInstance().registerReceiver(27, this);
 }
 
 void Game::init() {
+	mWindow = new Window(800, 600, "Game owns this window");
 	// Set up the window and cameras
 	mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
 	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
 	view = glm::rotate(view, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
+}
 
+void Game::load() {
 	FileService& index = ServiceLocator::getFileService(mAssetBasePath + mIndexFilename);
 	if (index.good()) {
 		// Generic game data
@@ -34,6 +38,7 @@ void Game::init() {
 		index.extract("\\S\n\\I \\I\n", &window);
 		mWindow->resize(window.w, window.h);
 		mWindow->rename(window.title);
+		delete window.title;
 		// Loading asset directories
 		char* workingDirectory;
 		while (index.good()) {
@@ -42,22 +47,67 @@ void Game::init() {
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the geometry data
+					while (workingIndex.good()) {
+						struct { char* name, *filepath; } geometry;
+						while (workingIndex.extract("\\S:\"\\S\"\n", &geometry)) {
+							ServiceLocator::getLoggingService().error(geometry.name, geometry.filepath);
+							mGeometries.add(geometry.name, new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data()));
+							delete geometry.name;
+							delete geometry.filepath;
+						}
+					}
 				}
 				else {
 					ServiceLocator::getLoggingService().error("Error opening geometry index", mAssetBasePath + workingDirectory + mIndexFilename);
 				}
 				delete workingDirectory;
-			} else if (index.extract("shaders:\"\\S\"\n", &workingDirectory)) {
+			}
+			else if (index.extract("shaders:\"\\S\"\n", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Found shader asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the shader data
+					while (workingIndex.good()) {
+						char* shaderName;
+						unsigned int type;
+						if (workingIndex.extract("Vertex \"\\S\" ", &shaderName))
+							type = GL_VERTEX_SHADER;
+						else if (workingIndex.extract("Fragment \"\\S\" ", &shaderName))
+							type = GL_FRAGMENT_SHADER;
+						else if (workingIndex.extract("Geometry \"\\S\" ", &shaderName))
+							type = GL_GEOMETRY_SHADER;
+						else {
+							if (workingIndex.extract("\\S\n", &shaderName)) {
+								ServiceLocator::getLoggingService().error("Unexpected character in index file", shaderName);
+								delete shaderName;
+								continue;
+							}
+							else {	// File is empty
+								ServiceLocator::getLoggingService().log("Finished parsing shader index.");
+								break;
+							}
+						}
+						// Extract and load all versions
+						struct { int version; char* filepath; } versionedFile;
+						while (workingIndex.extract("\\I:\"\\S\" ", &versionedFile)) {
+							ServiceLocator::getLoggingService().error(shaderName, versionedFile.filepath);
+							mShaders.add(shaderName, versionedFile.version, new Shader((mAssetBasePath + workingDirectory + versionedFile.filepath).data(), type));
+							delete versionedFile.filepath;
+						}
+						delete shaderName;
+						// Handle the uniforms I guess
+						if (workingIndex.extract("\\S\n", &shaderName)) {
+							ServiceLocator::getLoggingService().error("Found extra data at the end of the line", shaderName);
+							delete shaderName;
+						}
+					}
 				}
 				else {
 					ServiceLocator::getLoggingService().error("Error opening shader index", mAssetBasePath + workingDirectory + mIndexFilename);
 				}
 				delete workingDirectory;
-			} else if(index.extract("post:\"\\S\"\n", &workingDirectory)) {
+			}
+			else if (index.extract("post:\"\\S\"\n", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Found postprocessing asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
@@ -69,17 +119,29 @@ void Game::init() {
 				delete workingDirectory;
 				mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
 				mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
-			} else if (index.extract("levels:\"\\S\"\n", &workingDirectory)) {
+			}
+			else if (index.extract("levels:\"\\S\"\n", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Found level asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
-					// Extract the geometry data
+					// Extract the level data
+					while (workingIndex.good()) {
+						struct { char* name, *filepath; } level;
+						while (workingIndex.extract("\\S:\"\\S\"\n", &level)) {
+							ServiceLocator::getLoggingService().error(level.name, level.filepath);
+							mLevels.add(level.name, new Level((mAssetBasePath + workingDirectory + level.filepath).data()));
+							delete level.name;
+							delete level.filepath;
+						}
+					}
+					mCurrentLevel = mLevels.get("debug_world");
 				}
 				else {
 					ServiceLocator::getLoggingService().error("Error opening levels index", mAssetBasePath + workingDirectory + mIndexFilename);
 				}
 				delete workingDirectory;
-			} else if (index.extract("textures:\"\\S\"\n", &workingDirectory)) {
+			}
+			else if (index.extract("textures:\"\\S\"\n", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Found texture asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
@@ -103,102 +165,16 @@ void Game::init() {
 	}
 }
 
-void Game::loadShaders() {
-	mShaders.add("mvp_position",new Shader("glsl/mvp_position.vert",GL_VERTEX_SHADER));
-	mShaders.add("mvp_white",	new Shader("glsl/mvp_white.vert",	GL_VERTEX_SHADER));
-	mShaders.add("test_vert",	new Shader("glsl/test.vert",		GL_VERTEX_SHADER));
-	mShaders.add("sample_1",	new Shader("glsl/post/single.vert",	GL_VERTEX_SHADER));
-	mShaders.add("sample_7h",	new Shader("glsl/post/7x1.vert",	GL_VERTEX_SHADER));
-	mShaders.add("sample_7v",	new Shader("glsl/post/1x7.vert",	GL_VERTEX_SHADER));
-	mShaders.add("sample_11h",	new Shader("glsl/post/11x1.vert",	GL_VERTEX_SHADER));
-	mShaders.add("sample_11v",	new Shader("glsl/post/1x11.vert",	GL_VERTEX_SHADER));
-	mShaders.add("sample_3x3",	new Shader("glsl/post/3x3.vert",	GL_VERTEX_SHADER));
-	mShaders.add("sample_3h",	new Shader("glsl/post/3x1.vert",	GL_VERTEX_SHADER));
-	mShaders.add("sample_3v",	new Shader("glsl/post/1x3.vert",	GL_VERTEX_SHADER));
-
-	mShaders.add("flat_faces",	new Shader("glsl/flat.geom",		GL_GEOMETRY_SHADER));
-
-	mShaders.add("test_frag",	new Shader("glsl/test.frag",		GL_FRAGMENT_SHADER));
-	mShaders.add("diffuse",		new Shader("glsl/diffuse.frag",		GL_FRAGMENT_SHADER));
-	mShaders.add("none",		new Shader("glsl/post/none.frag",	GL_FRAGMENT_SHADER));
-	mShaders.add("invert",		new Shader("glsl/post/invert.frag",	GL_FRAGMENT_SHADER));
-	mShaders.add("darken",		new Shader("glsl/post/darken.frag",	GL_FRAGMENT_SHADER));
-	mShaders.add("blur_7",		new Shader("glsl/post/blur7.frag",	GL_FRAGMENT_SHADER));
-	mShaders.add("blur_11",		new Shader("glsl/post/blur11.frag",	GL_FRAGMENT_SHADER));
-	mShaders.add("kernel_3x3",	new Shader("glsl/post/kernel3x3.frag",	GL_FRAGMENT_SHADER));
-	mShaders.add("kernel_3",	new Shader("glsl/post/kernel3.frag",GL_FRAGMENT_SHADER));
-	mShaders.add("min",			new Shader("glsl/post/min.frag",	GL_FRAGMENT_SHADER));
-	mShaders.add("max",			new Shader("glsl/post/max.frag",	GL_FRAGMENT_SHADER));
-
-	mPrograms.add("debug_mvp_position_color",new Program(mShaders.get("mvp_position"),	mShaders.get("test_frag")));
-	mPrograms.add("debug_mvp_white",		new Program(mShaders.get("mvp_white"),		mShaders.get("test_frag")));
-	mPrograms.add("debug_notransform_white",new Program(mShaders.get("test_vert"),		mShaders.get("test_frag")));
-	mPrograms.add("debug_flat",				new Program(mShaders.get("mvp_position"),	mShaders.get("flat_faces"),		mShaders.get("diffuse")));
-	mPrograms.add("post_none",				new Program(mShaders.get("sample_1"),		mShaders.get("none")));
-	mPrograms.add("post_invert",			new Program(mShaders.get("sample_1"),		mShaders.get("invert")));
-	mPrograms.add("post_darken",			new Program(mShaders.get("sample_1"),		mShaders.get("darken")));
-	mPrograms.add("post_hblur",				new Program(mShaders.get("sample_11h"),		mShaders.get("blur_11")));
-	mPrograms.add("post_vblur",				new Program(mShaders.get("sample_11v"),		mShaders.get("blur_11")));
-	mPrograms.add("post_convolution",		new Program(mShaders.get("sample_3x3"),		mShaders.get("kernel_3x3")));
-	mPrograms.add("post_conv_3h",			new Program(mShaders.get("sample_3h"),		mShaders.get("kernel_3")));
-	mPrograms.add("post_conv_3v",			new Program(mShaders.get("sample_3v"),		mShaders.get("kernel_3")));
-	mPrograms.add("post_min",				new Program(mShaders.get("sample_3x3"),		mShaders.get("min")));
-	mPrograms.add("post_max",				new Program(mShaders.get("sample_3x3"),		mShaders.get("max")));
-
-	mShaders.clear_delete();
-}
-
-void Game::loadGeometry() {
-	mGeometries.add("debug_cube", new Geometry(cube_numverts, (float*)cube_vertices, cube_numfaces, cube_faces, { A_POSITION }));
-	mGeometries.add("debug_menu_square", new Geometry(square_numverts, (float*)square_vertices, square_numfaces, square_faces, { A_POSITION }));
-
-	// First we would need to load a file containing main menu information, then game saves, then data about the levels, then depending on the save selected, load a particular level...
-	// For now, automatically load one level, the debug level
-//	loadLevel();
-	bool memoryleak[5] = { true, true, false, true, false };
-	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(glm::vec3(0.0f, 0.0f, 1.0f), 90.0f), new MouseInputComponent(memoryleak)));
-	mGameObjects.push_back(new GameObject(mGeometries.get("debug_cube"), mPrograms.get("debug_flat"), new PhysicsComponent(glm::vec3(0.0f, 0.0f, 1.0f), 45.0f), new KeyboardInputComponent(4,"wasd")));
-	mGameObjects.back()->translate(glm::vec3(0.0f, 0.0f, 1.0f));
-	mGameObjects.back()->scale(glm::vec3(0.5f));
-}
-
-void Game::loadMenu() {
-	/*mHUDItems.push_back(new GameObject(mGeometries.get("debug_menu_square"), mPrograms.get("debug_mvp_white"), new PhysicsComponent(), NULL));
-	mHUDItems.back()->translate(glm::vec3(50.0f, 50.0f, 0.0f));
-	mHUDItems.back()->scale(glm::vec3(700.0f, 25.0f, 0.0f));//*/
-}
-
-void Game::loadPostProcessing() {
-	float* debug_square_blur = new float[16] { 0.0625, 0.125, 0.0625, 0.125, 0.25, 0.125, 0.0625, 0.125, 0.0625 };	// Fuck it, it can be a memory leak for now
-	float* debug_both_edges = new float[16]{ -2,-1,0,-1,0,1,0,1,2 };
-	float* debug_edge = new float[3]{ -1.0f, 0.0f, 1.0f };
-	mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
-	//mGameObjectsPost.attach(mPrograms.get("post_conv_3h"), 3, debug_edge, 0.5f);
-	//mGameObjectsPost.attach(mPrograms.get("post_conv_3v"), 3, debug_edge, 0.5f);
-	//mGameObjectsPost.attach(mPrograms.get("post_convolution"), 9, debug_both_edges, 0.5f);
-	/*mGameObjectsPost.attach(mPrograms.get("post_hblur"), 0.5f);
-	mGameObjectsPost.attach(mPrograms.get("post_vblur"), 0.5f);
-	mGameObjectsPost.attach(mPrograms.get("post_hblur"), 0.2f);
-	mGameObjectsPost.attach(mPrograms.get("post_vblur"), 0.2f);//*/
-	//mGameObjectsPost.attach(mPrograms.get("post_invert"), 2.0f);
-	mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
-	mMenuPost.attach(mPrograms.get("post_darken"));
-	mMenuPost.attach(mPrograms.get("post_hblur"));
-	mMenuPost.attach(mPrograms.get("post_vblur"));
-}
-
 void Game::cleanup() {
 	mGameObjectsPost.clear();
 	mMenuPost.clear();
-	for (auto object : mGameObjects)
-		delete object;
-	mGameObjects.clear();
+	mLevels.clear_delete();
 	for (auto item : mHUDItems)
 		delete item;
 	mHUDItems.clear();
 	mGeometries.clear_delete();
 	mPrograms.clear_delete();
-	mShaders.clear_delete();
+	mShaders.clear();
 	delete mSceneCamera;
 	delete mScreenCamera;
 	//KeyboardHandler::unregisterReceiver(this);
@@ -216,7 +192,7 @@ Game& Game::getInstance() {
 
 void Game::update(float dt) {
 	// Handle events
-	for (auto object : mGameObjects) {
+	for (auto object : mCurrentLevel->getObjectList()) {
 		object->update(dt);
 	}
 }
@@ -234,7 +210,7 @@ void Game::render(float dt) {
 
 	// Set the active framebuffer to an intermediate one
 	mGameObjectsPost.enableDrawing();
-	for (auto object : mGameObjects) {
+	for (auto object : mCurrentLevel->getObjectList()) {
 		object->render(mSceneCamera);
 	}
 	mGameObjectsPost.process();
@@ -272,7 +248,7 @@ void Game::resize(unsigned int width, unsigned int height) {
 
 void Game::reloadAll() {
 	cleanup();
-	init();
+	load();
 }
 
 void Game::handle(Event event) {

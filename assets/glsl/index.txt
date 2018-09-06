@@ -1,2 +1,3 @@
-Vertex "mvp_position" 330:"/330/mvp_position.vert" (mat4:"m" mat4:"vp")
-Vertex "mvp_white" 150:"/150/mvp_white.vert" (mat4:"mvp")
+Vertex "mvp_position" 330:"330/mvp_position.vert" 150:"150/mvp_position.vert" (mat4:"m" mat4:"vp")
+Vertex "mvp_white" 150:"150/mvp_white.vert" (mat4:"mvp")
+Vertex "mvp_red" 330:"330/mvp_red.vert" blah blah blah

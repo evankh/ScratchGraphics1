@@ -1,17 +1,10 @@
 #define GL_TEST_MAIN main
 
-//#include "mat4.h"
-//#include "cubedata_temp.h"
-//#include "squaredata_temp.h"
 #include "Game.h"
-#include "Geometry.h"
-#include "Shader.h"
-#include "Window.h"
-#include "Program.h"
-#include "Camera.h"
 #include "ServiceLocator.h"
 #include "KeyboardHandler.h"
 #include "MouseHandler.h"
+#include "Window.h"
 
 #include <iostream>
 #include <vector>
@@ -148,7 +141,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 
 #pragma region initEKH
 	ServiceLocator::provideLoggingService(new ConsoleLoggingService);
-	Game::getInstance();
+	Game::getInstance().init();
 /*
 	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
 	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -206,7 +199,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		//glClearColor(0.0f, 0.5f, 0.5f, 1.0f);
 	}
 	else {
-		ServiceLocator::getLoggingService().error("Error initiating glew", NULL);
+		ServiceLocator::getLoggingService().error("Error initiating glew", "");
 		return 1;
 	}
 #pragma endregion
@@ -290,7 +283,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 */
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glutSwapBuffers();
-	Game::getInstance().init();
+	Game::getInstance().load();
 	glutMainLoop();
 	ServiceLocator::getLoggingService().log("After the main loop");
 	system("pause");
@@ -312,7 +305,7 @@ int MATRIX_TEST_MAIN(int argc, char* argv[]) {
 
 int SHADER_TEST_MAIN(int argc, char* argv[]) {
 	glutInit(&argc, argv);
-	Window display(800, 600, "Test");
+	//Window display(800, 600, "Test");
 	assert(glewInit() == GLEW_OK);
 	Shader vs("test.vs", GL_VERTEX_SHADER);
 	Shader fs("test.fs", GL_FRAGMENT_SHADER);
