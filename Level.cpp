@@ -11,6 +11,8 @@ Level::Level(const char* filepath) {
 	// Blah blah blah
 }
 
+Level::Level(std::string filepath) :Level(filepath.data()) {}
+
 Level::~Level() {
 	for (auto object : mGameObjects)
 		delete object;

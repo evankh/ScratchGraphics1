@@ -11,6 +11,7 @@ private:
 	unsigned int mHandle;
 public:
 	Shader(const char* filepath, unsigned int type);
+	Shader(std::string filepath, unsigned int type);
 	~Shader();
 	void reload();
 };

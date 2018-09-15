@@ -19,6 +19,7 @@ private:
 	static NamedContainer<PhysicsComponent*>& sPhysicsLibrary;
 public:
 	Level(const char* filepath);
+	Level(std::string filepath);
 	~Level();
 	std::vector<GameObject*>& getObjectList() { return mGameObjects; };
 };

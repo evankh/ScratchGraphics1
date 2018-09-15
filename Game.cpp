@@ -111,7 +111,44 @@ void Game::load() {
 				ServiceLocator::getLoggingService().error("Found postprocessing asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
-					// Extract the postprocessing data
+					while (workingIndex.good()) {
+						// Extract the postprocessing data
+						struct { char* name; int samples; char* path; } shaderData;
+						struct { char* name; int samples; float* weights; } kernelData;
+						if (workingIndex.extract("Sampler \\S \\I \"\\S\"\n", &shaderData)) {
+							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
+							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_VERTEX_SHADER));
+							delete shaderData.name;
+							delete shaderData.path;
+						}
+						else if (workingIndex.extract("Processor \\S \\I \"\\S\"\n", &shaderData)) {
+							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
+							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_FRAGMENT_SHADER));
+							delete shaderData.name;
+							delete shaderData.path;
+						}
+						else if (workingIndex.extract("Kernel \\S \\I", &kernelData)) {
+							if (workingIndex.extract(" [", NULL)) {
+								kernelData.weights = new float[kernelData.samples];
+								for (int i = 0; i < kernelData.samples - 1; i++)
+									workingIndex.extract("\\F,", &kernelData.weights[i]);
+								workingIndex.extract("\\F]\n", &kernelData.weights[kernelData.samples - 1]);
+								// Need a KernelManager to store these in
+							}
+							else {
+								char* err;
+								workingIndex.extract("\\S\n", &err);
+								ServiceLocator::getLoggingService().error("Unexpected characters in kernel definition", err);
+								delete err;
+							}
+							delete kernelData.name;
+						}
+						else {
+							workingIndex.extract("\\S\n", &shaderData.name);
+							ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index", shaderData.name);
+							delete shaderData.name;
+						}
+					}
 				}
 				else {
 					ServiceLocator::getLoggingService().error("Error opening postprocessing index", mAssetBasePath + workingDirectory + mIndexFilename);
@@ -129,7 +166,7 @@ void Game::load() {
 						struct { char* name, *filepath; } level;
 						while (workingIndex.extract("\\S:\"\\S\"\n", &level)) {
 							ServiceLocator::getLoggingService().error(level.name, level.filepath);
-							mLevels.add(level.name, new Level((mAssetBasePath + workingDirectory + level.filepath).data()));
+							mLevels.add(level.name, new Level(mAssetBasePath + workingDirectory + level.filepath));
 							delete level.name;
 							delete level.filepath;
 						}
@@ -145,7 +182,14 @@ void Game::load() {
 				ServiceLocator::getLoggingService().error("Found texture asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
-					// Extract the geometry data
+					while (workingIndex.good()) {
+						struct { char* name, *path; } textureData;	// Maybe need to store the resolutions too, depends on what gli offers
+						while (workingIndex.extract("Texture \\S \"\\S\"", &textureData)) {
+							mTextures.add(textureData.name, new Texture(mAssetBasePath + workingDirectory + textureData.path));
+							delete textureData.name;
+							delete textureData.path;
+						}
+					}
 				}
 				else {
 					ServiceLocator::getLoggingService().error("Error opening texture index", mAssetBasePath + workingDirectory + mIndexFilename);

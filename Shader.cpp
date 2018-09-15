@@ -49,6 +49,8 @@ Shader::Shader(const char* filepath, unsigned int type) {
 	}
 }
 
+Shader::Shader(std::string filepath, unsigned int type) :Shader(filepath.data(), type) {}
+
 Shader::~Shader() {
 	// Maybe delete the filepath
 	glDeleteShader(mHandle);
