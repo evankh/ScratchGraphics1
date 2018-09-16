@@ -142,7 +142,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 
 #pragma region initEKH
 	ServiceLocator::provideLoggingService(new ConsoleLoggingService);
-	Game::getInstance().init();
+	Game::getInstance().init();	// Oh gosh, I hope I can move this down without breaking everything... Oh gosh, I can't move this anywhere without breaking everything...
 /*
 	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
 	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -172,7 +172,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glGetIntegerv(GL_MAJOR_VERSION, version);
 		glGetIntegerv(GL_MINOR_VERSION, version + 1);
 		ServiceLocator::getLoggingService().log("Version: " + std::to_string(version[0]) + "." + std::to_string(version[1]));
-
+		Game::getInstance().setGLVersion(100 * version[0] + 10 * version[1]);
 #pragma region callbacks
 		glutDisplayFunc(testDisplay);
 		glutTimerFunc(42, gameLoop, 0);

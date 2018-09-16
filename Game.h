@@ -52,6 +52,7 @@ public:
 	void render(float dt);
 	void resize(unsigned int width, unsigned int height);
 	void reloadAll();
+	void setGLVersion(unsigned int GLVersion) { mShaders.setGLVersion(GLVersion); };
 	virtual void handle(const Event event);
 };
 

@@ -56,11 +56,28 @@ Program::~Program() {
 	glDeleteProgram(mHandle);
 }
 
+void Program::attach(Shader* s, unsigned int type) {
+	if (type == GL_VERTEX_SHADER)
+		mVS = s;
+	else if (type == GL_FRAGMENT_SHADER)
+		mFS = s;
+	else if (type == GL_GEOMETRY_SHADER)
+		mGS = s;
+	glAttachShader(mHandle, s->mHandle);
+	// When to detach?
+}
+
 void Program::attach(Shader* vs, Shader* fs) {
 	mVS = vs;
 	mFS = fs;
 	glAttachShader(mHandle, mVS->mHandle);
 	glAttachShader(mHandle, mFS->mHandle);
+}
+
+void Program::detachAll() {
+	if (mVS) glDetachShader(mHandle, mVS->mHandle);
+	if (mGS) glDetachShader(mHandle, mGS->mHandle);
+	if (mFS) glDetachShader(mHandle, mFS->mHandle);
 }
 
 void Program::link() {

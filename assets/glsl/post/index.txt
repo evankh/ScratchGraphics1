@@ -1,4 +1,4 @@
-Sampler "one" 1 "Samplers/single.vert"
+Sampler "one" 1 "Samplers/one.vert"
 Sampler "three_h" 3 "Samplers/3x1.vert"
 Sampler "three_v" 3 "Samplers/1x3.vert"
 Sampler "seven_h" 7 "Samplers/7x1.vert"

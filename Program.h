@@ -16,7 +16,9 @@ public:
 	Program(Shader* vs, Shader* gs, Shader* fs);
 	Program(char* vsFilepath, char* fsFilepath);
 	~Program();
+	void attach(Shader* shader, unsigned int type);
 	void attach(Shader* vs, Shader* fs);
+	void detachAll();
 	void link();
 	void validate();
 	// I'm wondering if maybe subclassing for each type of uniforms is the right way to go? Should something else be sending uniforms?

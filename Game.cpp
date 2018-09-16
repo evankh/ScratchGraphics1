@@ -72,12 +72,30 @@ void Game::load() {
 					while (workingIndex.good()) {
 						char* shaderName;
 						unsigned int type;
-						if (workingIndex.extract("Vertex \"\\S\" ", &shaderName))
+						struct { char* name, *vs, *fs, *gs; } programData;
+						if (workingIndex.extract("Vertex \"\\S\"", &shaderName))
 							type = GL_VERTEX_SHADER;
-						else if (workingIndex.extract("Fragment \"\\S\" ", &shaderName))
+						else if (workingIndex.extract("Fragment \"\\S\"", &shaderName))
 							type = GL_FRAGMENT_SHADER;
-						else if (workingIndex.extract("Geometry \"\\S\" ", &shaderName))
+						else if (workingIndex.extract("Geometry \"\\S\"", &shaderName))
 							type = GL_GEOMETRY_SHADER;
+						else if (workingIndex.extract("Program \"\\S\" Vertex:\"\\S\" Fragment:\"\\S\"", &programData)) {
+							Program* program = new Program;
+							program->attach(mShaders.get(programData.vs), GL_VERTEX_SHADER);
+							program->attach(mShaders.get(programData.fs), GL_FRAGMENT_SHADER);
+							if (workingIndex.extract(" Geometry:\"\\S\"", &programData.gs)) {
+								program->attach(mShaders.get(programData.gs), GL_GEOMETRY_SHADER);
+								delete programData.gs;
+							}
+							program->link();
+							program->validate();
+							program->detachAll();
+							mPrograms.add(programData.name, program);
+							delete programData.name;
+							delete programData.vs;
+							delete programData.fs;
+							continue;
+						}
 						else {
 							if (workingIndex.extract("\\S\n", &shaderName)) {
 								ServiceLocator::getLoggingService().error("Unexpected character in index file", shaderName);
@@ -90,13 +108,14 @@ void Game::load() {
 						}
 						// Extract and load all versions
 						struct { int version; char* filepath; } versionedFile;
-						while (workingIndex.extract("\\I:\"\\S\" ", &versionedFile)) {
+						while (workingIndex.extract(" \\I:\"\\S\"", &versionedFile)) {
 							mShaders.add(shaderName, versionedFile.version, new Shader((mAssetBasePath + workingDirectory + versionedFile.filepath).data(), type));
 							delete versionedFile.filepath;
 						}
 						delete shaderName;
 						// Handle the uniforms I guess
-						if (workingIndex.extract("\\S\n", &shaderName)) {
+						if (!workingIndex.extract("\n", NULL)) {
+							workingIndex.extract("\\S\n", &shaderName);
 							ServiceLocator::getLoggingService().error("Found extra data at the end of the line", shaderName);
 							delete shaderName;
 						}
