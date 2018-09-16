@@ -14,6 +14,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "IL/ilut.h"
 
 #include "TestCallbacks.h"
 
@@ -204,6 +205,10 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 	}
 #pragma endregion
 #pragma endregion
+	ilInit();
+	iluInit();
+	ilutInit();
+	ilutRenderer(ILUT_OPENGL);
 	/*
 #pragma region testInterleavedVBO
 #pragma region generate

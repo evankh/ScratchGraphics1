@@ -49,17 +49,22 @@ void Game::load() {
 					// Extract the geometry data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } geometry;
-						while (workingIndex.extract("\\S:\"\\S\"\n", &geometry)) {
+						if (workingIndex.extract("\\S:\"\\S\"\n", &geometry)) {
 							ServiceLocator::getLoggingService().error(geometry.name, geometry.filepath);
 							mGeometries.add(geometry.name, new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data()));
 							delete geometry.name;
 							delete geometry.filepath;
 						}
+						else if (workingIndex.extract("\\S\n", &geometry.name)) {
+							ServiceLocator::getLoggingService().error("Unexpected line in geometry index file", geometry.name);
+							delete geometry.name;
+						}
 					}
 				}
 				else {
-					ServiceLocator::getLoggingService().error("Error opening geometry index", mAssetBasePath + workingDirectory + mIndexFilename);
+					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
 				}
+				workingIndex.close();
 				delete workingDirectory;
 			}
 			else if (index.extract("shaders:\"\\S\"\n", &workingDirectory)) {
@@ -103,31 +108,35 @@ void Game::load() {
 					}
 				}
 				else {
-					ServiceLocator::getLoggingService().error("Error opening shader index", mAssetBasePath + workingDirectory + mIndexFilename);
+					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
 				}
+				workingIndex.close();
 				delete workingDirectory;
 			}
 			else if (index.extract("post:\"\\S\"\n", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Found postprocessing asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
+				mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
 				if (workingIndex.good()) {
 					while (workingIndex.good()) {
 						// Extract the postprocessing data
 						struct { char* name; int samples; char* path; } shaderData;
 						struct { char* name; int samples; float* weights; } kernelData;
-						if (workingIndex.extract("Sampler \\S \\I \"\\S\"\n", &shaderData)) {
+						struct { char* name, *sampler, *processor, *kernel; } filterData;
+						if (workingIndex.extract("Sampler \"\\S\" \\I \"\\S\"\n", &shaderData)) {
 							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
 							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_VERTEX_SHADER));
 							delete shaderData.name;
 							delete shaderData.path;
 						}
-						else if (workingIndex.extract("Processor \\S \\I \"\\S\"\n", &shaderData)) {
+						else if (workingIndex.extract("Processor \"\\S\" \\I \"\\S\"\n", &shaderData)) {
 							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
 							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_FRAGMENT_SHADER));
 							delete shaderData.name;
 							delete shaderData.path;
 						}
-						else if (workingIndex.extract("Kernel \\S \\I", &kernelData)) {
+						else if (workingIndex.extract("Kernel \"\\S\" \\I", &kernelData)) {
 							if (workingIndex.extract(" [", NULL)) {
 								kernelData.weights = new float[kernelData.samples];
 								for (int i = 0; i < kernelData.samples - 1; i++)
@@ -143,19 +152,37 @@ void Game::load() {
 							}
 							delete kernelData.name;
 						}
-						else {
-							workingIndex.extract("\\S\n", &shaderData.name);
+						else if (workingIndex.extract("Filter \"\\S\" Sampler:\"\\S\" Processor:\"\\S\"", &filterData)) {
+							// I will have to redo a fair bit of this after adding the separate data structures, but for right now I'm just desparate to get something onto the screen
+							Program* program = new Program(mShaders.get(filterData.sampler), mShaders.get(filterData.processor));
+							mPrograms.add(filterData.name, program);
+							if (workingIndex.extract(" Kernel:\"\\S\"", &filterData.kernel)) {
+								//mGameObjectsPost.attach(program, , mKernels.get(filterData.kernel));
+								delete filterData.kernel;
+							}
+							else
+								mGameObjectsPost.attach(program);
+							if (!workingIndex.extract("\n", NULL)) {
+								char* err;
+								workingIndex.extract("\\S\n", &err);
+								ServiceLocator::getLoggingService().error("Unexpected characters in filter definition", err);
+								delete err;
+							}
+							delete filterData.name;
+							delete filterData.sampler;
+							delete filterData.processor;
+						}
+						else if (workingIndex.extract("\\S\n", &shaderData.name)) {
 							ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index", shaderData.name);
 							delete shaderData.name;
 						}
 					}
 				}
 				else {
-					ServiceLocator::getLoggingService().error("Error opening postprocessing index", mAssetBasePath + workingDirectory + mIndexFilename);
+					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
 				}
+				workingIndex.close();
 				delete workingDirectory;
-				mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
-				mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
 			}
 			else if (index.extract("levels:\"\\S\"\n", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Found level asset path", mAssetBasePath + workingDirectory);
@@ -164,18 +191,23 @@ void Game::load() {
 					// Extract the level data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } level;
-						while (workingIndex.extract("\\S:\"\\S\"\n", &level)) {
+						if (workingIndex.extract("\\S:\"\\S\"\n", &level)) {
 							ServiceLocator::getLoggingService().error(level.name, level.filepath);
 							mLevels.add(level.name, new Level(mAssetBasePath + workingDirectory + level.filepath));
 							delete level.name;
 							delete level.filepath;
 						}
+						else if (workingIndex.extract("\\S\n", &level.name)) {
+							ServiceLocator::getLoggingService().error("Unexpected line in level index file", level.name);
+							delete level.name;
+						}
 					}
 					mCurrentLevel = mLevels.get("debug_world");
 				}
 				else {
-					ServiceLocator::getLoggingService().error("Error opening levels index", mAssetBasePath + workingDirectory + mIndexFilename);
+					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
 				}
+				workingIndex.close();
 				delete workingDirectory;
 			}
 			else if (index.extract("textures:\"\\S\"\n", &workingDirectory)) {
@@ -184,27 +216,31 @@ void Game::load() {
 				if (workingIndex.good()) {
 					while (workingIndex.good()) {
 						struct { char* name, *path; } textureData;	// Maybe need to store the resolutions too, depends on what gli offers
-						while (workingIndex.extract("Texture \\S \"\\S\"", &textureData)) {
+						if (workingIndex.extract("Texture \"\\S\" \"\\S\"", &textureData)) {
 							mTextures.add(textureData.name, new Texture(mAssetBasePath + workingDirectory + textureData.path));
 							delete textureData.name;
 							delete textureData.path;
 						}
+						else if (workingIndex.extract("\\S\n", &textureData.name)) {
+							ServiceLocator::getLoggingService().error("Unexpected line in texture index file", textureData.name);
+							delete textureData.name;
+						}
 					}
 				}
 				else {
-					ServiceLocator::getLoggingService().error("Error opening texture index", mAssetBasePath + workingDirectory + mIndexFilename);
+					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
 				}
+				workingIndex.close();
 				delete workingDirectory;
 			}
-			else {
-				if (index.extract("\\S\n", &workingDirectory)) {
-					ServiceLocator::getLoggingService().error("Unrecognized string in index file", workingDirectory);
-					delete workingDirectory;
-				} else break;
+			else if (index.extract("\\S\n", &workingDirectory)) {
+				ServiceLocator::getLoggingService().error("Unexpected line in base index file", workingDirectory);
+				delete workingDirectory;
 			}
 		}
+		index.close();
 	} else {
-		ServiceLocator::getLoggingService().error("Could not open asset index file", mAssetBasePath + mIndexFilename);
+		ServiceLocator::getLoggingService().badFileError(mAssetBasePath + mIndexFilename);
 		// Hard quit I guess
 	}
 }
@@ -272,7 +308,7 @@ void Game::render(float dt) {
 	if (mIsMenuActive) {
 		mMenuPost.process();
 		mWindow->enableDrawing();
-		mPrograms.get("post_none")->use();
+		mPrograms.get("none")->use();
 		mMenuPost.draw();
 //		for (auto item : mCurrentMenu->items()) {
 //			item.render(mScreenCamera);

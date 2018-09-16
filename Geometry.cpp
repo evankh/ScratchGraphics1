@@ -130,7 +130,7 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		// First pass to count vertices
 		
 	} else {
-		ServiceLocator::getLoggingService().error("Unable to open file", filename);
+		ServiceLocator::getLoggingService().badFileError(filename);
 	}
 }
 

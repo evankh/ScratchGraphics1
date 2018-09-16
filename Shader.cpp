@@ -45,8 +45,9 @@ Shader::Shader(const char* filepath, unsigned int type) {
 		}
 	}
 	else {
-		ServiceLocator::getLoggingService().error("Failed to open file", filepath);
+		ServiceLocator::getLoggingService().badFileError(filepath);
 	}
+	file.close();
 }
 
 Shader::Shader(std::string filepath, unsigned int type) :Shader(filepath.data(), type) {}

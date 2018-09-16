@@ -3,16 +3,16 @@
 
 #include <string>
 
-// Include the GLI libraries, probably some glew/glut as well
-
 class Texture {
 private:
-	// Probably a handle or something, maybe a filepath
-	std::string mFilepath;
+	const char* mFilepath;
+	unsigned int mHandle;
 public:
-	// Meh
-	Texture(std::string filepath);
+	Texture(const char* filepath);
+	Texture(std::string filepath);	// $#!@#! external libraries not being const-correct means I can't be either... which means no std::string
 	~Texture();
+	void setWrapX(bool shouldWrap);	// May need to change to an enum
+	void setWrapY(bool shouldWrap);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_TEXTURE__

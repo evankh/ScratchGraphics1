@@ -1,4 +1,5 @@
 #include "Level.h"
+#include "ServiceLocator.h"
 
 // I can't believe this actually works
 NamedContainer<Geometry*>& Level::sGeometryLibrary = Game::getInstance().mGeometries;
@@ -9,6 +10,14 @@ NamedContainer<PhysicsComponent*>& Level::sPhysicsLibrary = Game::getInstance().
 
 Level::Level(const char* filepath) {
 	// Blah blah blah
+	FileService& file = ServiceLocator::getFileService(filepath);
+	if (file.good()) {
+
+	}
+	else {
+		ServiceLocator::getLoggingService().badFileError(filepath);
+	}
+	file.close();
 }
 
 Level::Level(std::string filepath) :Level(filepath.data()) {}
