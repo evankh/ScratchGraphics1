@@ -1,1 +1,1 @@
-Texture debug "debug.png"
+Texture "debug" "debug.png"

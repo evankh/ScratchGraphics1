@@ -22,15 +22,10 @@ Game::Game() {
 
 void Game::init() {
 	mWindow = new Window(800, 600, "Game owns this window");
-	// Set up the window and cameras
-	mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
-	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
-	view = glm::rotate(view, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
 }
 
 void Game::load() {
+	// Load assets from the folders & index files
 	FileService& index = ServiceLocator::getFileService(mAssetBasePath + mIndexFilename);
 	if (index.good()) {
 		// Generic game data
@@ -39,18 +34,21 @@ void Game::load() {
 		mWindow->resize(window.w, window.h);
 		mWindow->rename(window.title);
 		delete window.title;
+		mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
+		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
+		view = glm::rotate(view, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
 		// Loading asset directories
 		char* workingDirectory;
 		while (index.good()) {
 			if (index.extract("geometry:\"\\S\"\n", &workingDirectory)) {
-				ServiceLocator::getLoggingService().error("Found geometry asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the geometry data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } geometry;
 						if (workingIndex.extract("\\S:\"\\S\"\n", &geometry)) {
-							ServiceLocator::getLoggingService().error(geometry.name, geometry.filepath);
 							mGeometries.add(geometry.name, new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data()));
 							delete geometry.name;
 							delete geometry.filepath;
@@ -68,7 +66,6 @@ void Game::load() {
 				delete workingDirectory;
 			}
 			else if (index.extract("shaders:\"\\S\"\n", &workingDirectory)) {
-				ServiceLocator::getLoggingService().error("Found shader asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the shader data
@@ -88,14 +85,12 @@ void Game::load() {
 								continue;
 							}
 							else {	// File is empty
-								ServiceLocator::getLoggingService().log("Finished parsing shader index.");
 								break;
 							}
 						}
 						// Extract and load all versions
 						struct { int version; char* filepath; } versionedFile;
 						while (workingIndex.extract("\\I:\"\\S\" ", &versionedFile)) {
-							ServiceLocator::getLoggingService().error(shaderName, versionedFile.filepath);
 							mShaders.add(shaderName, versionedFile.version, new Shader((mAssetBasePath + workingDirectory + versionedFile.filepath).data(), type));
 							delete versionedFile.filepath;
 						}
@@ -114,7 +109,6 @@ void Game::load() {
 				delete workingDirectory;
 			}
 			else if (index.extract("post:\"\\S\"\n", &workingDirectory)) {
-				ServiceLocator::getLoggingService().error("Found postprocessing asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
 				mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
@@ -185,14 +179,12 @@ void Game::load() {
 				delete workingDirectory;
 			}
 			else if (index.extract("levels:\"\\S\"\n", &workingDirectory)) {
-				ServiceLocator::getLoggingService().error("Found level asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the level data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } level;
 						if (workingIndex.extract("\\S:\"\\S\"\n", &level)) {
-							ServiceLocator::getLoggingService().error(level.name, level.filepath);
 							mLevels.add(level.name, new Level(mAssetBasePath + workingDirectory + level.filepath));
 							delete level.name;
 							delete level.filepath;
@@ -211,7 +203,6 @@ void Game::load() {
 				delete workingDirectory;
 			}
 			else if (index.extract("textures:\"\\S\"\n", &workingDirectory)) {
-				ServiceLocator::getLoggingService().error("Found texture asset path", mAssetBasePath + workingDirectory);
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					while (workingIndex.good()) {
@@ -299,7 +290,7 @@ void Game::render(float dt) {
 		mMenuPost.enableDrawing();
 	else
 		mWindow->enableDrawing();
-	mPrograms.get("post_none")->use();
+	mPrograms.get("none")->use();
 	mGameObjectsPost.draw();
 	for (auto hud : mHUDItems) {
 		hud->render(mScreenCamera);
