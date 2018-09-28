@@ -127,11 +127,85 @@ Geometry::Geometry(const char* filename) :Geometry() {
 	// Using the new extract function:
 	FileService& file = ServiceLocator::getFileService(filename);
 	if (file.good()) {
-		// First pass to count vertices
-		
+		struct V3 { float x, y, z; };
+		struct V2 { float x, y; };
+		struct V { int pos, tex, norm; };
+		struct Face { V vertices[4]; };
+		// First counting pass
+		int numpos = 0, numnorm = 0, numtex = 0, numface = 0;
+		while (file.good()) {
+			if (file.extract("v \\S\n", NULL)) numpos++;
+			else if (file.extract("vn \\S\n", NULL)) numnorm++;
+			else if (file.extract("vt \\S\n", NULL)) numtex++;
+			else if (file.extract("f \\S\n", NULL)) numface++;
+			else if (file.extract("\\S\n", NULL));
+		}
+		// Second reading pass
+		file.restart();
+		int positer = 0, normiter = 0, texiter = 0, faceiter = 0;
+		char* err;
+		V3* positions = new V3[numpos];
+		V3* normals = new V3[numnorm];
+		V2* texcoords = new V2[numtex];
+		Face* faces = new Face[numface];
+		while (file.good()) {
+			if (file.extract("v \\F \\F \\F\n", &positions[positer])) positer++;
+			else if (file.extract("vn \\F \\F \\F\n", &normals[normiter])) normiter++;
+			else if (file.extract("vt \\F \\F\n", &texcoords[texiter])) texiter++;
+			else if (file.extract("#\\S\n", NULL));
+			else if (file.extract("f", NULL)) {
+				// Assumes (possibly dangerously?) that all vertices have already been loaded
+				int i = 0;
+				while (file.extract(" \\?I/\\?I/\\?I", &faces[faceiter].vertices[i]))
+					i++;
+				faceiter++;
+				if (file.extract("\\?S\n", &err)) {	// Will fail on last line of file, most likely
+					if (err) {
+						ServiceLocator::getLoggingService().error("Something's fucky at the end of a face line", err);
+						delete err;
+					}
+				}
+			}
+			else if (file.extract("\\S\n", &err)) {
+				ServiceLocator::getLoggingService().error("Unknown line in object file", err);
+				delete err;
+			}
+		}
+		// Converting to internal format
+		mProperties = { A_POSITION,A_TEXCOORD0,A_NORMAL };	// Won't always have texcoords
+		for (auto prop : mProperties)
+			mVertexSize += ATTRIB_SIZES[prop];
+		mNumVerts = numface * 6;	// Only valid for all quads  - when we're doing absolutely zero dupe checking - needs more robustness desperately
+		mVertexData = new float[mNumVerts * mVertexSize];
+		mNumTris = numface * 2;	// Only valid for all quads
+		mTriData = new unsigned int[mNumTris * 3];
+		int vertiter = 0, triiter = 0;
+		for (int face = 0; face < numface; face++) {
+			for (int j = 0; j < 2; j++) {
+				for (int vert = j; vert < j + 3; vert++) {	// 0,1,2; 1,2,3
+					mTriData[triiter++] = vertiter / mVertexSize;
+					// Good opportunity for three memcpy's, or some pointer magic to assign a V2/3 to a float[]
+					mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].x;
+					mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].y;
+					mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].z;
+					mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].x;
+					mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].y;
+					mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].x;
+					mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].y;
+					mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].z;
+				}
+			}
+		}
+		// Cleanup
+		delete positions;
+		delete normals;
+		delete texcoords;
+		delete faces;
+		file.close();
 	} else {
 		ServiceLocator::getLoggingService().badFileError(filename);
 	}
+	// Congratulations, I have a Stupid Version (TM)! It can get more fleshed-out in the future, but for now it appears to work
 }
 
 /*Geometry::Geometry(std::vector<Vertex> vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) {

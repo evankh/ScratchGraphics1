@@ -19,6 +19,11 @@ std::string FileService::getAll() {
 	return buffer;
 }
 
+void FileService::restart() {
+	in.clear();
+	in.seekg(0, in.beg);
+}
+
 bool FileService::extract(char* pattern, void* target) {
 	in.clear();	// DEBUG
 	std::streamoff pos = in.tellg();
@@ -32,32 +37,37 @@ bool FileService::extract(char* pattern, void* target) {
 				tok++;
 			}
 			switch (pattern[tok]) {
-			case 'I':
-				in >> *(int*)((char*)target + offset);
+			case 'I': {
+				int temp;
+				in >> temp;
 				// Not sure this is adequately robust, but it does work. Also puts all the responsibility on the caller to validate the results, but it already has all the responsibility for memory allocation, so this may not be a bad thing
 				if (in.fail() && !strictlyNecessary) {
-					*(int*)((char*)target + offset) = -1;
+					if (target) *(int*)((char*)target + offset) = -1;
 					in.clear();
 				}
+				if (target) *(int*)((char*)target + offset) = temp;
 				offset += sizeof(int);
 				break;
-			case 'F':
-				in >> *(float*)((char*)target + offset);
+			}
+			case 'F': {
+				float temp;
+				in >> temp;
 				if (in.fail() && !strictlyNecessary) {
-					*(float*)((char*)target + offset) = NAN;
+					if (target) *(float*)((char*)target + offset) = NAN;
 					in.clear();
 				}
+				if (target) *(float*)((char*)target + offset) = temp;
 				offset += sizeof(float);
 				break;
-			case 'S':
-			{
+			}
+			case 'S': {
 				tok++;
 				int stringStart = in.tellg();
 				while (in.peek() != pattern[tok]) {
 					in.ignore(1);
 					if (in.peek() == EOF) {
 						if (!strictlyNecessary) {
-							*(char**)((char*)target + offset) = NULL;
+							if (target) *(char**)((char*)target + offset) = NULL;
 							in.clear();
 							in.ignore(1);
 							offset += sizeof(char*);
@@ -71,14 +81,27 @@ bool FileService::extract(char* pattern, void* target) {
 				}
 				int stringEnd = in.tellg();
 				int length = stringEnd - stringStart;
-				in.seekg(stringStart, in.beg);
-				char* string = new char[(int)length + 1];
-				in.get(string, (int)length + 1);
-				*(char**)((char*)target + offset) = string;
-				offset += sizeof(char*);
-				in.ignore(1);
-			}
+				if (length) {
+					in.seekg(stringStart, in.beg);
+					char* string = new char[(int)length + 1];
+					in.get(string, (int)length + 1);
+					if (target) *(char**)((char*)target + offset) = string;
+					offset += sizeof(char*);
+					in.ignore(1);
+				}
+				else {
+					if (strictlyNecessary) {
+						in.seekg(pos, in.beg);
+						return false;
+					}
+					else {
+						if (target) *(char**)((char*)target + offset) = NULL;
+						offset += sizeof(char*);
+						in.ignore(1);
+					}
+				}
 				break;
+			}
 			case 'W':
 				while (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r' || in.peek() == '\n')
 					in.get();

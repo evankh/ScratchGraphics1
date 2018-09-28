@@ -49,7 +49,9 @@ void Game::load() {
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } geometry;
 						if (workingIndex.extract("\\S:\"\\S\"\n", &geometry)) {
-							mGeometries.add(geometry.name, new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data()));
+							Geometry* geom = new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data());
+							mGeometries.add(geometry.name, geom);
+							geom->transfer();
 							delete geometry.name;
 							delete geometry.filepath;
 						}

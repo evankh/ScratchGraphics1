@@ -5,8 +5,7 @@
 #include <string>
 
 class FileService {
-//private:
-public:
+private:
 	std::ifstream in;
 public:
 	FileService(const char* filename);
@@ -14,6 +13,7 @@ public:
 	void close();
 	std::string getAll();
 	bool extract(char* pattern, void* target);
+	void restart();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_FILE_SERVICE__

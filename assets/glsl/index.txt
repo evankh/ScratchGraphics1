@@ -1,6 +1,6 @@
-Vertex "mvp" 150:"150/mvp_position.vert" (mat4:"uM" mat4:"uVP")
+Vertex "mvp" 130:"130/mvp_position.vert" (mat4:"uM" mat4:"uVP")
 
-Fragment "color" 150:"150/color.frag"
-Fragment "texture" 150:"150/texture.frag" (sampler2D:"uTexture")
+Fragment "color" 130:"130/color.frag"
+Fragment "texture" 130:"130/texture.frag" (sampler2D:"uTexture")
 
 Program "mvp_position" Vertex:"mvp" Fragment:"color"
