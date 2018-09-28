@@ -4,3 +4,4 @@ Fragment "color" 130:"130/color.frag"
 Fragment "texture" 130:"130/texture.frag" (sampler2D:"uTexture")
 
 Program "mvp_position" Vertex:"mvp" Fragment:"color"
+Program "local_position_rainbow" Vertex:"mvp" Fragment:"color"

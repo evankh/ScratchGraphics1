@@ -1,5 +1,5 @@
 Game Window
-400 300
+800 600
 geometry:"obj/"
 shaders:"glsl/"
 post:"glsl/post/"

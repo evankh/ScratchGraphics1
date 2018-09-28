@@ -12,11 +12,11 @@ class Level {
 private:
 	std::vector<GameObject*> mGameObjects;
 	// A set of managers used for validation of level data
-	static NamedContainer<Geometry*>& sGeometryLibrary;
-	static ShaderManager& sShaderLibrary;
-	static NamedContainer<Texture*>& sTextureLibrary;
-	static NamedContainer<InputComponent*>& sInputLibrary;
-	static NamedContainer<PhysicsComponent*>& sPhysicsLibrary;
+	static const NamedContainer<Geometry*>& sGeometryLibrary;
+	static const NamedContainer<Program*>& sProgramLibrary;
+	static const NamedContainer<Texture*>& sTextureLibrary;
+	static const NamedContainer<InputComponent*>& sInputLibrary;
+	static const NamedContainer<PhysicsComponent*>& sPhysicsLibrary;
 public:
 	Level(const char* filepath);
 	Level(std::string filepath);

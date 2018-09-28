@@ -31,7 +31,7 @@ void Game::load() {
 		// Generic game data
 		struct { char* title; int w, h; } window;
 		index.extract("\\S\n\\I \\I\n", &window);
-		mWindow->resize(window.w, window.h);
+		mWindow->resize(window.w, window.h);	// Not sure why this doesn't work on the first load
 		mWindow->rename(window.title);
 		delete window.title;
 		mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
@@ -48,10 +48,10 @@ void Game::load() {
 					// Extract the geometry data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } geometry;
-						if (workingIndex.extract("\\S:\"\\S\"\n", &geometry)) {
+						if (workingIndex.extract("\"\\S\":\"\\S\"\n", &geometry)) {
 							Geometry* geom = new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data());
 							mGeometries.add(geometry.name, geom);
-							geom->transfer();
+							//geom->transfer();	// Apparently geometry gets transferred when it's used by an object, so no need to do it separately!
 							delete geometry.name;
 							delete geometry.filepath;
 						}
@@ -179,7 +179,7 @@ void Game::load() {
 								mGameObjectsPost.attach(program);
 							if (!workingIndex.extract("\n", NULL)) {
 								char* err;
-								workingIndex.extract("\\S\n", &err);
+								workingIndex.extract("\\?S\n", &err);
 								ServiceLocator::getLoggingService().error("Unexpected characters in filter definition", err);
 								delete err;
 							}
@@ -339,6 +339,7 @@ void Game::resize(unsigned int width, unsigned int height) {
 }
 
 void Game::reloadAll() {
+	ServiceLocator::getLoggingService().log("======== RELOADING ALL ========");
 	cleanup();
 	load();
 }

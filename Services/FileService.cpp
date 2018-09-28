@@ -24,7 +24,7 @@ void FileService::restart() {
 	in.seekg(0, in.beg);
 }
 
-bool FileService::extract(char* pattern, void* target) {
+bool FileService::extract(const char* pattern, void* target) {
 	in.clear();	// DEBUG
 	std::streamoff pos = in.tellg();
 	unsigned int offset = 0;
@@ -62,7 +62,7 @@ bool FileService::extract(char* pattern, void* target) {
 			}
 			case 'S': {
 				tok++;
-				int stringStart = in.tellg();
+				std::streampos stringStart = in.tellg();
 				while (in.peek() != pattern[tok]) {
 					in.ignore(1);
 					if (in.peek() == EOF) {
@@ -79,8 +79,8 @@ bool FileService::extract(char* pattern, void* target) {
 						}
 					}
 				}
-				int stringEnd = in.tellg();
-				int length = stringEnd - stringStart;
+				std::streampos stringEnd = in.tellg();
+				std::streamoff length = stringEnd - stringStart;
 				if (length) {
 					in.seekg(stringStart, in.beg);
 					char* string = new char[(int)length + 1];
@@ -125,5 +125,20 @@ bool FileService::extract(char* pattern, void* target) {
 	}
 	in.good();
 	in.clear();
+	return true;
+}
+
+bool FileService::putBack(const char* pattern) {	// Begging for off-by-one errors, keep aclose eye on it
+	int length = 0;
+	std::streampos pos = in.tellg();
+	for (; pattern[length] != '\0'; length++);
+	while (length > 0) {
+		if (in.peek() == pattern[--length])
+			in.seekg(-1, in.cur);
+		else {
+			in.seekg(pos);
+			return false;
+		}
+	}
 	return true;
 }

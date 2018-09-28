@@ -12,8 +12,9 @@ public:
 	bool good() { return in.good(); };
 	void close();
 	std::string getAll();
-	bool extract(char* pattern, void* target);
+	bool extract(const char* pattern, void* target);
 	void restart();
+	bool putBack(const char* pattern);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_FILE_SERVICE__

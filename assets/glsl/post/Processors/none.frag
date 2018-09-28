@@ -9,4 +9,5 @@ uniform sampler2D uDepthBuffer;
 
 void main() {
 	oFragColor = texture(uColorBuffer, pTexCoord);
+	oFragColor.a = 1.0f;
 }

@@ -8,6 +8,7 @@ Sampler "eleven_h" 11 "Samplers/11x1.vert"
 Sampler "eleven_v" 11 "Samplers/1x11.vert"
 
 Processor "none" 1 "Processors/none.frag"
+Processor "invert" 1 "Processors/invert.frag"
 Processor "max" 3 "Processors/max.frag"
 Processor "min" 3 "Processors/min.frag"
 Processor "kernel3" 3 "Processors/kernel3.frag"

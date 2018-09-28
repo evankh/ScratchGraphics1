@@ -34,6 +34,7 @@ void Window::enableDrawing() {
 void Window::resize(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
+	glutReshapeWindow(width, height);
 	glViewport(0, 0, mWidth, mHeight);
 }
 

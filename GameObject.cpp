@@ -27,8 +27,8 @@ void GameObject::render(Camera* c) {
 		mDisplay->use();
 		//glm::mat4 mvp = c->getViewProjectionMatrix() * mPhysicsComponent->getModelMatrix();
 		//mDisplay->sendUniform("mvp", glm::value_ptr(mvp));
-		mDisplay->sendUniform("m", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
-		mDisplay->sendUniform("vp", glm::value_ptr(c->getViewProjectionMatrix()));
+		mDisplay->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
+		mDisplay->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
 	}
 	if (mGeometry) mGeometry->render();
 }

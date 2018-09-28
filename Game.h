@@ -35,7 +35,6 @@ private:
 	NamedContainer<Level*> mLevels = NamedContainer<Level*>(NULL);
 	Level* mCurrentLevel;
 	NamedContainer<InputComponent*> mInputs = NamedContainer<InputComponent*>(NULL);
-	NamedContainer<PhysicsComponent*> mPhysics = NamedContainer<PhysicsComponent*>(NULL);
 	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
 	PostProcessingPipeline mGameObjectsPost;
 	std::vector<GameObject*> mHUDItems;

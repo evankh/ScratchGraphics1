@@ -181,19 +181,19 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		mTriData = new unsigned int[mNumTris * 3];
 		int vertiter = 0, triiter = 0;
 		for (int face = 0; face < numface; face++) {
-			for (int j = 0; j < 2; j++) {
-				for (int vert = j; vert < j + 3; vert++) {	// 0,1,2; 1,2,3
-					mTriData[triiter++] = vertiter / mVertexSize;
-					// Good opportunity for three memcpy's, or some pointer magic to assign a V2/3 to a float[]
-					mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].x;
-					mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].y;
-					mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].z;
-					mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].x;
-					mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].y;
-					mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].x;
-					mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].y;
-					mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].z;
-				}
+			int triangulate[6] = { 0,1,2,0,2,3 };
+			for (int j = 0; j < 6; j++) {
+				int vert = triangulate[j];
+				mTriData[triiter++] = vertiter / mVertexSize;
+				// Good opportunity for three memcpy's, or some pointer magic to assign a V2/3 to a float[]
+				mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].x;
+				mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].y;
+				mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].z;
+				mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].x;
+				mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].y;
+				mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].x;
+				mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].y;
+				mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].z;
 			}
 		}
 		// Cleanup

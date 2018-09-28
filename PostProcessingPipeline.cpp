@@ -57,16 +57,16 @@ void PostProcessingPipeline::process() {
 	}*/
 	mProcessingStages[0].second->setActive();
 	mProcessingStages[0].first->use();
-	mProcessingStages[0].first->sendUniform("pixel_width", 1.0f / (mProcessingStages[0].second->getRelativeScale() * mWindowWidth));
-	mProcessingStages[0].first->sendUniform("pixel_height", 1.0f / (mProcessingStages[0].second->getRelativeScale() * mWindowHeight));
-	if (mKernels[0].first) mProcessingStages[0].first->sendUniform("kernel", mKernels[0].first, mKernels[0].second);
+	mProcessingStages[0].first->sendUniform("uPixWidth", 1.0f / (mProcessingStages[0].second->getRelativeScale() * mWindowWidth));
+	mProcessingStages[0].first->sendUniform("uPixHeight", 1.0f / (mProcessingStages[0].second->getRelativeScale() * mWindowHeight));
+	if (mKernels[0].first) mProcessingStages[0].first->sendUniform("uKernel", mKernels[0].first, mKernels[0].second);
 	mInputFB->draw();
 	for (unsigned int i = 1; i < mProcessingStages.size(); i++) {
 		mProcessingStages[i].second->setActive();
 		mProcessingStages[i].first->use();
-		mProcessingStages[i].first->sendUniform("pixel_width", 1.0f / (mProcessingStages[i].second->getRelativeScale() * mWindowWidth));
-		mProcessingStages[i].first->sendUniform("pixel_height", 1.0f / (mProcessingStages[i].second->getRelativeScale() * mWindowHeight));
-		if (mKernels[i].first) mProcessingStages[i].first->sendUniform("kernel", mKernels[i].first, mKernels[i].second);
+		mProcessingStages[i].first->sendUniform("uPixWidth", 1.0f / (mProcessingStages[i].second->getRelativeScale() * mWindowWidth));
+		mProcessingStages[i].first->sendUniform("uPixHeight", 1.0f / (mProcessingStages[i].second->getRelativeScale() * mWindowHeight));
+		if (mKernels[i].first) mProcessingStages[i].first->sendUniform("uKernel", mKernels[i].first, mKernels[i].second);
 		mProcessingStages[i - 1].second->draw();
 	}
 	/*mOutputFB->setActive();

@@ -6,7 +6,7 @@ PhysicsComponent::PhysicsComponent() {
 	mModelMatrix = glm::mat4(1.0f);
 	mVelocity = glm::vec3(0.0f);
 	mAcceleration = glm::vec3(0.0f);
-	mAxis = glm::vec3(0.0f);
+	mAxis = glm::vec3(0.0f, 0.0f, 1.0f);
 	mAngularVelocity = 0.0f;
 	mBounds = new Collisionless();
 }
@@ -15,7 +15,7 @@ PhysicsComponent::PhysicsComponent(glm::mat4 &mm) {
 	mModelMatrix = mm;
 	mVelocity = glm::vec3(0.0f);
 	mAcceleration = glm::vec3(0.0f);
-	mAxis = glm::vec3(0.0f);
+	mAxis = glm::vec3(0.0f, 0.0f, 1.0f);
 	mAngularVelocity = 0.0f;
 	mBounds = new Collisionless();
 }
