@@ -29,6 +29,15 @@ PhysicsComponent::PhysicsComponent(glm::vec3 axis, float aVel) {
 	mBounds = new Collisionless();
 }
 
+PhysicsComponent::PhysicsComponent(glm::vec3 vel, glm::vec3 acc, glm::vec3 axis, float aVel) {
+	mModelMatrix = glm::mat4(1.0f);
+	mVelocity = vel;
+	mAcceleration = acc;
+	mAxis = axis;
+	mAngularVelocity = aVel;
+	mBounds = new Collisionless();
+}
+
 PhysicsComponent::~PhysicsComponent() {
 	delete mBounds;
 }

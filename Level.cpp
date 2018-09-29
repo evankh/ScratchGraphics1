@@ -16,8 +16,8 @@ Level::Level(const char* filepath) {
 			if (file.extract("Object \"\\S\"", &objectName)) {
 				// Set up variables and structs to read into
 				char* geomName, *progName, *inputName, *err;
-				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f };
-				float ang = 0.0f;
+				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f };
+				float ang = 0.0f, mom = 0.0f;
 				Geometry* geom = NULL;
 				Program* program = NULL;
 				InputComponent* input = NULL;
@@ -54,7 +54,8 @@ Level::Level(const char* filepath) {
 					else if (file.extract(" acc:(\\F,\\F,\\F)", &acc)) {}
 					else if (file.extract(" rot:(\\F,\\F,\\F)", &rot)) {}
 					else if (file.extract(" ang:\\F", &ang)) {}
-					// Will need to account for angular velocity here as well
+					else if (file.extract(" axis:(\\F,\\F,\\F)", &axis)) {}
+					else if (file.extract(" mom:\\F", &mom)) {}
 					else if (file.extract(" scl:\\F", &scl.x)) {
 						scl.z = scl.y = scl.x;
 					}
@@ -93,7 +94,7 @@ Level::Level(const char* filepath) {
 					// Construction of the actual object
 					// It actually looks safe for any of the components to be NULL so the validity checking may not be necessary
 					// I'm really not sure about the whole PhysicsComponent Library concept, it seems perfectly plausible to generate them here on the fly, and wouldn't allow multiple objects to be pointing to the same PhysicsComponent
-					PhysicsComponent* physics = new PhysicsComponent;
+					PhysicsComponent* physics = new PhysicsComponent({ vel.x,vel.y,vel.z }, { acc.x,acc.y,acc.z }, { axis.x, axis.y, axis.z }, mom);
 					physics->scale({ scl.x,scl.y,scl.z });
 					physics->rotate({ rot.x,rot.y,rot.z }, ang);
 					physics->translate({ pos.x,pos.y,pos.z });
