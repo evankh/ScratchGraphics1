@@ -30,7 +30,7 @@ void Game::load() {
 	if (index.good()) {
 		// Generic game data
 		struct { char* title; int w, h; } window;
-		index.extract("\\S\n\\I \\I\n", &window);
+		index.extract("\\S\\L\\I \\I\\L", &window);
 		mWindow->resize(window.w, window.h);	// Not sure why this doesn't work on the first load
 		mWindow->rename(window.title);
 		delete window.title;
@@ -42,20 +42,20 @@ void Game::load() {
 		// Loading asset directories
 		char* workingDirectory;
 		while (index.good()) {
-			if (index.extract("geometry:\"\\S\"\n", &workingDirectory)) {
+			if (index.extract("geometry:\"\\S\"\\L", &workingDirectory)) {
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the geometry data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } geometry;
-						if (workingIndex.extract("\"\\S\":\"\\S\"\n", &geometry)) {
+						if (workingIndex.extract("\"\\S\":\"\\S\"\\L", &geometry)) {
 							Geometry* geom = new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data());
 							mGeometries.add(geometry.name, geom);
 							//geom->transfer();	// Apparently geometry gets transferred when it's used by an object, so no need to do it separately!
 							delete geometry.name;
 							delete geometry.filepath;
 						}
-						else if (workingIndex.extract("\\S\n", &geometry.name)) {
+						else if (workingIndex.extract("\\S\\L", &geometry.name)) {
 							ServiceLocator::getLoggingService().error("Unexpected line in geometry index file", geometry.name);
 							delete geometry.name;
 						}
@@ -67,7 +67,7 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
-			else if (index.extract("shaders:\"\\S\"\n", &workingDirectory)) {
+			else if (index.extract("shaders:\"\\S\"\\L", &workingDirectory)) {
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the shader data
@@ -99,9 +99,11 @@ void Game::load() {
 							continue;
 						}
 						else {
-							if (workingIndex.extract("\\S\n", &shaderName)) {
-								ServiceLocator::getLoggingService().error("Unexpected character in index file", shaderName);
-								delete shaderName;
+							if (workingIndex.extract("\\?S\\L", &shaderName)) {
+								if (shaderName) {
+									ServiceLocator::getLoggingService().error("Unexpected character in index file", shaderName);
+									delete shaderName;
+								}
 								continue;
 							}
 							else {	// File is empty
@@ -116,8 +118,8 @@ void Game::load() {
 						}
 						delete shaderName;
 						// Handle the uniforms I guess
-						if (!workingIndex.extract("\n", NULL)) {
-							workingIndex.extract("\\S\n", &shaderName);
+						if (!workingIndex.extract("\\L", NULL)) {
+							workingIndex.extract("\\S\\L", &shaderName);
 							ServiceLocator::getLoggingService().error("Found extra data at the end of the line", shaderName);
 							delete shaderName;
 						}
@@ -129,7 +131,7 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
-			else if (index.extract("post:\"\\S\"\n", &workingDirectory)) {
+			else if (index.extract("post:\"\\S\"\\L", &workingDirectory)) {
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
 				mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
@@ -139,13 +141,13 @@ void Game::load() {
 						struct { char* name; int samples; char* path; } shaderData;
 						struct { char* name; int samples; float* weights; } kernelData;
 						struct { char* name, *sampler, *processor, *kernel; } filterData;
-						if (workingIndex.extract("Sampler \"\\S\" \\I \"\\S\"\n", &shaderData)) {
+						if (workingIndex.extract("Sampler \"\\S\" \\I \"\\S\"\\L", &shaderData)) {
 							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
 							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_VERTEX_SHADER));
 							delete shaderData.name;
 							delete shaderData.path;
 						}
-						else if (workingIndex.extract("Processor \"\\S\" \\I \"\\S\"\n", &shaderData)) {
+						else if (workingIndex.extract("Processor \"\\S\" \\I \"\\S\"\\L", &shaderData)) {
 							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
 							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_FRAGMENT_SHADER));
 							delete shaderData.name;
@@ -156,12 +158,12 @@ void Game::load() {
 								kernelData.weights = new float[kernelData.samples];
 								for (int i = 0; i < kernelData.samples - 1; i++)
 									workingIndex.extract("\\F,", &kernelData.weights[i]);
-								workingIndex.extract("\\F]\n", &kernelData.weights[kernelData.samples - 1]);
+								workingIndex.extract("\\F]\\L", &kernelData.weights[kernelData.samples - 1]);
 								// Need a KernelManager to store these in
 							}
 							else {
 								char* err;
-								workingIndex.extract("\\S\n", &err);
+								workingIndex.extract("\\S\\L", &err);
 								ServiceLocator::getLoggingService().error("Unexpected characters in kernel definition", err);
 								delete err;
 							}
@@ -177,9 +179,9 @@ void Game::load() {
 							}
 							else
 								mGameObjectsPost.attach(program);
-							if (!workingIndex.extract("\n", NULL)) {
+							if (!workingIndex.extract("\\L", NULL)) {
 								char* err;
-								workingIndex.extract("\\?S\n", &err);
+								workingIndex.extract("\\?S\\L", &err);
 								ServiceLocator::getLoggingService().error("Unexpected characters in filter definition", err);
 								delete err;
 							}
@@ -187,7 +189,7 @@ void Game::load() {
 							delete filterData.sampler;
 							delete filterData.processor;
 						}
-						else if (workingIndex.extract("\\S\n", &shaderData.name)) {
+						else if (workingIndex.extract("\\S\\L", &shaderData.name)) {
 							ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index", shaderData.name);
 							delete shaderData.name;
 						}
@@ -199,18 +201,18 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
-			else if (index.extract("levels:\"\\S\"\n", &workingDirectory)) {
+			else if (index.extract("levels:\"\\S\"\\L", &workingDirectory)) {
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the level data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } level;
-						if (workingIndex.extract("\\S:\"\\S\"\n", &level)) {
+						if (workingIndex.extract("\\S:\"\\S\"\\L", &level)) {
 							mLevels.add(level.name, new Level(mAssetBasePath + workingDirectory + level.filepath));
 							delete level.name;
 							delete level.filepath;
 						}
-						else if (workingIndex.extract("\\S\n", &level.name)) {
+						else if (workingIndex.extract("\\S\\L", &level.name)) {
 							ServiceLocator::getLoggingService().error("Unexpected line in level index file", level.name);
 							delete level.name;
 						}
@@ -223,17 +225,17 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
-			else if (index.extract("textures:\"\\S\"\n", &workingDirectory)) {
+			else if (index.extract("textures:\"\\S\"\\L", &workingDirectory)) {
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					while (workingIndex.good()) {
 						struct { char* name, *path; } textureData;	// Maybe need to store the resolutions too, depends on what gli offers
-						if (workingIndex.extract("Texture \"\\S\" \"\\S\"", &textureData)) {
+						if (workingIndex.extract("Texture \"\\S\" \"\\S\"\\L", &textureData)) {
 							mTextures.add(textureData.name, new Texture(mAssetBasePath + workingDirectory + textureData.path));
 							delete textureData.name;
 							delete textureData.path;
 						}
-						else if (workingIndex.extract("\\S\n", &textureData.name)) {
+						else if (workingIndex.extract("\\S\\L", &textureData.name)) {
 							ServiceLocator::getLoggingService().error("Unexpected line in texture index file", textureData.name);
 							delete textureData.name;
 						}
@@ -245,7 +247,7 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
-			else if (index.extract("\\S\n", &workingDirectory)) {
+			else if (index.extract("\\S\\L", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Unexpected line in base index file", workingDirectory);
 				delete workingDirectory;
 			}

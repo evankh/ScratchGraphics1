@@ -24,8 +24,28 @@ void FileService::restart() {
 	in.seekg(0, in.beg);
 }
 
+enum DelimType {
+	DELIM_CHAR = 0,
+	DELIM_WHITESPACE,
+	DELIM_EOF,
+	DELIM_LINE
+};
+
+bool found_delim(char c, DelimType type, char delim) {
+	switch (type) {
+	case DELIM_WHITESPACE:
+		return c == ' ' || c == '\r' || c == '\n' || c == '\t' || c == EOF;
+	case DELIM_EOF:
+		return c == EOF;
+	case DELIM_CHAR:
+		return c == delim;
+	case DELIM_LINE:
+		return c == '\r' || c == '\n' || c == EOF;
+	}
+	return false;
+}
+
 bool FileService::extract(const char* pattern, void* target) {
-	in.clear();	// DEBUG
 	std::streamoff pos = in.tellg();
 	unsigned int offset = 0;
 	for (unsigned int tok = 0; pattern[tok] != '\0'; tok++) {
@@ -41,42 +61,83 @@ bool FileService::extract(const char* pattern, void* target) {
 				int temp;
 				in >> temp;
 				// Not sure this is adequately robust, but it does work. Also puts all the responsibility on the caller to validate the results, but it already has all the responsibility for memory allocation, so this may not be a bad thing
-				if (in.fail() && !strictlyNecessary) {
-					if (target) *(int*)((char*)target + offset) = -1;
+				if (in.fail()) {
 					in.clear();
+					if (strictlyNecessary) {
+						in.seekg(pos, in.beg);
+						return false;
+					}
+					if (target) *(int*)((char*)target + offset) = -1;
 				}
-				if (target) *(int*)((char*)target + offset) = temp;
+				else
+					if (target) *(int*)((char*)target + offset) = temp;
 				offset += sizeof(int);
 				break;
 			}
 			case 'F': {
 				float temp;
 				in >> temp;
-				if (in.fail() && !strictlyNecessary) {
-					if (target) *(float*)((char*)target + offset) = NAN;
+				if (in.fail()) {
 					in.clear();
+					if (strictlyNecessary) {
+						in.seekg(pos, in.beg);
+						return false;
+					}
+					if (target) *(float*)((char*)target + offset) = NAN;
 				}
-				if (target) *(float*)((char*)target + offset) = temp;
+				else
+					if (target) *(float*)((char*)target + offset) = temp;
 				offset += sizeof(float);
 				break;
 			}
 			case 'S': {
-				tok++;
 				std::streampos stringStart = in.tellg();
-				while (in.peek() != pattern[tok]) {
+				char delim = pattern[tok + 1];
+				DelimType type = DELIM_CHAR;
+				if (delim == '\\') {
+					if (pattern[tok + 2] == 'W')	// Assumes a well-formatted pattern string, like everything else here
+						type = DELIM_WHITESPACE;
+					else if (pattern[tok + 2] == 'E')
+						type = DELIM_EOF;
+					else if (pattern[tok + 2] == 'L')
+						type = DELIM_LINE;
+					else
+						delim = pattern[tok + 3];
+				}	// Handle the special cases
+				/*while (!found_delim(in.peek(), type, delim)) {
 					in.ignore(1);
 					if (in.peek() == EOF) {
-						if (!strictlyNecessary) {
-							if (target) *(char**)((char*)target + offset) = NULL;
-							in.clear();
-							in.ignore(1);
-							offset += sizeof(char*);
-							break;
+						in.clear();
+						if (type == DELIM_CHAR) {
+							if (!strictlyNecessary) {
+								if (target) *(char**)((char*)target + offset) = NULL;
+								in.clear();
+								in.ignore(1);
+								offset += sizeof(char*);
+								break;
+							}
+							else {
+								in.seekg(pos, in.beg);
+								return false;
+							}
 						}
-						else {
+					}
+				}*/
+				while (true) {
+					if (in.peek() == EOF) {
+						in.clear();
+						if (type == DELIM_CHAR) {
 							in.seekg(pos, in.beg);
 							return false;
 						}
+						else
+							break;
+					}
+					else {
+						if (found_delim(in.peek(), type, delim))
+							break;
+						else
+							in.ignore(1);
 					}
 				}
 				std::streampos stringEnd = in.tellg();
@@ -87,7 +148,6 @@ bool FileService::extract(const char* pattern, void* target) {
 					in.get(string, (int)length + 1);
 					if (target) *(char**)((char*)target + offset) = string;
 					offset += sizeof(char*);
-					in.ignore(1);
 				}
 				else {
 					if (strictlyNecessary) {
@@ -97,14 +157,39 @@ bool FileService::extract(const char* pattern, void* target) {
 					else {
 						if (target) *(char**)((char*)target + offset) = NULL;
 						offset += sizeof(char*);
-						in.ignore(1);
 					}
 				}
 				break;
 			}
 			case 'W':
-				while (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r' || in.peek() == '\n')
-					in.get();
+				if (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r' || in.peek() == '\n') {
+					while (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r' || in.peek() == '\n')	// Needs to check & handle EOF too
+						in.get();
+				}
+				else if (strictlyNecessary) {
+					in.seekg(pos, in.beg);
+					return false;
+				}
+				break;
+			case 'L':
+				if (in.peek() == EOF)
+					return true;
+				if (in.peek() == '\r' || in.peek() == '\n') {
+					while (in.peek() == '\r' || in.peek() == '\n')
+						in.get();
+				}
+				else if (strictlyNecessary) {
+					in.seekg(pos, in.beg);
+					return false;
+				}
+				break;
+			case 'E':
+				if (in.peek() == EOF)
+					return true;	// Should check to make sure the pattern stops here, but w/e, that's on the caller
+				else if (strictlyNecessary) {
+					in.seekg(pos, in.beg);
+					return false;
+				}
 				break;
 			case '.':
 				in.get();
@@ -115,16 +200,13 @@ bool FileService::extract(const char* pattern, void* target) {
 		}
 		else {
 			char buffer = in.get();
-			if (buffer == '\r')
-				buffer = in.get();	// Screw line endings
 			if (buffer != pattern[tok]) {
+				in.clear();	// In case we got EOF (will this have any other consequences?)
 				in.seekg(pos, in.beg);
 				return false;
 			}
 		}
 	}
-	in.good();
-	in.clear();
 	return true;
 }
 

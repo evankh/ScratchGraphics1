@@ -9,7 +9,6 @@ const NamedContainer<InputComponent*>& Level::sInputLibrary = Game::getInstance(
 /* That thing you just said there? "Oh boy, I really don't want to fuck with this code"? Yeah, that's a good sign you should rethink how you're doing this part. */
 
 Level::Level(const char* filepath) {
-	// Blah blah blah
 	FileService& file = ServiceLocator::getFileService(filepath);
 	if (file.good()) {
 		char* objectName;
@@ -23,7 +22,7 @@ Level::Level(const char* filepath) {
 				Program* program = NULL;
 				InputComponent* input = NULL;
 				bool valid = true;
-				while (!file.extract("\n", NULL)) {
+				while (!file.extract("\\L", NULL)) {
 					if (file.extract(" geom:\"\\S\"", &geomName)) {
 						// Check if the geometry exists in the geometry library
 						// If so, save a reference to it to pass to the GameObject constructor
@@ -35,7 +34,7 @@ Level::Level(const char* filepath) {
 							ServiceLocator::getLoggingService().error("Geometry not found", geomName);
 							delete geomName;
 							valid = false;
-							file.extract("\\S\n", NULL);
+							file.extract("\\?S\\L", NULL);
 							break;
 						}
 					}
@@ -46,7 +45,7 @@ Level::Level(const char* filepath) {
 							ServiceLocator::getLoggingService().error("Program not found", progName);
 							delete progName;
 							valid = false;
-							file.extract("\\S\n", NULL);
+							file.extract("\\?S\\L", NULL);
 							break;
 						}
 					}
@@ -67,7 +66,7 @@ Level::Level(const char* filepath) {
 							ServiceLocator::getLoggingService().error("Input component not found", inputName);
 							delete inputName;
 							valid = false;	// Actually it is probably fine to be valid as long as an error mesage is printed
-							file.extract("\\S\n", NULL);
+							file.extract("\\?S\\L", NULL);
 							break;
 						}
 					}
@@ -80,10 +79,12 @@ Level::Level(const char* filepath) {
 							file.putBack(" ");	// To continue with proper parsing
 						}
 					}
-					else if (file.extract("\\S\n", &err)) {
-						ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line (skipping line)", err);
-						delete err;
-						file.putBack("\n");
+					else if (file.extract("\\?S\\L", &err)) {
+						if (err) {
+							ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line (skipping line)", err);
+							delete err;
+						}
+						file.putBack("\n");	// Not really sure how I should handle this with the new \\L, but his works fine for now
 						valid = false;
 						break;
 					}
@@ -102,9 +103,11 @@ Level::Level(const char* filepath) {
 				// Cleanup
 				delete objectName;
 			}
-			else if (file.extract("\\S\n", &objectName)) {
-				ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
-				delete objectName;
+			else if (file.extract("\\?S\\L", &objectName)) {
+				if (objectName) {
+					ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
+					delete objectName;
+				}
 			}
 		}
 	}

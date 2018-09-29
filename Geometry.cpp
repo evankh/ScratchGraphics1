@@ -134,11 +134,11 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		// First counting pass
 		int numpos = 0, numnorm = 0, numtex = 0, numface = 0;
 		while (file.good()) {
-			if (file.extract("v \\S\n", NULL)) numpos++;
-			else if (file.extract("vn \\S\n", NULL)) numnorm++;
-			else if (file.extract("vt \\S\n", NULL)) numtex++;
-			else if (file.extract("f \\S\n", NULL)) numface++;
-			else if (file.extract("\\S\n", NULL));
+			if (file.extract("v \\S\\L", NULL)) numpos++;
+			else if (file.extract("vn \\S\\L", NULL)) numnorm++;
+			else if (file.extract("vt \\S\\L", NULL)) numtex++;
+			else if (file.extract("f \\S\\L", NULL)) numface++;
+			else if (file.extract("\\?S\\L", NULL));
 		}
 		// Second reading pass
 		file.restart();
@@ -149,26 +149,32 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		V2* texcoords = new V2[numtex];
 		Face* faces = new Face[numface];
 		while (file.good()) {
-			if (file.extract("v \\F \\F \\F\n", &positions[positer])) positer++;
-			else if (file.extract("vn \\F \\F \\F\n", &normals[normiter])) normiter++;
-			else if (file.extract("vt \\F \\F\n", &texcoords[texiter])) texiter++;
-			else if (file.extract("#\\S\n", NULL));
+			if (file.extract("v \\F \\F \\F\\L", &positions[positer])) positer++;
+			else if (file.extract("vn \\F \\F \\F\\L", &normals[normiter])) normiter++;
+			else if (file.extract("vt \\F \\F\\L", &texcoords[texiter])) texiter++;
+			else if (file.extract("#\\S\\L", NULL));
+			else if (file.extract("o \\S\\L", NULL));	// It's nice of you to offer me a name for the object, but I've got it covered
+			else if (file.extract("s \\S\\L", NULL));	// No idea what that does, but it's part of the standard so I shouldn't throw an error
+			else if (file.extract("mtllib \\S\\L", NULL));
+			else if (file.extract("usemtl \\S\\L", NULL));
 			else if (file.extract("f", NULL)) {
 				// Assumes (possibly dangerously?) that all vertices have already been loaded
 				int i = 0;
 				while (file.extract(" \\?I/\\?I/\\?I", &faces[faceiter].vertices[i]))
 					i++;
 				faceiter++;
-				if (file.extract("\\?S\n", &err)) {	// Will fail on last line of file, most likely
+				if (file.extract("\\?S\\L", &err)) {	// Will fail on last line of file, most likely
 					if (err) {
 						ServiceLocator::getLoggingService().error("Something's fucky at the end of a face line", err);
 						delete err;
 					}
 				}
 			}
-			else if (file.extract("\\S\n", &err)) {
-				ServiceLocator::getLoggingService().error("Unknown line in object file", err);
-				delete err;
+			else if (file.extract("\\?S\\L", &err)) {
+				if (err) {
+					ServiceLocator::getLoggingService().error("Unknown line in object file", err);
+					delete err;
+				}
 			}
 		}
 		// Converting to internal format
