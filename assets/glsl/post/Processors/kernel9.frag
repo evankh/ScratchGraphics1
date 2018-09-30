@@ -13,6 +13,6 @@ void main() {
 	for (int i = 0; i < 9; i++) {
 		col += texture(uColorBuffer, pTexCoord[i]) * uKernel[i];
 	}
-	oFragColor.xyz = col.xyz;
-	oFragColor.w = 1.0f;
+	oFragColor.rgb = col.rgb;
+	oFragColor.a = 1.0f;
 }

@@ -3,6 +3,7 @@
 
 #include "Camera.h"
 class GameObject;
+#include "KernelManager.h"
 class Level;
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
@@ -34,10 +35,13 @@ private:
 	NamedContainer<Geometry*> mGeometries = NamedContainer<Geometry*>(NULL);
 	NamedContainer<Level*> mLevels = NamedContainer<Level*>(NULL);
 	Level* mCurrentLevel;
+	ShaderManager mPostShaders;	// Do I need a new container type to handle matching sample sizes? Probably.
+	NamedContainer<Program*> mFilters = NamedContainer<Program*>(NULL);
+	KernelManager mKernels;
 	NamedContainer<InputComponent*> mInputs = NamedContainer<InputComponent*>(NULL);
 	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
 	PostProcessingPipeline mGameObjectsPost;
-	std::vector<GameObject*> mHUDItems;
+	std::vector<GameObject*> mHUDItems;	// Yeeeaaah, that's gonna hafta go pretty soon
 	PostProcessingPipeline mMenuPost;
 	bool mIsMenuActive = false;
 	const std::string mAssetBasePath = "assets/";

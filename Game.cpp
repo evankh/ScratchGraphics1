@@ -42,13 +42,15 @@ void Game::load() {
 		// Loading asset directories
 		char* workingDirectory;
 		while (index.good()) {
-			if (index.extract("geometry:\"\\S\"\\L", &workingDirectory)) {
+			if (index.extract("//\\S\\L", NULL));
+			else if (index.extract("geometry:\"\\S\"\\L", &workingDirectory)) {
 				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
 				if (workingIndex.good()) {
 					// Extract the geometry data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } geometry;
-						if (workingIndex.extract("\"\\S\":\"\\S\"\\L", &geometry)) {
+						if (workingIndex.extract("//\\S\\L", NULL));
+						else if (workingIndex.extract("\"\\S\":\"\\S\"\\L", &geometry)) {
 							Geometry* geom = new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data());
 							mGeometries.add(geometry.name, geom);
 							//geom->transfer();	// Apparently geometry gets transferred when it's used by an object, so no need to do it separately!
@@ -75,7 +77,8 @@ void Game::load() {
 						char* shaderName;
 						unsigned int type;
 						struct { char* name, *vs, *fs, *gs; } programData;
-						if (workingIndex.extract("Vertex \"\\S\"", &shaderName))
+						if (workingIndex.extract("//\\S\\L", NULL)) continue;
+						else if (workingIndex.extract("Vertex \"\\S\"", &shaderName))
 							type = GL_VERTEX_SHADER;
 						else if (workingIndex.extract("Fragment \"\\S\"", &shaderName))
 							type = GL_FRAGMENT_SHADER;
@@ -139,27 +142,29 @@ void Game::load() {
 					while (workingIndex.good()) {
 						// Extract the postprocessing data
 						struct { char* name; int samples; char* path; } shaderData;
-						struct { char* name; int samples; float* weights; } kernelData;
+						struct { char* name; Kernel kernel; } kernelData;
 						struct { char* name, *sampler, *processor, *kernel; } filterData;
-						if (workingIndex.extract("Sampler \"\\S\" \\I \"\\S\"\\L", &shaderData)) {
+						if (workingIndex.extract("//\\S\\L", NULL));
+						else if (workingIndex.extract("Sampler \"\\S\" \\I \"\\S\"\\L", &shaderData)) {
 							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
-							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_VERTEX_SHADER));
+							mPostShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_VERTEX_SHADER));
 							delete shaderData.name;
 							delete shaderData.path;
 						}
 						else if (workingIndex.extract("Processor \"\\S\" \\I \"\\S\"\\L", &shaderData)) {
 							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
-							mShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_FRAGMENT_SHADER));
+							mPostShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_FRAGMENT_SHADER));
 							delete shaderData.name;
 							delete shaderData.path;
 						}
 						else if (workingIndex.extract("Kernel \"\\S\" \\I", &kernelData)) {
 							if (workingIndex.extract(" [", NULL)) {
-								kernelData.weights = new float[kernelData.samples];
-								for (int i = 0; i < kernelData.samples - 1; i++)
-									workingIndex.extract("\\F,", &kernelData.weights[i]);
-								workingIndex.extract("\\F]\\L", &kernelData.weights[kernelData.samples - 1]);
-								// Need a KernelManager to store these in
+								kernelData.kernel.weights = new float[kernelData.kernel.samples];
+								// TODO: Checking the number of samples (don't need to store it, can use a while loop & a counter)
+								for (int i = 0; i < kernelData.kernel.samples - 1; i++)
+									workingIndex.extract("\\F,", &kernelData.kernel.weights[i]);
+								workingIndex.extract("\\F]\\L", &kernelData.kernel.weights[kernelData.kernel.samples - 1]);
+								mKernels.add(kernelData.name, kernelData.kernel);
 							}
 							else {
 								char* err;
@@ -170,24 +175,42 @@ void Game::load() {
 							delete kernelData.name;
 						}
 						else if (workingIndex.extract("Filter \"\\S\" Sampler:\"\\S\" Processor:\"\\S\"", &filterData)) {
-							// I will have to redo a fair bit of this after adding the separate data structures, but for right now I'm just desparate to get something onto the screen
-							Program* program = new Program(mShaders.get(filterData.sampler), mShaders.get(filterData.processor));
-							mPrograms.add(filterData.name, program);
-							if (workingIndex.extract(" Kernel:\"\\S\"", &filterData.kernel)) {
-								//mGameObjectsPost.attach(program, , mKernels.get(filterData.kernel));
-								delete filterData.kernel;
+							Shader* sampler = mPostShaders.get(filterData.sampler);
+							Shader* processor = mPostShaders.get(filterData.processor);
+							if (sampler && processor) {
+								Program* program = new Program(sampler, processor);
+								if (workingIndex.extract(" Kernel:\"\\S\"", &filterData.kernel)) {
+									Kernel kernel = mKernels.get(filterData.kernel);
+									if (kernel.weights) {
+										mGameObjectsPost.attach(program, kernel);
+										mFilters.add(filterData.name, program);	// Doesn't have a way to store the kernel - is this a problem? When do we pull it out of here?
+									}
+									else {
+										ServiceLocator::getLoggingService().error("Cannot locate kernel", filterData.kernel);
+										delete program;
+									}
+									delete filterData.kernel;
+								}
+								else {
+									mGameObjectsPost.attach(program);
+									mFilters.add(filterData.name, program);
+								}
 							}
-							else
-								mGameObjectsPost.attach(program);
+							else {
+								if (!sampler)
+									ServiceLocator::getLoggingService().error("Cannot locate sampler", filterData.sampler);
+								if (!processor)
+									ServiceLocator::getLoggingService().error("Cannot locate processor", filterData.processor);
+							}
+							delete filterData.name;
+							delete filterData.sampler;
+							delete filterData.processor;
 							if (!workingIndex.extract("\\L", NULL)) {
 								char* err;
 								workingIndex.extract("\\?S\\L", &err);
 								ServiceLocator::getLoggingService().error("Unexpected characters in filter definition", err);
 								delete err;
 							}
-							delete filterData.name;
-							delete filterData.sampler;
-							delete filterData.processor;
 						}
 						else if (workingIndex.extract("\\S\\L", &shaderData.name)) {
 							ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index", shaderData.name);
@@ -207,7 +230,8 @@ void Game::load() {
 					// Extract the level data
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } level;
-						if (workingIndex.extract("\\S:\"\\S\"\\L", &level)) {
+						if (workingIndex.extract("//\\S\\L", NULL));
+						else if (workingIndex.extract("\\S:\"\\S\"\\L", &level)) {
 							mLevels.add(level.name, new Level(mAssetBasePath + workingDirectory + level.filepath));
 							delete level.name;
 							delete level.filepath;
@@ -230,7 +254,8 @@ void Game::load() {
 				if (workingIndex.good()) {
 					while (workingIndex.good()) {
 						struct { char* name, *path; } textureData;	// Maybe need to store the resolutions too, depends on what gli offers
-						if (workingIndex.extract("Texture \"\\S\" \"\\S\"\\L", &textureData)) {
+						if (workingIndex.extract("//\\S\\L", NULL));
+						else if (workingIndex.extract("Texture \"\\S\" \"\\S\"\\L", &textureData)) {
 							mTextures.add(textureData.name, new Texture(mAssetBasePath + workingDirectory + textureData.path));
 							delete textureData.name;
 							delete textureData.path;
@@ -262,6 +287,9 @@ void Game::load() {
 void Game::cleanup() {
 	mGameObjectsPost.clear();
 	mMenuPost.clear();
+	mFilters.clear_delete();
+	mPostShaders.clear();
+	mKernels.clear();
 	mLevels.clear_delete();
 	for (auto item : mHUDItems)
 		delete item;
@@ -313,7 +341,7 @@ void Game::render(float dt) {
 		mMenuPost.enableDrawing();
 	else
 		mWindow->enableDrawing();
-	mPrograms.get("none")->use();
+	mFilters.get("none")->use();
 	mGameObjectsPost.draw();
 	for (auto hud : mHUDItems) {
 		hud->render(mScreenCamera);
@@ -322,7 +350,7 @@ void Game::render(float dt) {
 	if (mIsMenuActive) {
 		mMenuPost.process();
 		mWindow->enableDrawing();
-		mPrograms.get("none")->use();
+		mFilters.get("none")->use();
 		mMenuPost.draw();
 //		for (auto item : mCurrentMenu->items()) {
 //			item.render(mScreenCamera);

@@ -48,83 +48,6 @@ Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtri
 
 Geometry::Geometry(const char* filename) :Geometry() {
 	// Load a .OBJ file into the internal Geometry format
-	// Good idea to wrap file reads in a Service like with writes?
-	// First was a dud that sorta works:
-	/*std::ifstream in(filename);
-	if (in.good()) {
-		// First pass: find number of vertices
-		int numNormals = 0, numTexcoords = 0;
-		std::string buffer;
-		for (std::getline(in, buffer); !in.eof(); std::getline(in, buffer)) {
-			if (buffer.substr(0, 2) == "v ")
-				mNumVerts++;
-			if (buffer.substr(0, 2) == "vn")
-				numNormals++;
-			if (buffer.substr(0, 2) == "vt")
-				numTexcoords++;
-			if (buffer.substr(0, 2) == "f ")
-				mNumTris++;
-		}
-		in.clear();
-		in.seekg(0, in.beg);
-		float* allPositionData = new float[mNumVerts * 3];
-		int posIter = 0, normIter = 0, texIter = 0;
-		float* allNormalData = NULL;
-		if (numNormals) allNormalData = new float[numNormals * 3];
-		float* allTexcoordData = NULL;
-		if (numTexcoords) allTexcoordData = new float[numTexcoords * 2];
-		for (int lineNumber = 0; !in.eof(); lineNumber++) {
-			// Second pass: load data
-
-			std::string token;
-			std::getline(in, token, ' ');
-			if (token == "v") {
-				// There will be 3 floats here
-				in >> allPositionData[posIter++];
-				in >> allPositionData[posIter++];
-				in >> allPositionData[posIter++];
-				in.ignore(1, '\n');
-			} else if (token == "vn") {
-				// There will be 3 floats here
-				in >> allNormalData[normIter++];
-				in >> allNormalData[normIter++];
-				in >> allNormalData[normIter++];
-				in.ignore(1, '\n');
-			} else if (token == "vt") {
-				// There will be 3 floats here
-				in >> allTexcoordData[texIter++];
-				in >> allTexcoordData[texIter++];
-				in.ignore(1, '\n');
-			} else if (token == "f") {
-				// Format: f v/vt/vn v/vt/vn v/vt/vn [v/vt/vn]
-				std::string vertex;
-				for (int v = 0; v < 4 && in.peek() != '\n'; v++) {
-					int vert, tex, norm;
-					in >> vert;
-					in.ignore(1, '/');
-					if (numTexcoords)
-						in >> tex;
-					in.ignore(1, '/');
-					if (numNormals)
-						in >> norm;
-				}
-				std::getline(in, token);
-			} else if (token == "#") {
-				// Comment, nothing to do here
-				std::getline(in, token);
-			} else if (token == "") {
-				// Blank line, no need to register an error
-				std::getline(in, token);
-			} else {
-				ServiceLocator::getLoggingService().fileError(filename, lineNumber, "Unexpected token", token);
-				getline(in, token);
-			}
-		}
-	}
-	else {
-		ServiceLocator::getLoggingService().error("Unable to open file", filename);
-	}*/
-	// Using the new extract function:
 	FileService& file = ServiceLocator::getFileService(filename);
 	if (file.good()) {
 		struct V3 { float x, y, z; };
@@ -163,7 +86,7 @@ Geometry::Geometry(const char* filename) :Geometry() {
 				while (file.extract(" \\?I/\\?I/\\?I", &faces[faceiter].vertices[i]))
 					i++;
 				faceiter++;
-				if (file.extract("\\?S\\L", &err)) {	// Will fail on last line of file, most likely
+				if (file.extract("\\?S\\L", &err)) {
 					if (err) {
 						ServiceLocator::getLoggingService().error("Something's fucky at the end of a face line", err);
 						delete err;
