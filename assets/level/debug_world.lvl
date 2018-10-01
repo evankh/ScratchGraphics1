@@ -1,8 +1,7 @@
-Object "big_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(0.0,0.0,0.0) axis:(0.0,0.0,1.0) mom:90.0
-Object "little_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(0.0,0.0,1.0) axis:(0.0,0.0,1.0) mom:45.0 scl:0.5
-Object "rolling_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(-1.0,0.0,0.0) vel:(-1.0,0.0,0.0) scl:0.5
+Object "big_cube" geom:"debug_cube" prog:"texture" tex:"debug" pos:(0.0,0.0,0.0) axis:(0.0,0.0,1.0) mom:90.0
+//Object "rolling_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(-1.0,0.0,0.0) vel:(-1.0,0.0,0.0) scl:0.5
 //axis:(0.0,-1.0,0.0) mom:30.0
-Object "smart_cube" geom:"debug_cube" prog:"local_position_rainbow" input:"wasd" pos:(0.0,-1.0,0.0) scl:0.5
-Object "gravity_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(0.5,0.0,1.0) vel:(0.0,-1.0,5.0) acc:(0.0,0.0,-5.0) scl:0.5
+//Object "gravity_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(0.5,0.0,1.0) vel:(0.0,-1.0,5.0) acc:(0.0,0.0,-5.0) scl:0.5
 //axis:(0.0,1.0,0.0) mom:45.0
 Object "spaceship" geom:"spaceship" prog:"metal" pos:(0.0,0.0,1.0) axis:(0.0,0.0,1.0) mom:45.0
+//Object "texture_cube" geom:"debug_cube" prog:"texture" tex:"debug" pos:(0.0,1.0,0.0)

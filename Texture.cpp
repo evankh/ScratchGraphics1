@@ -2,9 +2,9 @@
 #include "ServiceLocator.h"
 #include "IL\ilut.h"
 
-Texture::Texture(const char* filepath) {
+Texture::Texture(std::string filepath) {
 	mFilepath = filepath;
-	mHandle = ilutGLLoadImage(const_cast<char*>(filepath));
+	mHandle = ilutGLLoadImage(const_cast<char*>(mFilepath.data()));
 	// As it turns out it would not actually be that hard to implement PNGs myself, so worth considering in the future
 	// Still not clear on what it does with the resolution... but is it even necessary for anything?
 	if (mHandle) {
@@ -20,8 +20,6 @@ Texture::Texture(const char* filepath) {
 		ServiceLocator::getLoggingService().badFileError(mFilepath);
 	}
 }
-
-Texture::Texture(std::string filepath) :Texture(filepath.data()) {}
 
 /*
 Texture::Texture(std::string filepath) {
@@ -55,5 +53,13 @@ void Texture::setWrapY(bool shouldWrap) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	else
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Texture::activate() {
+	glBindTexture(GL_TEXTURE_2D, mHandle);
+}
+
+void Texture::deactivate() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

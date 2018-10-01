@@ -1,11 +1,12 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__
 #define __EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__
 
-#include "Geometry.h"
-#include "Program.h"
-#include "InputComponent.h"
+class Geometry;
+class Program;
+class InputComponent;
 #include "PhysicsComponent.h"
 class Camera;
+class Texture;
 
 class GameObject {
 private:
@@ -13,8 +14,9 @@ private:
 	Program* mDisplay;
 	PhysicsComponent* mPhysicsComponent;
 	InputComponent* mInputComponent;
+	Texture* mTexture;
 public:
-	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input);
+	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture = NULL);
 	~GameObject();
 	void update(float dt);
 	void render(Camera* c);

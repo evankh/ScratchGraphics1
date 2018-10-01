@@ -15,12 +15,13 @@ Level::Level(const char* filepath) {
 		while (file.good()) {
 			if (file.extract("Object \"\\S\"", &objectName)) {
 				// Set up variables and structs to read into
-				char* geomName, *progName, *inputName, *err;
+				char* geomName, *progName, *texName, *inputName, *err;
 				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f };
 				float ang = 0.0f, mom = 0.0f;
 				Geometry* geom = NULL;
 				Program* program = NULL;
 				InputComponent* input = NULL;
+				Texture* texture = NULL;
 				bool valid = true;
 				while (!file.extract("\\L", NULL)) {
 					if (file.extract(" geom:\"\\S\"", &geomName)) {
@@ -44,6 +45,17 @@ Level::Level(const char* filepath) {
 						else {
 							ServiceLocator::getLoggingService().error("Program not found", progName);
 							delete progName;
+							valid = false;
+							file.extract("\\?S\\L", NULL);
+							break;
+						}
+					}
+					else if (file.extract(" tex:\"\\S\"", &texName)) {
+						if (texture = sTextureLibrary.get(texName))
+							delete texName;
+						else {
+							ServiceLocator::getLoggingService().error("Texture not found", texName);
+							delete texName;
 							valid = false;
 							file.extract("\\?S\\L", NULL);
 							break;
@@ -99,11 +111,12 @@ Level::Level(const char* filepath) {
 					physics->rotate({ rot.x,rot.y,rot.z }, ang);
 					physics->translate({ pos.x,pos.y,pos.z });
 					// Also store velocity
-					mGameObjects.push_back(new GameObject(geom, program, physics, input));
+					mGameObjects.push_back(new GameObject(geom, program, physics, input, texture));
 				}
 				// Cleanup
 				delete objectName;
 			}
+			else if (file.extract("//\\S\\L", NULL));
 			else if (file.extract("\\?S\\L", &objectName)) {
 				if (objectName) {
 					ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);

@@ -131,3 +131,8 @@ void Program::sendUniform(const char* name, int size, float* value) {
 	if (handle != -1) glUniform1fv(handle, size, value);
 	bool error = (glGetError() == GL_INVALID_OPERATION);
 }
+
+void Program::sendUniform(const char* name, unsigned int value) {
+	unsigned int handle = glGetUniformLocation(mHandle, name);
+	if (handle != -1) glUniform1i(handle, value);
+}

@@ -1,12 +1,17 @@
 #include "GameObject.h"
 #include "Camera.h"
+#include "Geometry.h"
+#include "InputComponent.h"
+#include "Program.h"
+#include "Texture.h"
 
-GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input) {
+GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture) {
 	mGeometry = geometry;
 	if (mGeometry) mGeometry->transfer();
 	mDisplay = display;
 	mPhysicsComponent = physics;
 	mInputComponent = input;
+	mTexture = texture;
 }
 
 GameObject::~GameObject() {
@@ -30,6 +35,7 @@ void GameObject::render(Camera* c) {
 		mDisplay->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 		mDisplay->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
 		mDisplay->sendUniform("uCamera", glm::value_ptr(c->getPosition()));
+		if (mTexture) mTexture->activate();
 	}
 	if (mGeometry) mGeometry->render();
 }

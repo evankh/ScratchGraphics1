@@ -26,6 +26,7 @@ public:
 	void sendUniform(const char* name, float value);
 	void sendUniform(const char* name, const float* matrix);
 	void sendUniform(const char* name, int size, float* value);
+	void sendUniform(const char* name, unsigned int value);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PROGRAM__

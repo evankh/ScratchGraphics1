@@ -1,2 +1,2 @@
-debug_world:"debug_world.lvl"
-world1:"world1.lvl"
+"debug_world":"debug_world.lvl"
+"world1":"world1.lvl"

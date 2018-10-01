@@ -3,5 +3,5 @@ Game Window
 geometry:"obj/"
 shaders:"glsl/"
 post:"glsl/post/"
-levels:"level/"
 textures:"tex/"
+levels:"level/"

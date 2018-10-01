@@ -231,7 +231,7 @@ void Game::load() {
 					while (workingIndex.good()) {
 						struct { char* name, *filepath; } level;
 						if (workingIndex.extract("//\\S\\L", NULL));
-						else if (workingIndex.extract("\\S:\"\\S\"\\L", &level)) {
+						else if (workingIndex.extract("\"\\S\":\"\\S\"\\L", &level)) {
 							mLevels.add(level.name, new Level(mAssetBasePath + workingDirectory + level.filepath));
 							delete level.name;
 							delete level.filepath;
