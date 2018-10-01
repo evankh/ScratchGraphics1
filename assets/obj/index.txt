@@ -1,2 +1,3 @@
 "debug_cube":"cube.obj"
 "spaceship":"spaceship.obj"
+"debug_cube_2":"cube2.obj"

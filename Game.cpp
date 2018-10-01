@@ -1,13 +1,12 @@
 #include "Game.h"
-#include "Program.h"
+#include "InputComponent.h"
 #include "KeyboardHandler.h"
-#include "Shader.h"
-#include "Window.h"
-#include "ServiceLocator.h"
 #include "Level.h"
-
-#include "cubedata_temp.h"
-#include "squaredata_temp.h"
+#include "Program.h"
+#include "ServiceLocator.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "Window.h"
 
 #include "GL\glew.h"	// I literally just need this for GL_VERTEX_SHADER, which is a bit annoying
 #include "glm\gtc\matrix_transform.hpp"	// And this one only for the mSceneCamera transforms, which should be done elsewhere
@@ -39,6 +38,10 @@ void Game::load() {
 		view = glm::rotate(view, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
+		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
+		mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
+		mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
+		//mInputs.add("mouse", new KeyboardInputComponent(2, { true,true,false,false,false }));	// Need a different way to do that
 		// Loading asset directories
 		char* workingDirectory;
 		while (index.good()) {
@@ -297,6 +300,7 @@ void Game::cleanup() {
 	mGeometries.clear_delete();
 	mPrograms.clear_delete();
 	mShaders.clear();
+	mInputs.clear_delete();
 	delete mSceneCamera;
 	delete mScreenCamera;
 	//KeyboardHandler::unregisterReceiver(this);

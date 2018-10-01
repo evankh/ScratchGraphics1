@@ -1,16 +1,15 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_SHADER__
 #define __EKH_SCRATCH_GRAPHICS_1_SHADER__
 
-//#include <fstream>
+#include <string>
 
 class Shader {
 	friend class Program;
 private:
-	const char* mFilepath;
+	std::string mFilepath;
 	unsigned int mType;
 	unsigned int mHandle;
 public:
-	Shader(const char* filepath, unsigned int type);
 	Shader(std::string filepath, unsigned int type);
 	~Shader();
 	void reload();

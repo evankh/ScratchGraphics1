@@ -16,13 +16,13 @@ Level::Level(const char* filepath) {
 			if (file.extract("Object \"\\S\"", &objectName)) {
 				// Set up variables and structs to read into
 				char* geomName, *progName, *texName, *inputName, *err;
-				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f };
+				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f }, col{ 0.0f,0.0f,0.0f };
 				float ang = 0.0f, mom = 0.0f;
 				Geometry* geom = NULL;
 				Program* program = NULL;
 				InputComponent* input = NULL;
 				Texture* texture = NULL;
-				bool valid = true;
+				bool valid = true, hasCol = false;
 				while (!file.extract("\\L", NULL)) {
 					if (file.extract(" geom:\"\\S\"", &geomName)) {
 						// Check if the geometry exists in the geometry library
@@ -61,6 +61,7 @@ Level::Level(const char* filepath) {
 							break;
 						}
 					}
+					else if (file.extract(" col:(\\F,\\F,\\F)", &col)) { hasCol = true; }
 					else if (file.extract(" pos:(\\F,\\F,\\F)", &pos)) {}	// Not sure I actually need to do anything for the raw data?
 					else if (file.extract(" vel:(\\F,\\F,\\F)", &vel)) {}
 					else if (file.extract(" acc:(\\F,\\F,\\F)", &acc)) {}
@@ -110,8 +111,10 @@ Level::Level(const char* filepath) {
 					physics->scale({ scl.x,scl.y,scl.z });
 					physics->rotate({ rot.x,rot.y,rot.z }, ang);
 					physics->translate({ pos.x,pos.y,pos.z });
+					glm::vec3* color = NULL;
+					if (hasCol) color = new glm::vec3(col.x, col.y, col.z);
 					// Also store velocity
-					mGameObjects.push_back(new GameObject(geom, program, physics, input, texture));
+					mGameObjects.push_back(new GameObject(geom, program, physics, input, texture, color));
 				}
 				// Cleanup
 				delete objectName;

@@ -210,14 +210,13 @@ bool FileService::extract(const char* pattern, void* target) {
 	return true;
 }
 
-bool FileService::putBack(const char* pattern) {	// Begging for off-by-one errors, keep aclose eye on it
+bool FileService::putBack(const char* pattern) {	// Begging for off-by-one errors, keep a close eye on it
 	int length = 0;
 	std::streampos pos = in.tellg();
 	for (; pattern[length] != '\0'; length++);
 	while (length > 0) {
-		if (in.peek() == pattern[--length])
-			in.seekg(-1, in.cur);
-		else {
+		in.seekg(-1, in.cur);
+		if (in.peek() != pattern[--length]) {
 			in.seekg(pos);
 			return false;
 		}

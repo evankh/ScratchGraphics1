@@ -9,7 +9,7 @@ class Level;
 #include "PostProcessingPipeline.h"
 class Program;
 #include "ShaderManager.h"
-#include "Texture.h"
+class Texture;
 #include "Event System\Receiver.h"
 class Window;
 

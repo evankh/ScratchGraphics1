@@ -15,8 +15,9 @@ private:
 	PhysicsComponent* mPhysicsComponent;
 	InputComponent* mInputComponent;
 	Texture* mTexture;
+	glm::vec3* mColor;	// Temporary
 public:
-	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture = NULL);
+	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture = NULL, glm::vec3* color = NULL);
 	~GameObject();
 	void update(float dt);
 	void render(Camera* c);

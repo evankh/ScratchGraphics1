@@ -5,18 +5,19 @@
 #include "Program.h"
 #include "Texture.h"
 
-GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture) {
+GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture, glm::vec3* color) {
 	mGeometry = geometry;
 	if (mGeometry) mGeometry->transfer();
 	mDisplay = display;
 	mPhysicsComponent = physics;
 	mInputComponent = input;
 	mTexture = texture;
+	mColor = color;
 }
 
 GameObject::~GameObject() {
 	if (mPhysicsComponent) delete mPhysicsComponent;
-	if (mInputComponent) delete mInputComponent;
+	if (mColor) delete mColor;	// Just because it's temporary doesn't mean it's allowed to leak
 }
 
 void GameObject::update(float dt) {
@@ -34,8 +35,9 @@ void GameObject::render(Camera* c) {
 		//mDisplay->sendUniform("mvp", glm::value_ptr(mvp));
 		mDisplay->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 		mDisplay->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
-		mDisplay->sendUniform("uCamera", glm::value_ptr(c->getPosition()));
+		mDisplay->sendUniform("uCamera", 4,  glm::value_ptr(c->getPosition()));
 		if (mTexture) mTexture->activate();
+		if (mColor) mDisplay->sendUniform("uColor", 3, &mColor->r);	// Temporary, will figure out a more intelligent way of assigning uniforms later
 	}
 	if (mGeometry) mGeometry->render();
 }

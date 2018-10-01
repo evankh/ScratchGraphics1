@@ -9,6 +9,6 @@ uniform float uPixWidth;
 uniform float uPixHeight;
 
 void main() {
-	gl_Position = vec4(iPosition.x, iPosition.y, 0.0f, 1.0f);
+	gl_Position = vec4(iPosition.x +0.1*uPixWidth, iPosition.y +0.1*uPixHeight, 0.0f, 1.0f);
 	pTexCoord = iTexCoord;
 }
