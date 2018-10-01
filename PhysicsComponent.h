@@ -25,6 +25,7 @@ public:
 	void scale(glm::vec3 scale);
 	glm::mat4& getModelMatrix();
 	glm::mat4& getInverseModelMatrix();
+	glm::vec4 getPosition();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PHYSICS_COMPONENT__

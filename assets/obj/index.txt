@@ -1,2 +1,2 @@
 "debug_cube":"cube.obj"
-"windows_cube":"cube fixed.txt"
+"spaceship":"spaceship.obj"

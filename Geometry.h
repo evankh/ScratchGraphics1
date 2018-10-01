@@ -33,9 +33,9 @@ struct GeometryHandles {
 
 class Geometry {
 private:
-	unsigned int mNumVerts;
+	unsigned int mNumVerts = 0;
 	float* mVertexData;
-	unsigned int mNumTris;
+	unsigned int mNumTris = 0;
 	unsigned int* mTriData;
 	std::vector<ATTRIB_INDEX> mProperties;
 	unsigned int mVertexSize = 0;

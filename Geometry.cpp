@@ -53,7 +53,7 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		struct V3 { float x, y, z; };
 		struct V2 { float x, y; };
 		struct V { int pos, tex, norm; };
-		struct Face { V vertices[4]; };
+		struct Face { V vertices[4]; int numVerts; };	// Setting this array to <n> should make it support up to <n>-gons
 		// First counting pass
 		int numpos = 0, numnorm = 0, numtex = 0, numface = 0;
 		while (file.good()) {
@@ -83,9 +83,10 @@ Geometry::Geometry(const char* filename) :Geometry() {
 			else if (file.extract("f", NULL)) {
 				// Assumes (possibly dangerously?) that all vertices have already been loaded
 				int i = 0;
-				while (file.extract(" \\?I/\\?I/\\?I", &faces[faceiter].vertices[i]))
-					i++;
-				faceiter++;
+				while (file.extract(" \\?I/\\?I/\\?I", &faces[faceiter].vertices[i])) i++;
+				faces[faceiter++].numVerts = i;
+				mNumVerts += 3*i-2;
+				mNumTris += i - 2;
 				if (file.extract("\\?S\\L", &err)) {
 					if (err) {
 						ServiceLocator::getLoggingService().error("Something's fucky at the end of a face line", err);
@@ -104,25 +105,30 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		mProperties = { A_POSITION,A_TEXCOORD0,A_NORMAL };	// Won't always have texcoords
 		for (auto prop : mProperties)
 			mVertexSize += ATTRIB_SIZES[prop];
-		mNumVerts = numface * 6;	// Only valid for all quads  - when we're doing absolutely zero dupe checking - needs more robustness desperately
 		mVertexData = new float[mNumVerts * mVertexSize];
-		mNumTris = numface * 2;	// Only valid for all quads
 		mTriData = new unsigned int[mNumTris * 3];
 		int vertiter = 0, triiter = 0;
 		for (int face = 0; face < numface; face++) {
-			int triangulate[6] = { 0,1,2,0,2,3 };
-			for (int j = 0; j < 6; j++) {
-				int vert = triangulate[j];
+			for (int j = 1; j < faces[face].numVerts - 1; j++) {
 				mTriData[triiter++] = vertiter / mVertexSize;
-				// Good opportunity for three memcpy's, or some pointer magic to assign a V2/3 to a float[]
-				mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].x;
-				mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].y;
-				mVertexData[vertiter++] = positions[faces[face].vertices[vert].pos - 1].z;
-				mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].x;
-				mVertexData[vertiter++] = texcoords[faces[face].vertices[vert].tex - 1].y;
-				mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].x;
-				mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].y;
-				mVertexData[vertiter++] = normals[faces[face].vertices[vert].norm - 1].z;
+				// Copy over vertex 0
+				memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[0].pos - 1], 3 * sizeof(float));
+				vertiter += 3;
+				memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[0].tex - 1], 2 * sizeof(float));
+				vertiter += 2;
+				memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[0].norm - 1], 3 * sizeof(float));
+				vertiter += 3;
+				for (int i = 0; i < 2; i++) {
+					mTriData[triiter++] = vertiter / mVertexSize;
+					// Copy over vertex j + i
+					// Good opportunity for three memcpy's, or some pointer magic to assign a V2/3 to a float[]
+					memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[j + i].pos - 1], 3 * sizeof(float));
+					vertiter += 3;
+					memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[j + i].tex - 1], 2 * sizeof(float));
+					vertiter += 2;
+					memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[j + i].norm - 1], 3 * sizeof(float));
+					vertiter += 3;
+				}
 			}
 		}
 		// Cleanup
@@ -166,7 +172,7 @@ void Geometry::transfer() {
 		glBindBuffer(GL_ARRAY_BUFFER, mHandles.vboHandle);
 		unsigned int offset = 0;
 		for (auto property : mProperties) {
-			glEnableVertexAttribArray(property);
+			glEnableVertexAttribArray(property);	// I think this is the problem line that requires explicit location
 			glVertexAttribPointer(property, ATTRIB_SIZES[property], GL_FLOAT, GL_FALSE, mVertexSize * sizeof(float), (char*)(offset * sizeof(float)));
 			offset += ATTRIB_SIZES[property];
 		}

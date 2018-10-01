@@ -67,3 +67,7 @@ glm::mat4& PhysicsComponent::getModelMatrix() {
 glm::mat4& PhysicsComponent::getInverseModelMatrix() {
 	return glm::inverse(mModelMatrix);
 }
+
+glm::vec4 PhysicsComponent::getPosition() {
+	return mModelMatrix[3];
+}

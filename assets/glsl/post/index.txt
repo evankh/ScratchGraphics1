@@ -24,4 +24,4 @@ Kernel "gauss11" 11 [0.010000020102080308,0.029100872215875997,0.066791486520611
 Filter "none" Sampler:"one" Processor:"none"
 //Filter "vertical_edges" Sampler:"three_h" Processor:"kernel3" Kernel:"edge"
 //Filter "horizontal_edges" Sampler:"three_v" Processor:"kernel3" Kernel:"edge"
-Filter "double_edges" Sampler:"nine_sq" Processor:"kernel9" Kernel:"double_edge"
+//Filter "double_edges" Sampler:"nine_sq" Processor:"kernel9" Kernel:"double_edge"
