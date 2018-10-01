@@ -56,11 +56,28 @@ Program::~Program() {
 	glDeleteProgram(mHandle);
 }
 
+void Program::attach(Shader* s, unsigned int type) {
+	if (type == GL_VERTEX_SHADER)
+		mVS = s;
+	else if (type == GL_FRAGMENT_SHADER)
+		mFS = s;
+	else if (type == GL_GEOMETRY_SHADER)
+		mGS = s;
+	glAttachShader(mHandle, s->mHandle);
+	// When to detach?
+}
+
 void Program::attach(Shader* vs, Shader* fs) {
 	mVS = vs;
 	mFS = fs;
 	glAttachShader(mHandle, mVS->mHandle);
 	glAttachShader(mHandle, mFS->mHandle);
+}
+
+void Program::detachAll() {
+	if (mVS) glDetachShader(mHandle, mVS->mHandle);
+	if (mGS) glDetachShader(mHandle, mGS->mHandle);
+	if (mFS) glDetachShader(mHandle, mFS->mHandle);
 }
 
 void Program::link() {
@@ -99,18 +116,25 @@ void Program::use() {
 	glUseProgram(mHandle);
 }
 
-void Program::sendUniform(const char* name, float value) {
-	unsigned int handle = glGetUniformLocation(mHandle, name);
+void Program::sendUniform(const char* name, const float value) {
+	int handle = glGetUniformLocation(mHandle, name);
 	if (handle != -1) glUniform1f(handle, value);
 }
 
 void Program::sendUniform(const char* name, const float* matrix) {
-	unsigned int handle = glGetUniformLocation(mHandle, name);
+	int handle = glGetUniformLocation(mHandle, name);
 	if (handle != -1) glUniformMatrix4fv(handle, 1, GL_FALSE, matrix);
 }
 
-void Program::sendUniform(const char* name, int size, float* value) {
-	unsigned int handle = glGetUniformLocation(mHandle, name);
+void Program::sendUniform(const char* name, const int size, const float* value) {
+	int handle = glGetUniformLocation(mHandle, name);
 	if (handle != -1) glUniform1fv(handle, size, value);
-	bool error = (glGetError() == GL_INVALID_OPERATION);
+	bool x = glGetError() == GL_INVALID_VALUE;
+	bool y = glGetError() == GL_INVALID_OPERATION;
+	bool z = glGetError() == GL_NONE;
+}
+
+void Program::sendUniform(const char* name, const unsigned int value) {
+	int handle = glGetUniformLocation(mHandle, name);
+	if (handle != -1) glUniform1i(handle, value);
 }

@@ -1,0 +1,8 @@
+Shader "mvp_position" 150:"glsl/450/mvp_position.vert" type:V
+Shader "mvp_white" 150:"glsl/450/mvp_white.vert" type:V
+Shader "test_vert" 150:"glsl/450/test.vert" type:V
+Program "debug_mvp_position_color" vert:"mvp_position" frag:"test_frag"
+Program "debug_flat" vert:"mvp_position" frag:"diffuse" geom:"flat_faces"
+Geometry cube src:"obj/cube.obj"
+GameObject cube1 geom:"cube" prog:"debug_flat" input:K"wasd"
+GameObject cube2 geom:"cube" prog:"debug_flat" input:M"lmu" pos:(0.0,0.0,1.0) scl:0.5

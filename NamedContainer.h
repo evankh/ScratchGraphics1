@@ -12,13 +12,11 @@ private:
 public:
 	NamedContainer(Type default);
 	void add(std::string key, Type item);
-	Type get(std::string key);
+	Type get(std::string key) const;
 	void remove(std::string key);
 	void clear();
 	void clear_delete();
 };
-
-#endif//__EKH_SCRATCH_GRAPHICS_1_NAMED_CONTAINER__
 
 template<class Type>
 inline NamedContainer<Type>::NamedContainer(Type default) {
@@ -33,9 +31,9 @@ void NamedContainer<Type>::add(std::string key, Type item) {
 }
 
 template<class Type>
-inline Type NamedContainer<Type>::get(std::string key) {
+inline Type NamedContainer<Type>::get(std::string key) const {
 	if (mItems.count(key))
-		return mItems[key];
+		return mItems.at(key);
 	else
 		return mDefault;
 }
@@ -57,3 +55,5 @@ inline void NamedContainer<Type>::clear_delete() {
 		delete item.second;
 	mItems.clear();
 }
+
+#endif//__EKH_SCRATCH_GRAPHICS_1_NAMED_CONTAINER__

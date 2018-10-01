@@ -48,90 +48,99 @@ Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtri
 
 Geometry::Geometry(const char* filename) :Geometry() {
 	// Load a .OBJ file into the internal Geometry format
-	// Good idea to wrap file reads in a Service like with writes?
-	// First was a dud that sorta works:
-	/*std::ifstream in(filename);
-	if (in.good()) {
-		// First pass: find number of vertices
-		int numNormals = 0, numTexcoords = 0;
-		std::string buffer;
-		for (std::getline(in, buffer); !in.eof(); std::getline(in, buffer)) {
-			if (buffer.substr(0, 2) == "v ")
-				mNumVerts++;
-			if (buffer.substr(0, 2) == "vn")
-				numNormals++;
-			if (buffer.substr(0, 2) == "vt")
-				numTexcoords++;
-			if (buffer.substr(0, 2) == "f ")
-				mNumTris++;
-		}
-		in.clear();
-		in.seekg(0, in.beg);
-		float* allPositionData = new float[mNumVerts * 3];
-		int posIter = 0, normIter = 0, texIter = 0;
-		float* allNormalData = NULL;
-		if (numNormals) allNormalData = new float[numNormals * 3];
-		float* allTexcoordData = NULL;
-		if (numTexcoords) allTexcoordData = new float[numTexcoords * 2];
-		for (int lineNumber = 0; !in.eof(); lineNumber++) {
-			// Second pass: load data
-
-			std::string token;
-			std::getline(in, token, ' ');
-			if (token == "v") {
-				// There will be 3 floats here
-				in >> allPositionData[posIter++];
-				in >> allPositionData[posIter++];
-				in >> allPositionData[posIter++];
-				in.ignore(1, '\n');
-			} else if (token == "vn") {
-				// There will be 3 floats here
-				in >> allNormalData[normIter++];
-				in >> allNormalData[normIter++];
-				in >> allNormalData[normIter++];
-				in.ignore(1, '\n');
-			} else if (token == "vt") {
-				// There will be 3 floats here
-				in >> allTexcoordData[texIter++];
-				in >> allTexcoordData[texIter++];
-				in.ignore(1, '\n');
-			} else if (token == "f") {
-				// Format: f v/vt/vn v/vt/vn v/vt/vn [v/vt/vn]
-				std::string vertex;
-				for (int v = 0; v < 4 && in.peek() != '\n'; v++) {
-					int vert, tex, norm;
-					in >> vert;
-					in.ignore(1, '/');
-					if (numTexcoords)
-						in >> tex;
-					in.ignore(1, '/');
-					if (numNormals)
-						in >> norm;
-				}
-				std::getline(in, token);
-			} else if (token == "#") {
-				// Comment, nothing to do here
-				std::getline(in, token);
-			} else if (token == "") {
-				// Blank line, no need to register an error
-				std::getline(in, token);
-			} else {
-				ServiceLocator::getLoggingService().fileError(filename, lineNumber, "Unexpected token", token);
-				getline(in, token);
-			}
-		}
-	}
-	else {
-		ServiceLocator::getLoggingService().error("Unable to open file", filename);
-	}*/
-	// Using the new extract function:
 	FileService& file = ServiceLocator::getFileService(filename);
 	if (file.good()) {
-		// First pass to count vertices
-		
+		struct V3 { float x, y, z; };
+		struct V2 { float x, y; };
+		struct V { int pos, tex, norm; };
+		struct Face { V vertices[4]; int numVerts; };	// Setting this array to <n> should make it support up to <n>-gons
+		// First counting pass
+		int numpos = 0, numnorm = 0, numtex = 0, numface = 0;
+		while (file.good()) {
+			if (file.extract("v \\S\\L", NULL)) numpos++;
+			else if (file.extract("vn \\S\\L", NULL)) numnorm++;
+			else if (file.extract("vt \\S\\L", NULL)) numtex++;
+			else if (file.extract("f \\S\\L", NULL)) numface++;
+			else if (file.extract("\\?S\\L", NULL));
+		}
+		// Second reading pass
+		file.restart();
+		int positer = 0, normiter = 0, texiter = 0, faceiter = 0;
+		char* err;
+		V3* positions = new V3[numpos];
+		V3* normals = new V3[numnorm];
+		V2* texcoords = new V2[numtex];
+		Face* faces = new Face[numface];
+		while (file.good()) {
+			if (file.extract("v \\F \\F \\F\\L", &positions[positer])) positer++;
+			else if (file.extract("vn \\F \\F \\F\\L", &normals[normiter])) normiter++;
+			else if (file.extract("vt \\F \\F\\L", &texcoords[texiter])) texiter++;
+			else if (file.extract("#\\S\\L", NULL));
+			else if (file.extract("o \\S\\L", NULL));	// It's nice of you to offer me a name for the object, but I've got it covered
+			else if (file.extract("s \\S\\L", NULL));	// No idea what that does, but it's part of the standard so I shouldn't throw an error
+			else if (file.extract("mtllib \\S\\L", NULL));
+			else if (file.extract("usemtl \\S\\L", NULL));
+			else if (file.extract("f", NULL)) {
+				// Assumes (possibly dangerously?) that all vertices have already been loaded
+				int i = 0;
+				while (file.extract(" \\?I/\\?I/\\?I", &faces[faceiter].vertices[i])) i++;
+				faces[faceiter++].numVerts = i;
+				mNumVerts += 3*i-2;
+				mNumTris += i - 2;
+				if (file.extract("\\?S\\L", &err)) {
+					if (err) {
+						ServiceLocator::getLoggingService().error("Something's fucky at the end of a face line", err);
+						delete err;
+					}
+				}
+			}
+			else if (file.extract("\\?S\\L", &err)) {
+				if (err) {
+					ServiceLocator::getLoggingService().error("Unknown line in object file", err);
+					delete err;
+				}
+			}
+		}
+		// Converting to internal format
+		mProperties = { A_POSITION,A_TEXCOORD0,A_NORMAL };	// Won't always have texcoords
+		for (auto prop : mProperties)
+			mVertexSize += ATTRIB_SIZES[prop];
+		mVertexData = new float[mNumVerts * mVertexSize];
+		mTriData = new unsigned int[mNumTris * 3];
+		int vertiter = 0, triiter = 0;
+		for (int face = 0; face < numface; face++) {
+			for (int j = 1; j < faces[face].numVerts - 1; j++) {
+				mTriData[triiter++] = vertiter / mVertexSize;
+				// Copy over vertex 0
+				memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[0].pos - 1], 3 * sizeof(float));
+				vertiter += 3;
+				memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[0].tex - 1], 2 * sizeof(float));
+				vertiter += 2;
+				memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[0].norm - 1], 3 * sizeof(float));
+				vertiter += 3;
+				for (int i = 0; i < 2; i++) {
+					mTriData[triiter++] = vertiter / mVertexSize;
+					// Copy over vertex j + i
+					// Good opportunity for three memcpy's, or some pointer magic to assign a V2/3 to a float[]
+					memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[j + i].pos - 1], 3 * sizeof(float));
+					vertiter += 3;
+					memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[j + i].tex - 1], 2 * sizeof(float));
+					vertiter += 2;
+					memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[j + i].norm - 1], 3 * sizeof(float));
+					vertiter += 3;
+				}
+			}
+		}
+		// Cleanup
+		delete positions;
+		delete normals;
+		delete texcoords;
+		delete faces;
+		file.close();
 	} else {
-		ServiceLocator::getLoggingService().error("Unable to open file", filename);
+		ServiceLocator::getLoggingService().badFileError(filename);
 	}
+	// Congratulations, I have a Stupid Version (TM)! It can get more fleshed-out in the future, but for now it appears to work
 }
 
 /*Geometry::Geometry(std::vector<Vertex> vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) {
@@ -163,7 +172,7 @@ void Geometry::transfer() {
 		glBindBuffer(GL_ARRAY_BUFFER, mHandles.vboHandle);
 		unsigned int offset = 0;
 		for (auto property : mProperties) {
-			glEnableVertexAttribArray(property);
+			glEnableVertexAttribArray(property);	// I think this is the problem line that requires explicit location
 			glVertexAttribPointer(property, ATTRIB_SIZES[property], GL_FLOAT, GL_FALSE, mVertexSize * sizeof(float), (char*)(offset * sizeof(float)));
 			offset += ATTRIB_SIZES[property];
 		}

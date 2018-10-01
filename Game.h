@@ -3,9 +3,13 @@
 
 #include "Camera.h"
 class GameObject;
+#include "KernelManager.h"
+class Level;
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
 class Program;
+#include "ShaderManager.h"
+class Texture;
 #include "Event System\Receiver.h"
 class Window;
 
@@ -18,6 +22,7 @@ enum GameState {
 };
 
 class Game :public Receiver {
+	friend class Level;
 private:
 	Game();
 	~Game();
@@ -25,27 +30,32 @@ private:
 	OrthoCamera* mScreenCamera;
 	PerspCamera* mSceneCamera;
 	// I guess I could also do a std::vector<Camera> & a Camera* active...
-	NamedContainer<Shader*> mShaders = NamedContainer<Shader*>(NULL);
+	ShaderManager mShaders;
 	NamedContainer<Program*> mPrograms = NamedContainer<Program*>(NULL);
 	NamedContainer<Geometry*> mGeometries = NamedContainer<Geometry*>(NULL);
-	std::vector<GameObject*> mGameObjects;
+	NamedContainer<Level*> mLevels = NamedContainer<Level*>(NULL);
+	Level* mCurrentLevel;
+	ShaderManager mPostShaders;	// Do I need a new container type to handle matching sample sizes? Probably.
+	NamedContainer<Program*> mFilters = NamedContainer<Program*>(NULL);
+	KernelManager mKernels;
+	NamedContainer<InputComponent*> mInputs = NamedContainer<InputComponent*>(NULL);
+	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
 	PostProcessingPipeline mGameObjectsPost;
-	std::vector<GameObject*> mHUDItems;
+	std::vector<GameObject*> mHUDItems;	// Yeeeaaah, that's gonna hafta go pretty soon
 	PostProcessingPipeline mMenuPost;
 	bool mIsMenuActive = false;
-	void loadShaders();
-	void loadGeometry();
-	void loadMenu();
-	void loadPostProcessing();
+	const std::string mAssetBasePath = "assets/";
+	const std::string mIndexFilename = "index.txt";
 public:
 	static Game& getInstance();
 	void init();
+	void load();
 	void cleanup();
 	void update(float dt);
-	void render();
+	void render(float dt);
 	void resize(unsigned int width, unsigned int height);
-	void loadLevel();
 	void reloadAll();
+	void setGLVersion(unsigned int GLVersion) { mShaders.setGLVersion(GLVersion); };
 	virtual void handle(const Event event);
 };
 

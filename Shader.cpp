@@ -3,7 +3,7 @@
 #include "GL\glew.h"
 #include <fstream>
 
-Shader::Shader(char* filepath, unsigned int type) {
+Shader::Shader(std::string filepath, unsigned int type) {
 	mFilepath = filepath;
 	mType = type;
 	// Read file
@@ -45,8 +45,9 @@ Shader::Shader(char* filepath, unsigned int type) {
 		}
 	}
 	else {
-		ServiceLocator::getLoggingService().error("Failed to open file", filepath);
+		ServiceLocator::getLoggingService().badFileError(filepath);
 	}
+	file.close();
 }
 
 Shader::~Shader() {

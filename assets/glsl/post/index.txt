@@ -1,0 +1,27 @@
+Sampler "one" 1 "Samplers/one.vert"
+Sampler "three_h" 3 "Samplers/3x1.vert"
+Sampler "three_v" 3 "Samplers/1x3.vert"
+Sampler "seven_h" 7 "Samplers/7x1.vert"
+Sampler "seven_v" 7 "Samplers/1x7.vert"
+Sampler "nine_sq" 9 "Samplers/3x3.vert"
+Sampler "eleven_h" 11 "Samplers/11x1.vert"
+Sampler "eleven_v" 11 "Samplers/1x11.vert"
+
+Processor "none" 1 "Processors/none.frag"
+Processor "invert" 1 "Processors/invert.frag"
+Processor "max" 3 "Processors/max.frag"
+Processor "min" 3 "Processors/min.frag"
+Processor "kernel3" 3 "Processors/kernel3.frag"
+Processor "kernel7" 7 "Processors/kernel7.frag"
+Processor "kernel9" 9 "Processors/kernel9.frag"
+Processor "kernel11" 11 "Processors/kernel11.frag"
+
+Kernel "edge" 3 [-1.0,0.0,1.0]
+Kernel "double_edge" 9 [-2.0,-1.0,0.0,-1.0,0.0,1.0,0.0,1.0,2.0]
+Kernel "gauss7" 7 [0.00443185,0.053991,0.241971,0.398942,0.241971,0.053991,0.00443185]
+Kernel "gauss11" 11 [0.010000020102080308,0.029100872215875997,0.06679148652061107,0.12090553500182073,0.17261607109179009,0.19436866071302797,0.17261607109179009,0.12090553500182073,0.06679148652061107,0.029100872215875997,0.010000020102080308]
+
+Filter "none" Sampler:"one" Processor:"none"
+//Filter "vertical_edges" Sampler:"three_h" Processor:"kernel3" Kernel:"edge"
+//Filter "horizontal_edges" Sampler:"three_v" Processor:"kernel3" Kernel:"edge"
+//Filter "double_edges" Sampler:"nine_sq" Processor:"kernel9" Kernel:"double_edge"

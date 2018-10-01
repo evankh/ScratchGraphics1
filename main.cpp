@@ -1,17 +1,10 @@
 #define GL_TEST_MAIN main
 
-//#include "mat4.h"
-//#include "cubedata_temp.h"
-//#include "squaredata_temp.h"
 #include "Game.h"
-#include "Geometry.h"
-#include "Shader.h"
-#include "Window.h"
-#include "Program.h"
-#include "Camera.h"
 #include "ServiceLocator.h"
 #include "KeyboardHandler.h"
 #include "MouseHandler.h"
+#include "Window.h"
 
 #include <iostream>
 #include <vector>
@@ -21,6 +14,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "IL/ilut.h"
 
 #include "TestCallbacks.h"
 
@@ -93,7 +87,7 @@ std::ostream& operator<<(std::ostream& out, glm::mat4 matrix) {
 void game_resize_wrapper(int width, int height) {
 	Game::getInstance().resize(width, height);
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	Game::getInstance().render();
+	Game::getInstance().render(0.0f);
 	glutSwapBuffers();
 }
 
@@ -117,13 +111,28 @@ void game_movement_wrapper(int mouse_x, int mouse_y) {
 	MouseHandler::getInstance().handleMove(mouse_x, mouse_y);
 }
 
+GLint64 getCurrentTime() {
+	GLint64 time;
+	glGetInteger64v(GL_TIMESTAMP, &time);
+	return time;
+}
+
 void gameLoop(int value) {
-	glutTimerFunc(10, gameLoop, 0);
-	KeyboardHandler::getInstance().dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
-	MouseHandler::getInstance().dispatchAll();
-	Game::getInstance().update(0.01f);
+	static GLint64 current, prev = getCurrentTime();
+	static float msPerFrame = 10.0f, lag = 0.0f;
+	glutTimerFunc((int)msPerFrame, gameLoop, 0);
+	current = getCurrentTime();
+	GLint64 elapsed = current - prev;
+	prev = current;
+	lag += elapsed / 1000000.0f;
+	while (lag > msPerFrame) {
+		KeyboardHandler::getInstance().dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
+		MouseHandler::getInstance().dispatchAll();
+		Game::getInstance().update(msPerFrame / 1000.0f);
+		lag -= msPerFrame;
+	}
 	glClear(GL_DEPTH_BUFFER_BIT);
-	Game::getInstance().render();
+	Game::getInstance().render(lag);
 	glutSwapBuffers();
 }
 
@@ -133,7 +142,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 
 #pragma region initEKH
 	ServiceLocator::provideLoggingService(new ConsoleLoggingService);
-	Game::getInstance();
+	Game::getInstance().init();	// Oh gosh, I hope I can move this down without breaking everything... Oh gosh, I can't move this anywhere without breaking everything...
 /*
 	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
 	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -163,7 +172,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glGetIntegerv(GL_MAJOR_VERSION, version);
 		glGetIntegerv(GL_MINOR_VERSION, version + 1);
 		ServiceLocator::getLoggingService().log("Version: " + std::to_string(version[0]) + "." + std::to_string(version[1]));
-
+		Game::getInstance().setGLVersion(100 * version[0] + 10 * version[1]);
 #pragma region callbacks
 		glutDisplayFunc(testDisplay);
 		glutTimerFunc(42, gameLoop, 0);
@@ -191,11 +200,15 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		//glClearColor(0.0f, 0.5f, 0.5f, 1.0f);
 	}
 	else {
-		ServiceLocator::getLoggingService().error("Error initiating glew", NULL);
+		ServiceLocator::getLoggingService().error("Error initiating glew", "");
 		return 1;
 	}
 #pragma endregion
 #pragma endregion
+	ilInit();
+	iluInit();
+	ilutInit();
+	ilutRenderer(ILUT_OPENGL);
 	/*
 #pragma region testInterleavedVBO
 #pragma region generate
@@ -275,55 +288,9 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 */
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glutSwapBuffers();
-	Game::getInstance().init();
+	Game::getInstance().load();
 	glutMainLoop();
 	ServiceLocator::getLoggingService().log("After the main loop");
-	system("pause");
-	return 0;
-}
-
-int MATRIX_TEST_MAIN(int argc, char* argv[]) {
-/*	sizeof(vec4);
-	sizeof(mat4);
-	vec4 myvector(1.0, 1.0, 1.0, 1.0);
-	myvector[1] = 2.0;
-	mat4 mytranslation = makeTranslationMatrix(1.0, 2.0, 3.0);
-	vec4 result = mytranslation * myvector;
-	std::cout << myvector << std::endl << mytranslation << std::endl << result << std::endl;
-	std::cout << mytranslation[2] << std::endl;
-	system("pause");*/
-	return 0;
-}
-
-int SHADER_TEST_MAIN(int argc, char* argv[]) {
-	glutInit(&argc, argv);
-	Window display(800, 600, "Test");
-	assert(glewInit() == GLEW_OK);
-	Shader vs("test.vs", GL_VERTEX_SHADER);
-	Shader fs("test.fs", GL_FRAGMENT_SHADER);
-	Program program(&vs, &fs);
-	program.link();
-	program.validate();
-	system("pause");
-	return 0;
-}
-
-struct Vortex {
-	int x, y, z;
-};
-
-int OBJ_TEST_MAIN(int argc, char* argv[]) {
-	ServiceLocator::provideLoggingService(new ConsoleLoggingService);
-	FileService& file = ServiceLocator::getFileService("obj/spaceship.obj");
-	char buffer[100];
-	char* t1 = new char;
-	file.extract("\\Sd", &t1);
-	for (int i = 0; i < 25; i++)
-		file.in.getline(buffer, 100);
-	char* target = new char;
-	file.extract("\\S/", &target);
-	file.close();
-	Geometry test("obj/spaceship.obj");
 	system("pause");
 	return 0;
 }

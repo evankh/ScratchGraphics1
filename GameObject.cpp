@@ -1,34 +1,43 @@
 #include "GameObject.h"
 #include "Camera.h"
+#include "Geometry.h"
+#include "InputComponent.h"
+#include "Program.h"
+#include "Texture.h"
 
-GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input) {
+GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture, glm::vec3* color) {
 	mGeometry = geometry;
 	if (mGeometry) mGeometry->transfer();
 	mDisplay = display;
 	mPhysicsComponent = physics;
 	mInputComponent = input;
+	mTexture = texture;
+	mColor = color;
 }
 
 GameObject::~GameObject() {
 	if (mPhysicsComponent) delete mPhysicsComponent;
-	if (mInputComponent) delete mInputComponent;
+	if (mColor) delete mColor;	// Just because it's temporary doesn't mean it's allowed to leak
 }
 
 void GameObject::update(float dt) {
 	if (mInputComponent) mInputComponent->update(/*mState*/);
-	rotate(glm::vec3(0, 0, 1), dt * 90.0f);
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
 }
 
 #include "glm\gtc\type_ptr.hpp"
+// Eventually sorting Objects for rendering based on their materials would save time on switching and let me take the stupid Camera out of here
 void GameObject::render(Camera* c) {
 	//if (mDisplay) mDisplay->use(c->getViewProjectionMatrix(), mPhysicsComponent->getModelMatrix());
 	if (mDisplay) {
 		mDisplay->use();
-		glm::mat4 mvp = c->getViewProjectionMatrix() * mPhysicsComponent->getModelMatrix();
+		//glm::mat4 mvp = c->getViewProjectionMatrix() * mPhysicsComponent->getModelMatrix();
 		//mDisplay->sendUniform("mvp", glm::value_ptr(mvp));
-		mDisplay->sendUniform("m", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
-		mDisplay->sendUniform("vp", glm::value_ptr(c->getViewProjectionMatrix()));
+		mDisplay->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
+		mDisplay->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
+		mDisplay->sendUniform("uCamera", 4,  glm::value_ptr(c->getPosition()));
+		if (mTexture) mTexture->activate();
+		if (mColor) mDisplay->sendUniform("uColor", 3, &mColor->r);	// Temporary, will figure out a more intelligent way of assigning uniforms later
 	}
 	if (mGeometry) mGeometry->render();
 }
