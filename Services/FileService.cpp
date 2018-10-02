@@ -90,6 +90,12 @@ bool FileService::extract(const char* pattern, void* target) {
 				offset += sizeof(float);
 				break;
 			}
+			case 'C': {
+				int temp = in.get();
+				if (target) *(int*)((char*)target + offset) = temp;
+				offset += sizeof(int);	// Uses ints for chars to avoid data misalignment problems, but that doesn't really solve it. Should actually be, at the start, rounding offset up to the next multiple of the size of the current data type.
+				break;
+			}
 			case 'S': {
 				std::streampos stringStart = in.tellg();
 				char delim = pattern[tok + 1];
@@ -222,4 +228,13 @@ bool FileService::putBack(const char* pattern) {	// Begging for off-by-one error
 		}
 	}
 	return true;
+}
+
+bool FileService::putBack(const char pattern) {
+	std::streampos pos = in.tellg();
+	in.seekg(-1, in.cur);
+	if (in.peek() == pattern)
+		return true;
+	in.seekg(pos);
+	return false;
 }

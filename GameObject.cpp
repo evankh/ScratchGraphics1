@@ -3,6 +3,7 @@
 #include "Geometry.h"
 #include "InputComponent.h"
 #include "Program.h"
+#include "Source.h"
 #include "Texture.h"
 
 GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture, glm::vec3* color) {
@@ -13,16 +14,29 @@ GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* p
 	mInputComponent = input;
 	mTexture = texture;
 	mColor = color;
+	mSource = NULL;
 }
 
 GameObject::~GameObject() {
 	if (mPhysicsComponent) delete mPhysicsComponent;
 	if (mColor) delete mColor;	// Just because it's temporary doesn't mean it's allowed to leak
+	if (mSource) delete mSource;
 }
 
 void GameObject::update(float dt) {
 	if (mInputComponent) mInputComponent->update(/*mState*/);
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
+	if (mSource) mSource->update();
+	if (!hasPlayed) {
+		if (auto sound = mSounds.get("close_encounters"))
+			mSource->playSound(sound);
+		hasPlayed = true;
+	}
+}
+
+void GameObject::registerSound(std::string name, Sound* sound) {
+	if (!mSource) mSource = new Source(mPhysicsComponent, false);
+	mSounds.add(name, sound);
 }
 
 #include "glm\gtc\type_ptr.hpp"

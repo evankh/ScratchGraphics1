@@ -14,7 +14,7 @@ public:
 	float getAspectRatio() const { return float(mWidth) / mHeight; };
 	virtual void resize(unsigned int width, unsigned int height) = 0;
 	glm::mat4& getViewProjectionMatrix();
-	virtual glm::vec4 getPosition() = 0;
+	virtual glm::vec4 getPosition() const = 0;
 };
 
 class PerspCamera : public Camera {
@@ -25,14 +25,15 @@ public:
 	PerspCamera(glm::mat4 &model, unsigned int width, unsigned int height, float fov);
 	~PerspCamera();
 	virtual void resize(unsigned int width, unsigned int height);
-	glm::vec4 getPosition() { return mPhysicsComponent->getPosition(); };
+	glm::vec4 getPosition() const { return mPhysicsComponent->getPosition(); };
+	PhysicsComponent* getPhysics() const { return mPhysicsComponent; };
 };
 
 class OrthoCamera : public Camera {
 public:
 	OrthoCamera(unsigned int width, unsigned int height);
 	virtual void resize(unsigned int width, unsigned int height);
-	glm::vec4 getPosition() { return glm::vec4(INFINITY); };
+	glm::vec4 getPosition() const { return glm::vec4(INFINITY); };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_CAMERA__

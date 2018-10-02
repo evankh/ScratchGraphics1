@@ -24,8 +24,9 @@ public:
 	void rotate(glm::vec3 axis, float degrees);
 	void scale(glm::vec3 scale);
 	glm::mat4& getModelMatrix();
-	glm::mat4& getInverseModelMatrix();
+	glm::mat4 getInverseModelMatrix();
 	glm::vec4 getPosition();
+	glm::vec3 getVelocity() const { return mVelocity; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PHYSICS_COMPONENT__

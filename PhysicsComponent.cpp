@@ -64,7 +64,7 @@ glm::mat4& PhysicsComponent::getModelMatrix() {
 	return mModelMatrix;
 }
 
-glm::mat4& PhysicsComponent::getInverseModelMatrix() {
+glm::mat4 PhysicsComponent::getInverseModelMatrix() {
 	return glm::inverse(mModelMatrix);
 }
 

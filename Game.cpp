@@ -5,6 +5,8 @@
 #include "Program.h"
 #include "ServiceLocator.h"
 #include "Shader.h"
+#include "Sound.h"
+#include "SoundHandler.h"
 #include "Texture.h"
 #include "Window.h"
 
@@ -38,6 +40,7 @@ void Game::load() {
 		view = glm::rotate(view, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
+		mSoundSystem.registerListener(mSceneCamera->getPhysics());
 		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
 		mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
 		mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
@@ -275,6 +278,34 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
+			else if (index.extract("sounds:\"\\S\"\\L", &workingDirectory)) {
+				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				if (workingIndex.good()) {
+					while (workingIndex.good()) {
+						struct { char* name, *path; } soundData;
+						if (workingIndex.extract("//\\S\\L", NULL));
+						else if (workingIndex.extract("Procedural \"\\S\" \"\\S\"\\L", &soundData)) {
+							mSounds.add(soundData.name, new ProceduralSound(mAssetBasePath + workingDirectory + soundData.path));
+							delete soundData.name;
+							delete soundData.path;
+						}
+						else if (workingIndex.extract("File \"\\S\" \"\\S\"\\L", &soundData)) {
+							mSounds.add(soundData.name, new FileSound(mAssetBasePath + workingDirectory + soundData.path));
+							delete soundData.name;
+							delete soundData.path;
+						}
+						else if (workingIndex.extract("\\S\\L", &soundData.name)) {
+							ServiceLocator::getLoggingService().error("Unexpected line in sound index file", soundData.name);
+							delete soundData.name;
+						}
+					}
+				}
+				else {
+					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
+				}
+				workingIndex.close();
+				delete workingDirectory;
+			}
 			else if (index.extract("\\S\\L", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Unexpected line in base index file", workingDirectory);
 				delete workingDirectory;
@@ -293,6 +324,7 @@ void Game::cleanup() {
 	mFilters.clear_delete();
 	mPostShaders.clear();
 	mKernels.clear();
+	mSounds.clear();
 	mLevels.clear_delete();
 	for (auto item : mHUDItems)
 		delete item;

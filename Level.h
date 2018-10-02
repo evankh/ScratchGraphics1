@@ -17,6 +17,7 @@ private:
 	static const NamedContainer<Texture*>& sTextureLibrary;
 	static const NamedContainer<InputComponent*>& sInputLibrary;
 	static const NamedContainer<PhysicsComponent*>& sPhysicsLibrary;
+	static const SoundLibrary& sSoundLibrary;
 public:
 	Level(const char* filepath);
 	Level(std::string filepath);

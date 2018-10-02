@@ -9,6 +9,8 @@ class Level;
 #include "PostProcessingPipeline.h"
 class Program;
 #include "ShaderManager.h"
+#include "SoundLibrary.h"
+#include "SoundHandler.h"
 class Texture;
 #include "Event System\Receiver.h"
 class Window;
@@ -41,8 +43,10 @@ private:
 	NamedContainer<InputComponent*> mInputs = NamedContainer<InputComponent*>(NULL);
 	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
 	PostProcessingPipeline mGameObjectsPost;
+	SoundLibrary mSounds;
 	std::vector<GameObject*> mHUDItems;	// Yeeeaaah, that's gonna hafta go pretty soon
 	PostProcessingPipeline mMenuPost;
+	SoundHandler& mSoundSystem = SoundHandler::getInstance();
 	bool mIsMenuActive = false;
 	const std::string mAssetBasePath = "assets/";
 	const std::string mIndexFilename = "index.txt";
