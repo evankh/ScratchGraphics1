@@ -1,12 +1,15 @@
 Vertex "mvp" 130:"130/mvp.vert" (mat4:"uM" mat4:"uVP" vec3:"uCamera")
 
-Fragment "color" 130:"130/color_position.frag"
+Fragment "debug_position" 130:"130/debug_position.frag"
+Fragment "debug_normal" 130:"130/debug_normal.frag"
+Fragment "debug_texcoord" 130:"130/debug_texcoord.frag"
 Fragment "texture" 130:"130/texture.frag" (sampler2D:"uTexture")
 Fragment "metal" 130:"130/phong.frag"
 Fragment "solid" 130:"130/solid.frag" (vec3:"uColor")
 
-Program "mvp" Vertex:"mvp" Fragment:"color"
-Program "local_position_rainbow" Vertex:"mvp" Fragment:"color"
+Program "debug_position" Vertex:"mvp" Fragment:"debug_position"
+Program "debug_normal" Vertex:"mvp" Fragment:"debug_normal"
+Program "debug_texcoord" Vertex:"mvp" Fragment:"debug_texcoord"
 Program "metal" Vertex:"mvp" Fragment:"metal"
 Program "texture" Vertex:"mvp" Fragment:"texture"
 Program "solid_color" Vertex:"mvp" Fragment:"solid"

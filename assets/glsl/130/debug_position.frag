@@ -10,6 +10,7 @@ out vec4 oFragColor;
 const vec3 lightvec = vec3(0.3520,0.2304,0.9072);
 
 void main() {
-	oFragColor.rgb = pPosition.xyz * (dot(pNormal, lightvec)*0.25+0.75);
+	float shadeFac = dot(pNormal, lightvec)*0.25 + 0.75;
+	oFragColor.rgb = pPosition.xyz * shadeFac;
 	oFragColor.a = 1.0f;
 }

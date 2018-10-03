@@ -24,7 +24,8 @@ public:
 struct Point {
 	float time;
 	float freq;
-	float gain = 1.0;
+	float gain = 1.0f;
+	float phase = 0.0f;
 };
 
 enum InterType {

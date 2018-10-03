@@ -28,7 +28,7 @@ void GameObject::update(float dt) {
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
 	if (mSource) mSource->update();
 	if (!hasPlayed) {
-		if (auto sound = mSounds.get("close_encounters"))
+		if (auto sound = mSounds.get("click"))
 			mSource->playSound(sound);
 		hasPlayed = true;
 	}

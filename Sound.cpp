@@ -3,6 +3,8 @@
 //#include "alut.h"	// Where do I find this? I don't fancy parsing WAV files myself...
 #include "ServiceLocator.h"
 
+#include <algorithm>
+
 int Sound::sSampleRate = 44100;
 
 Sound::Sound(std::string filename) :mFilename(filename) {}
@@ -175,10 +177,12 @@ void ProceduralSound::build() {
 	mData = new float[mNumSamples];
 	for (int i = 0; i < mNumSamples; i++)
 		mData[i] = 0.0f;
+	std::sort(mSweeps.begin(), mSweeps.end(), [](Sweep const& a, Sweep const& b) { return a.p1->time < b.p1->time; });
 	for (auto sweep : mSweeps) {
 		int startIndex = sweep.p1->time * sSampleRate;
 		int endIndex = sweep.p2->time * sSampleRate;
 		float time = (float)(endIndex - startIndex) / sSampleRate;
+		sweep.p2->phase = fmod((sweep.p1->freq * time - sweep.p2->freq) * 2 * PI + sweep.p1->phase, 2 * PI);
 		if (sweep.wave == WAVE_NOISE) {
 			// Skip the interpolation, since frequency has no effect on noise
 			for (int i = startIndex; i < endIndex; i++)
@@ -190,19 +194,19 @@ void ProceduralSound::build() {
 			case WAVE_SINE:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += sweep.p1->gain * Sine(sweep.p1->freq * fac * time * 2*PI);
+					mData[startIndex + i] += sweep.p1->gain * Sine(sweep.p1->freq * fac * time * 2*PI + sweep.p1->phase);
 				}
 				break;
 			case WAVE_SQUARE:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += sweep.p1->gain * Square(sweep.p1->freq * fac * time * 2 * PI);
+					mData[startIndex + i] += sweep.p1->gain * Square(sweep.p1->freq * fac * time * 2 * PI + sweep.p1->phase);
 				}
 				break;
 			case WAVE_SAWTOOTH:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += sweep.p1->gain * Sawtooth(sweep.p1->freq * fac * time * 2 * PI);
+					mData[startIndex + i] += sweep.p1->gain * Sawtooth(sweep.p1->freq * fac * time * 2 * PI + sweep.p1->phase);
 				}
 				break;
 			}
@@ -212,19 +216,19 @@ void ProceduralSound::build() {
 			case WAVE_SINE:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sine(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2*PI);
+					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sine(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2*PI + sweep.p1->phase);
 				}
 				break;
 			case WAVE_SQUARE:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Square(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI);
+					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Square(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
 				}
 				break;
 			case WAVE_SAWTOOTH:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sawtooth(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI);
+					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sawtooth(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
 				}
 				break;
 			}
@@ -236,19 +240,19 @@ void ProceduralSound::build() {
 			case WAVE_SINE:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sine(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI);
+					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sine(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
 				}
 				break;
 			case WAVE_SQUARE:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Square(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI);
+					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Square(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
 				}
 				break;
 			case WAVE_SAWTOOTH:
 				for (int i = 0; i < endIndex - startIndex; i++) {
 					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sawtooth(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI);
+					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sawtooth(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
 				}
 				break;
 			}

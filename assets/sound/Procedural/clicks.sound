@@ -1,0 +1,6 @@
+Point time:0.0 freq:440.31415926
+Point time:0.25 freq:440.0
+Point time:1.0 freq:440.0
+
+Sweep Constant Sine 0 1
+Sweep Constant Sine 1 2
