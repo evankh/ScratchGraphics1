@@ -36,11 +36,9 @@ void Game::load() {
 		mWindow->rename(window.title);
 		delete window.title;
 		mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
-		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
-		view = glm::rotate(view, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		PhysicsComponent* view = new PhysicsComponent(glm::vec3(1.5f,1.5f,2.0f), glm::vec3(0.0f));
 		mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
-		mSoundSystem.registerListener(mSceneCamera->getPhysics());
+		mSoundSystem.registerListener(view);
 		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
 		mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
 		mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
@@ -349,6 +347,7 @@ Game& Game::getInstance() {
 }
 
 void Game::update(float dt) {
+	mSoundSystem.update();
 	// Handle events
 	for (auto object : mCurrentLevel->getObjectList()) {
 		object->update(dt);

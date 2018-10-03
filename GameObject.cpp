@@ -35,7 +35,7 @@ void GameObject::update(float dt) {
 }
 
 void GameObject::registerSound(std::string name, Sound* sound) {
-	if (!mSource) mSource = new Source(mPhysicsComponent, false);
+	if (!mSource) mSource = new Source(mPhysicsComponent, true);
 	mSounds.add(name, sound);
 }
 
@@ -49,7 +49,7 @@ void GameObject::render(Camera* c) {
 		//mDisplay->sendUniform("mvp", glm::value_ptr(mvp));
 		mDisplay->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 		mDisplay->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
-		mDisplay->sendUniform("uCamera", 4,  glm::value_ptr(c->getPosition()));
+		mDisplay->sendUniform("uCamera", 3,  glm::value_ptr(c->getPosition()));
 		if (mTexture) mTexture->activate();
 		if (mColor) mDisplay->sendUniform("uColor", 3, &mColor->r);	// Temporary, will figure out a more intelligent way of assigning uniforms later
 	}

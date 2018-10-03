@@ -11,8 +11,8 @@
 	mProjectionMatrix = glm::perspective(mFOV, getAspectRatio(), mZMin, mZMax);
 }*/
 
-PerspCamera::PerspCamera(glm::mat4 &model, unsigned int width, unsigned int height, float fov) {
-	mPhysicsComponent = new PhysicsComponent(model);
+PerspCamera::PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned int height, float fov) {
+	mPhysicsComponent = physics;
 	mWidth = width;
 	mHeight = height;
 	mFOV = glm::radians(fov);
