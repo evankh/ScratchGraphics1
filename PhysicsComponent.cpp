@@ -15,7 +15,7 @@ PhysicsComponent::PhysicsComponent() {
 
 PhysicsComponent::PhysicsComponent(glm::vec3 pos, glm::vec3 towards) :PhysicsComponent() {
 	mPosition = pos;
-	mRotation = glm::lookAt(pos, towards, glm::vec3(0.0f, 0.0f, 1.0f));
+	mRotation = glm::inverse(glm::lookAt(pos, towards, glm::vec3(0.0f, 0.0f, 1.0f)));
 }
 
 PhysicsComponent::PhysicsComponent(glm::vec3 axis, float aVel) :PhysicsComponent() {
