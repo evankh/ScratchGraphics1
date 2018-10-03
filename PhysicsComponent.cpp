@@ -53,10 +53,7 @@ void PhysicsComponent::scale(glm::vec3 scale) {
 }
 
 glm::mat4 PhysicsComponent::getModelMatrix() {
-	glm::mat4 mm = glm::mat4(1.0);
-	glm::scale(mm, mScale);
-	mm = mRotation * mm;
-	glm::translate(mm, mPosition);
+	glm::mat4 mm = glm::translate(glm::mat4(1.0), mPosition) * (mRotation * glm::scale(glm::mat4(1.0), mScale));
 	return mm;
 }
 

@@ -1,4 +1,5 @@
 #include "Level.h"
+#include "Camera.h"
 #include "ServiceLocator.h"
 
 // I can't believe this actually works
@@ -14,7 +15,14 @@ Level::Level(const char* filepath) {
 	if (file.good()) {
 		char* objectName;
 		while (file.good()) {
-			if (file.extract("Object \"\\S\"", &objectName)) {
+			if (file.extract("//\\S\\L", NULL));
+			else if (file.extract("Object \"\\S\"", &objectName)) {
+				if (mSceneObjects.count(objectName)) {
+					ServiceLocator::getLoggingService().error("Redefining object", objectName);
+					delete objectName;
+					file.extract("\\S\\L", NULL);
+					continue;
+				}
 				// Set up variables and structs to read into
 				char* geomName, *progName, *texName, *inputName, *soundName, *err;
 				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f }, col{ 0.0f,0.0f,0.0f };
@@ -131,12 +139,47 @@ Level::Level(const char* filepath) {
 						else
 							ServiceLocator::getLoggingService().error("Sound not found", sound);
 					}
-					mGameObjects.push_back(object);
+					mSceneObjects[objectName] = object;
 				}
 				// Cleanup
 				delete objectName;
 			}
-			else if (file.extract("//\\S\\L", NULL));
+			else if (file.extract("Camera \"\\S\"", &objectName)) {
+				if (mSceneCameras.count(objectName)) {
+					ServiceLocator::getLoggingService().error("Redefining camera", objectName);
+					delete objectName;
+					file.extract("\\S\\L", NULL);
+					continue;
+				}
+				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, at{ 0.0f,1.0f,0.0f };
+				float fov = 75.0;
+				char* err;
+				while (!file.extract("\\L", NULL)) {
+					if (file.extract(" pos:(\\F,\\F,\\F)", &pos));
+					else if (file.extract(" at:(\\F,\\F,\\F)", &at));
+					else if (file.extract(" fov:\\F", &fov));
+					else if (file.extract("\\S:", &err)) {
+						ServiceLocator::getLoggingService().error("Unexpected keyword in line", err);
+						delete err;
+						if (file.extract("\\S ", &err)) {
+							ServiceLocator::getLoggingService().error("Skipping parameter", err);
+							delete err;
+							file.putBack(" ");	// To continue with proper parsing
+						}
+					}
+					else if (file.extract("\\?S\\L", &err)) {
+						if (err) {
+							ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line (skipping line)", err);
+							delete err;
+						}
+						file.putBack("\n");
+						break;
+					}
+				}
+				PerspCamera* camera = new PerspCamera(new PhysicsComponent({ pos.x,pos.y,pos.z }, { at.x,at.y,at.z }), 800, 600, fov);	// How do I get these values in here?
+				mSceneCameras[objectName] = camera;
+				delete objectName;
+			}
 			else if (file.extract("\\?S\\L", &objectName)) {
 				if (objectName) {
 					ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
@@ -154,7 +197,10 @@ Level::Level(const char* filepath) {
 Level::Level(std::string filepath) :Level(filepath.data()) {}
 
 Level::~Level() {
-	for (auto object : mGameObjects)
-		delete object;
-	mGameObjects.clear();
+	for (auto object : mSceneObjects)
+		delete object.second;
+	mSceneObjects.clear();
+	for (auto camera : mSceneCameras)
+		delete camera.second;
+	mSceneCameras.clear();
 }

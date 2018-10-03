@@ -1,8 +1,8 @@
-Camera "main" pos:(1.5,1.5,2.0) at:(0.0,0.0,0.0)
+Camera "main" pos:(2.0,2.0,2.0) at:(0.0,0.0,0.0) fov:75.0
 Object "big_cube" geom:"debug_cube_2" prog:"texture" tex:"debug" pos:(0.0,0.0,0.0) axis:(0.0,0.0,1.0) mom:90.0
 //Object "rolling_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(-1.0,0.0,0.0) vel:(-1.0,0.0,0.0) scl:0.5 axis:(0.0,-1.0,0.0) mom:30.0
-//Object "gravity_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(0.5,0.0,1.0) vel:(0.0,-1.0,5.0) acc:(0.0,0.0,-5.0) scl:0.5 rot:(0.0,1.0,0.0) ang:45.0 sounds:("close_encounters")
-Object "spaceship" geom:"spaceship" prog:"metal" pos:(-1.0,-1.0,0.5) axis:(0.0,0.0,1.0) mom:45.0
+Object "gravity_cube" geom:"debug_cube" prog:"local_position_rainbow" pos:(0.5,0.0,1.0) vel:(0.0,-1.0,5.0) acc:(0.0,0.0,-5.0) scl:0.5 rot:(0.0,1.0,0.0) ang:45.0
+Object "spaceship" geom:"spaceship" prog:"metal" pos:(0.0,0.0,2.0) axis:(0.0,0.0,1.0) mom:45.0
 //Object "player1" geom:"spaceship" prog:"solid_color" col:(1.0,0.0,0.0) pos:(1.0,-1.0,0.0) scl:0.3 input:"player1"
 //Object "player2" geom:"spaceship" prog:"solid_color" col:(0.0,1.0,0.0) pos:(-1.0,1.0,0.0) scl:0.3 input:"player2"
-//Object "moving_cube" geom:"spaceship" prog:"metal" pos:(0.0,-100.0,0.0) vel:(0.0,5.0,0.0) sounds:("close_encounters")
+Object "moving_spaceship" geom:"spaceship" prog:"metal" pos:(0.0,-20.0,0.0) vel:(0.0,5.0,0.0) sounds:("close_encounters")

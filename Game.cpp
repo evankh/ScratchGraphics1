@@ -36,9 +36,6 @@ void Game::load() {
 		mWindow->rename(window.title);
 		delete window.title;
 		mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
-		PhysicsComponent* view = new PhysicsComponent(glm::vec3(1.5f,1.5f,2.0f), glm::vec3(0.0f));
-		mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
-		mSoundSystem.registerListener(view);
 		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
 		mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
 		mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
@@ -246,6 +243,12 @@ void Game::load() {
 						}
 					}
 					mCurrentLevel = mLevels.get("debug_world");
+					if (mCurrentLevel->getCameraList().count("main")) {
+						mCurrentCamera = mCurrentLevel->getCameraList().at("main");
+						mSoundSystem.registerListener(mCurrentCamera->getPhysics());
+					}
+					else
+						ServiceLocator::getLoggingService().error("No camera \"main\" defined in level", "debug_world");
 				}
 				else {
 					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
@@ -331,7 +334,6 @@ void Game::cleanup() {
 	mPrograms.clear_delete();
 	mShaders.clear();
 	mInputs.clear_delete();
-	delete mSceneCamera;
 	delete mScreenCamera;
 	//KeyboardHandler::unregisterReceiver(this);
 }
@@ -350,7 +352,7 @@ void Game::update(float dt) {
 	mSoundSystem.update();
 	// Handle events
 	for (auto object : mCurrentLevel->getObjectList()) {
-		object->update(dt);
+		object.second->update(dt);	// A compelling reason to separate further into Components which can be updated individually
 	}
 }
 
@@ -368,7 +370,7 @@ void Game::render(float dt) {
 	// Set the active framebuffer to an intermediate one
 	mGameObjectsPost.enableDrawing();
 	for (auto object : mCurrentLevel->getObjectList()) {
-		object->render(mSceneCamera);
+		object.second->render(mCurrentCamera);
 	}
 	mGameObjectsPost.process();
 
@@ -396,7 +398,8 @@ void Game::render(float dt) {
 void Game::resize(unsigned int width, unsigned int height) {
 	// Presumably OpenGL won't let me resize it to something impossible, so there's no need to check the dimensions
 	mWindow->resize(width, height);
-	mSceneCamera->resize(width, height);
+	for (auto a : mCurrentLevel->getCameraList())
+		a.second->resize(width, height);
 	mScreenCamera->resize(width, height);
 	mGameObjectsPost.resize(width, height);
 	mMenuPost.resize(width, height);

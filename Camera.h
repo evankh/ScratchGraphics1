@@ -15,6 +15,7 @@ public:
 	virtual void resize(unsigned int width, unsigned int height) = 0;
 	glm::mat4& getViewProjectionMatrix();
 	virtual glm::vec3 getPosition() const = 0;
+	virtual PhysicsComponent* getPhysics() const = 0;
 };
 
 class PerspCamera : public Camera {
@@ -25,15 +26,16 @@ public:
 	PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned int height, float fov);
 	~PerspCamera();
 	virtual void resize(unsigned int width, unsigned int height);
-	glm::vec3 getPosition() const { return mPhysicsComponent->getPosition(); };
-	PhysicsComponent* getPhysics() const { return mPhysicsComponent; };
+	virtual glm::vec3 getPosition() const { return mPhysicsComponent->getPosition(); };
+	virtual PhysicsComponent* getPhysics() const { return mPhysicsComponent; };
 };
 
 class OrthoCamera : public Camera {
 public:
 	OrthoCamera(unsigned int width, unsigned int height);
 	virtual void resize(unsigned int width, unsigned int height);
-	glm::vec3 getPosition() const { return glm::vec3(INFINITY); };
+	virtual glm::vec3 getPosition() const { return glm::vec3(INFINITY); };
+	virtual PhysicsComponent* getPhysics() const { return NULL; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_CAMERA__

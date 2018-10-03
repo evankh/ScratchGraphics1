@@ -30,7 +30,7 @@ private:
 	~Game();
 	Window* mWindow;
 	OrthoCamera* mScreenCamera;
-	PerspCamera* mSceneCamera;
+	Camera* mCurrentCamera;
 	// I guess I could also do a std::vector<Camera> & a Camera* active...
 	ShaderManager mShaders;
 	NamedContainer<Program*> mPrograms = NamedContainer<Program*>(NULL);

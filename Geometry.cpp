@@ -140,18 +140,7 @@ Geometry::Geometry(const char* filename) :Geometry() {
 	} else {
 		ServiceLocator::getLoggingService().badFileError(filename);
 	}
-	// Congratulations, I have a Stupid Version (TM)! It can get more fleshed-out in the future, but for now it appears to work
 }
-
-/*Geometry::Geometry(std::vector<Vertex> vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) {
-	mNumVerts = vertexData.size();
-	mVertexData = (float*)vertexData.data();
-	mNumTris = numtris;
-	mTriData = triData;
-	mProperties = properties;
-	mHandles = NULL;
-	mDisplay = NULL;
-}*/
 
 Geometry::~Geometry() {
 	cleanup();
@@ -173,6 +162,11 @@ void Geometry::transfer() {
 		unsigned int offset = 0;
 		for (auto property : mProperties) {
 			glEnableVertexAttribArray(property);	// I think this is the problem line that requires explicit location
+			// This tells OpenGL how to get the data for a particular attribute out of the interleaved array we sent it earlier -
+			// And I can tell it to pull out whatever data I want, however I want. If I made a Vertex struct and gave OpenGL the
+			// array of Vertices, then stride would be sizeof(Vertex) and offset would be (&Vertex[0].attribute - &Vertex[0]). If
+			// the layout of the Vertex struct matched the order of the inputs in the shader, there would be no need for explicit
+			// locations.
 			glVertexAttribPointer(property, ATTRIB_SIZES[property], GL_FLOAT, GL_FALSE, mVertexSize * sizeof(float), (char*)(offset * sizeof(float)));
 			offset += ATTRIB_SIZES[property];
 		}
