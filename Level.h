@@ -15,6 +15,8 @@ private:
 	std::map<std::string, GameObject*> mSceneObjects;
 	std::map<std::string, Camera*> mSceneCameras;
 	Camera* mCurrentCamera;
+	Source* mSceneAudio;	// And then each menu or HUD could have its own Source just like this, because presumably each will only be playing one sound at a time
+	Sound* mBackgroundMusic;
 	// A set of managers used for validation of level data
 	static const NamedContainer<Geometry*>& sGeometryLibrary;
 	static const NamedContainer<Program*>& sProgramLibrary;
@@ -28,6 +30,8 @@ public:
 	~Level();
 	std::map<std::string, GameObject*>& getObjectList() { return mSceneObjects; };
 	std::map<std::string, Camera*>& getCameraList() { return mSceneCameras; };
+	Camera* getCurrentCamera() const { return mCurrentCamera; };
+	void setBackgroundMusicVolume(float volume);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_LEVEL__

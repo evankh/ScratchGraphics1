@@ -21,7 +21,14 @@ void Source::update() {
 }
 
 void Source::playSound(Sound* sound) {
-	alSourcef(mHandle, AL_GAIN, mGain * sound->getGain());
-	alSourcei(mHandle, AL_BUFFER, sound->getBuffer());
-	alSourcePlay(mHandle);
+	alGetSourcei(mHandle, AL_SOURCE_STATE, &mState);
+	if (mState != AL_PLAYING) {
+		alSourcef(mHandle, AL_GAIN, mGain * sound->getGain());
+		alSourcei(mHandle, AL_BUFFER, sound->getBuffer());
+		alSourcePlay(mHandle);
+	}
+}
+
+void Source::setVolume(float volume) {
+	alSourcef(mHandle, AL_GAIN, volume);
 }

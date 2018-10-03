@@ -1,7 +1,8 @@
 Camera "main" pos:(2.0,2.0,2.0) at:(0.0,0.0,0.0) fov:75.0
-Object "big_cube" geom:"debug_cube_2" prog:"debug_texcoord" tex:"debug" pos:(0.0,0.0,0.0) axis:(0.0,0.0,1.0) mom:90.0 sounds:("envelope","click")
+Music "background"
+Object "big_cube" geom:"debug_cube_2" prog:"debug_texcoord" tex:"debug" pos:(0.0,0.0,0.0) axis:(0.0,0.0,1.0) mom:90.0
 Object "gravity_cube" geom:"debug_cube" prog:"debug_texcoord" pos:(0.5,0.0,1.0) vel:(0.0,-1.0,5.0) acc:(0.0,0.0,-5.0) scl:0.5 rot:(0.0,1.0,0.0) ang:45.0
 Object "spaceship" geom:"spaceship" prog:"debug_position" pos:(0.0,0.0,2.0) axis:(0.0,0.0,1.0) mom:45.0
-Object "player1" geom:"spaceship" prog:"debug_normal" col:(1.0,0.0,0.0) pos:(2.0,0.0,0.0) scl:0.3 input:"player1" rot:(0.0,0.0,1.0) ang:-90.0
-Object "player2" geom:"spaceship" prog:"debug_normal" col:(0.0,1.0,0.0) pos:(0.0,2.0,0.0) scl:0.3 input:"player2"
+Object "player1" geom:"spaceship" prog:"debug_normal" col:(1.0,0.0,0.0) pos:(2.0,0.0,0.0) scl:0.3 input:"player1" rot:(0.0,0.0,1.0) ang:-90.0 sounds:("ascending","descending","ascending_3","descending_3")
+Object "player2" geom:"spaceship" prog:"debug_normal" col:(0.0,1.0,0.0) pos:(0.0,2.0,0.0) scl:0.3 input:"player2" sounds:("doorbell")
 //Object "moving_spaceship" geom:"spaceship" prog:"metal" pos:(0.0,-20.0,0.0) vel:(0.0,5.0,0.0) sounds:("close_encounters")

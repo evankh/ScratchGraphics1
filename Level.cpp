@@ -1,6 +1,7 @@
 #include "Level.h"
 #include "Camera.h"
 #include "ServiceLocator.h"
+#include "Source.h"
 
 // I can't believe this actually works
 const NamedContainer<Geometry*>& Level::sGeometryLibrary = Game::getInstance().mGeometries;
@@ -180,12 +181,33 @@ Level::Level(const char* filepath) {
 				mSceneCameras[objectName] = camera;
 				delete objectName;
 			}
+			else if (file.extract("Music \"\\S\"", &objectName)) {
+				if (mBackgroundMusic) {
+					ServiceLocator::getLoggingService().error("Attempted redefinition of background music", objectName);
+					delete objectName;
+				}
+				else if (mBackgroundMusic = sSoundLibrary.get(objectName))
+					delete objectName;
+				else {
+					ServiceLocator::getLoggingService().error("Background music not found", objectName);
+					delete objectName;
+				}
+			}
 			else if (file.extract("\\?S\\L", &objectName)) {
 				if (objectName) {
 					ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
 					delete objectName;
 				}
 			}
+		}
+		if (mSceneCameras.count("main"))
+			mCurrentCamera = mSceneCameras.at("main");
+		else
+			ServiceLocator::getLoggingService().error("No camera \"main\" defined in level", filepath);
+		if (mBackgroundMusic) {
+			mSceneAudio = new Source(mCurrentCamera->getPhysics(), true);
+			mSceneAudio->update();
+			mSceneAudio->playSound(mBackgroundMusic);
 		}
 	}
 	else {
@@ -203,4 +225,9 @@ Level::~Level() {
 	for (auto camera : mSceneCameras)
 		delete camera.second;
 	mSceneCameras.clear();
+	if (mSceneAudio) delete mSceneAudio;
+}
+
+void Level::setBackgroundMusicVolume(float volume) {
+	mSceneAudio->setVolume(volume);
 }

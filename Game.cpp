@@ -243,12 +243,8 @@ void Game::load() {
 						}
 					}
 					mCurrentLevel = mLevels.get("debug_world");
-					if (mCurrentLevel->getCameraList().count("main")) {
-						mCurrentCamera = mCurrentLevel->getCameraList().at("main");
-						mSoundSystem.registerListener(mCurrentCamera->getPhysics());
-					}
-					else
-						ServiceLocator::getLoggingService().error("No camera \"main\" defined in level", "debug_world");
+					mSoundSystem.registerListener(mCurrentLevel->getCurrentCamera()->getPhysics());
+					mCurrentLevel->setBackgroundMusicVolume(0.25);
 				}
 				else {
 					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
@@ -370,7 +366,7 @@ void Game::render(float dt) {
 	// Set the active framebuffer to an intermediate one
 	mGameObjectsPost.enableDrawing();
 	for (auto object : mCurrentLevel->getObjectList()) {
-		object.second->render(mCurrentCamera);
+		object.second->render(mCurrentLevel->getCurrentCamera());
 	}
 	mGameObjectsPost.process();
 

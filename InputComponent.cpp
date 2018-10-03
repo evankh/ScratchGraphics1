@@ -1,4 +1,5 @@
 #include "InputComponent.h"
+#include "GameObject.h"
 #include "KeyboardHandler.h"
 #include "MouseHandler.h"
 #include "ServiceLocator.h"
@@ -14,13 +15,32 @@ KeyboardInputComponent::~KeyboardInputComponent() {
 
 void KeyboardInputComponent::handle(Event event) {
 	mKeyboardEvents.push(event);
-	ServiceLocator::getLoggingService().error("event received", &event.mData.keyboard.key);
+	ServiceLocator::getLoggingService().log(std::string(1, event.mData.keyboard.key) + " queued");
 }
 
-void KeyboardInputComponent::update() {
+void KeyboardInputComponent::update(GameObject* owner) {
 	while (!mKeyboardEvents.isEmpty()) {
 		Event event = mKeyboardEvents.pop();
-		ServiceLocator::getLoggingService().error("update handling event", &event.mData.keyboard.key);
+		switch (event.mData.keyboard.key) {
+		case 'a':
+			owner->playSound("ascending_3");
+			break;
+		case 'd':
+			owner->playSound("descending_3");
+			break;
+		case 'w':
+			owner->playSound("ascending");
+			break;
+		case 's':
+			owner->playSound("descending");
+			break;
+		case 'i':
+		case 'j':
+		case 'k':
+		case 'l':
+			owner->playSound("doorbell");
+			break;
+		}
 	}
 }
 
@@ -37,7 +57,7 @@ void MouseInputComponent::handle(Event event) {
 	ServiceLocator::getLoggingService().log("event received in MouseInputComponent");
 }
 
-void MouseInputComponent::update() {
+void MouseInputComponent::update(GameObject* owner) {
 	while (!mMouseEvents.isEmpty()) {
 		Event event = mMouseEvents.pop();
 		ServiceLocator::getLoggingService().log("event consumed by MouseInputComponent");

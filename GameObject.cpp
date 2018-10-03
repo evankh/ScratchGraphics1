@@ -24,19 +24,19 @@ GameObject::~GameObject() {
 }
 
 void GameObject::update(float dt) {
-	if (mInputComponent) mInputComponent->update(/*mState*/);
+	if (mInputComponent) mInputComponent->update(this/*mState*/);
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
 	if (mSource) mSource->update();
-	if (!hasPlayed) {
-		if (auto sound = mSounds.get("click"))
-			mSource->playSound(sound);
-		hasPlayed = true;
-	}
 }
 
 void GameObject::registerSound(std::string name, Sound* sound) {
-	if (!mSource) mSource = new Source(mPhysicsComponent, true);
+	if (!mSource) mSource = new Source(mPhysicsComponent, false);
 	mSounds.add(name, sound);
+}
+
+void GameObject::playSound(std::string name) {
+	if (auto sound = mSounds.get(name))
+		mSource->playSound(sound);
 }
 
 #include "glm\gtc\type_ptr.hpp"

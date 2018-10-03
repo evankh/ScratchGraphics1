@@ -10,11 +10,13 @@ private:
 	unsigned int mHandle;
 	float mGain = 1.0;
 	bool mLooping = false;
+	int mState;
 public:
 	Source(PhysicsComponent* physics, bool looping);
 	~Source();
 	void update();
 	void playSound(Sound* sound);
+	void setVolume(float volume);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_SOURCE__
