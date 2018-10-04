@@ -105,28 +105,30 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 				Sweep s;
 				s.p1 = &mPoints[sweep.p1];
 				s.p2 = &mPoints[sweep.p2];
-				if (strcmp(sweep.interp, "Constant") == 0)	// Testing string equality, bleh
-					s.type = INTER_CONSTANT;
-				else if (strcmp(sweep.interp, "Linear") == 0)
-					s.type = INTER_LINEAR;
-				else if (strcmp(sweep.interp, "Logarithmic") == 0)
-					s.type = INTER_LOG;
-				else {
+				if (strcmp(sweep.interp, "Constant") == 0) {	// Testing string equality, bleh
+					s.gain = interpConstant;
+					s.freq = interpConstant;
+				}
+				else if (strcmp(sweep.interp, "Linear") == 0) {
+					s.gain = interpLinear;
+					s.freq = interpLinear;
+				}
+				else if (strcmp(sweep.interp, "Logarithmic") == 0) {
+					s.gain = interpLinear;
+					s.freq = interpLogarithmic;
+				}
+				else
 					ServiceLocator::getLoggingService().error("Unrecognized interpolation mode (defaulting to Constant)", sweep.interp);
-					s.type = INTER_CONSTANT;
-				}
 				if (strcmp(sweep.waveform, "Sine") == 0)
-					s.wave = WAVE_SINE;
+					s.wave = waveSine;
 				else if (strcmp(sweep.waveform, "Square") == 0)
-					s.wave = WAVE_SQUARE;
+					s.wave = waveSquare;
 				else if (strcmp(sweep.waveform, "Sawtooth") == 0)
-					s.wave = WAVE_SAWTOOTH;
+					s.wave = waveSawtooth;
 				else if (strcmp(sweep.waveform, "Noise") == 0)
-					s.wave = WAVE_NOISE;
-				else {
+					s.wave = waveNoise;
+				else
 					ServiceLocator::getLoggingService().error("Unrecognized waveform (defaulting to Sine)", sweep.waveform);
-					s.wave = WAVE_SINE;
-				}
 				mSweeps.push_back(s);
 			}
 			else if (file.extract("\\S\\L", &err)) {
@@ -143,120 +145,75 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 	file.close();
 }
 
-float lerp(float v1, float v2, float fac) {
+float interpConstant(float v1, float v2, float fac) {
+	return v1;
+}
+
+float interpLinear(float v1, float v2, float fac) {
 	return (1 - fac)*v1 + fac * v2;
 }
 
-float logp(float v1, float v2, float fac) {
-	return exp(lerp(log(v1), log(v2), fac));
+float interpLogarithmic(float v1, float v2, float fac) {
+	return expf(interpLinear(logf(v1), logf(v2), fac));
 }
 
-#include <math.h>
-#ifndef PI
-#define PI 3.14159
-#endif
-
-float Sine(float x) {
-	return sin(x);
+float waveSine(float x) {
+	return sinf(x);
 }
 
-float Square(float x) {
-	return (fmod(x, 2 * PI) < PI) ? -1 : 1;
+float waveSquare(float x) {
+	return (fmodf(x, 2 * PI) < PI) ? -1.0f : 1.0f;
 }
 
-float Sawtooth(float x) {
-	x = fmod(x, 2 * PI);
-	return x / PI - 1;
+float waveSawtooth(float x) {
+	x = fmodf(x, 2 * PI);
+	return x / PI - 1.0f;
+}
+
+float waveNoise(float x) {
+	return (float)rand() / RAND_MAX;
+}
+
+// Non-normalized [0,duration] time coordinate, not [0,1] fac
+float ADSR(Envelope env, float time, float duration) {
+	if (time < env.delayTime)
+		return 0.0;
+	if (time < env.attackTime)
+		return interpLinear(env.delayAmplitude, env.attackAmplitude, (time - env.delayTime) / (env.attackTime - env.delayTime));
+	if (time < env.decayTime)
+		return interpLinear(env.attackAmplitude,env.delayAmplitude, (time - env.attackTime) / (env.decayTime - env.attackTime));
+	if (duration < env.decayTime)
+		duration = env.decayTime;
+	if (time < duration)
+		return env.decayAmplitude;
+	if (time < duration + env.releaseTime)
+		return interpLinear(env.decayAmplitude, env.releaseAmplitude, (time - duration) / env.releaseTime);
+	return 0.0;
 }
 
 void ProceduralSound::build() {
 	float length = 0.0;
+	for (Sweep sweep : mSweeps)
+		if (sweep.p2->time + sweep.adsr.releaseTime > length) length = sweep.p2->time + sweep.adsr.releaseTime;	// Still doesn't handle if the attack-decay of the last note is shorter than the note, in which case it should extend even further... Also doesn't pad the end with silence!
 	for (Point point : mPoints)
-		if (point.time > length) length = point.time;
+		if (point.time>length) length = point.time;
 	mNumSamples = int(length * sSampleRate);
 	mData = new float[mNumSamples];
 	for (int i = 0; i < mNumSamples; i++)
 		mData[i] = 0.0f;
 	std::sort(mSweeps.begin(), mSweeps.end(), [](Sweep const& a, Sweep const& b) { return a.p1->time < b.p1->time; });
-	for (auto sweep : mSweeps) {
-		int startIndex = sweep.p1->time * sSampleRate;
-		int endIndex = sweep.p2->time * sSampleRate;
-		float time = (float)(endIndex - startIndex) / sSampleRate;
-		sweep.p2->phase = fmod((sweep.p1->freq * time - sweep.p2->freq) * 2 * PI + sweep.p1->phase, 2 * PI);
-		if (sweep.wave == WAVE_NOISE) {
-			// Skip the interpolation, since frequency has no effect on noise
-			for (int i = startIndex; i < endIndex; i++)
-				mData[i] += lerp(sweep.p1->gain, sweep.p2->gain, (float)(i - startIndex) / (endIndex - startIndex)) * (float)rand() / RAND_MAX;
-		}
-		else switch (sweep.type) {
-		case INTER_CONSTANT:
-			switch (sweep.wave) {
-			case WAVE_SINE:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += sweep.p1->gain * Sine(sweep.p1->freq * fac * time * 2*PI + sweep.p1->phase);
-				}
-				break;
-			case WAVE_SQUARE:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += sweep.p1->gain * Square(sweep.p1->freq * fac * time * 2 * PI + sweep.p1->phase);
-				}
-				break;
-			case WAVE_SAWTOOTH:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += sweep.p1->gain * Sawtooth(sweep.p1->freq * fac * time * 2 * PI + sweep.p1->phase);
-				}
-				break;
-			}
-			break;
-		case INTER_LINEAR:
-			switch (sweep.wave) {
-			case WAVE_SINE:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sine(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2*PI + sweep.p1->phase);
-				}
-				break;
-			case WAVE_SQUARE:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Square(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
-				}
-				break;
-			case WAVE_SAWTOOTH:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sawtooth(lerp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
-				}
-				break;
-			}
-			break;
-		case INTER_LOG:	// Be sure to check and make sure neither frequency is 0
-			if (sweep.p1->freq == 0.0f) sweep.p1->freq += 0.01;
-			if (sweep.p2->freq == 0.0f) sweep.p2->freq += 0.01;
-			switch (sweep.wave) {
-			case WAVE_SINE:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sine(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
-				}
-				break;
-			case WAVE_SQUARE:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Square(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
-				}
-				break;
-			case WAVE_SAWTOOTH:
-				for (int i = 0; i < endIndex - startIndex; i++) {
-					float fac = (float)i / (endIndex - startIndex);
-					mData[startIndex + i] += lerp(sweep.p1->gain, sweep.p2->gain, fac) * Sawtooth(logp(sweep.p1->freq, sweep.p2->freq, fac) * fac * time * 2 * PI + sweep.p1->phase);
-				}
-				break;
-			}
-			break;
+	for (Sweep sweep : mSweeps) {
+		float startTime = sweep.p1->time + sweep.adsr.delayTime;
+		int startIndex = int(sweep.p1->time * sSampleRate);
+		float endTime = fmax(sweep.p2->time + sweep.adsr.releaseTime, sweep.p1->time + sweep.adsr.decayTime + sweep.adsr.releaseTime);
+		int endIndex = int(endTime * sSampleRate);
+		float duration = endTime - sweep.p1->time;
+		sweep.p2->phase = fmod((sweep.p1->freq * (sweep.p2->time - sweep.p1->time) - sweep.p2->freq) * 2 * PI + sweep.p1->phase, 2 * PI);
+		for (int i = startIndex; i < endIndex; i++) {
+			float time = duration * (float)(i - startIndex) / (endIndex - startIndex);
+			float fac = (time - startTime) / (sweep.p2->time - startTime);
+			fac = fmax(fmin(fac, 1.0f), 0.0f);	// Clamp to [0,1]
+			mData[i] += ADSR(sweep.adsr, time, duration) * sweep.gain(sweep.p1->gain, sweep.p2->gain, fac) * sweep.wave(sweep.freq(sweep.p1->freq, sweep.p2->freq, fac) * time * 2 * PI + sweep.p1->phase);
 		}
 	}
 	// Analyze samples to find the largest float

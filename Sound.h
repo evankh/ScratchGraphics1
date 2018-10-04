@@ -2,8 +2,12 @@
 #define __EKH_SCRATCH_GRAPHICS_1_SOUND__
 
 #include <map>
+#include <math.h>
 #include <string>
 #include <vector>
+#ifndef PI
+#define PI 3.14159f
+#endif
 
 class Sound {
 protected:
@@ -21,6 +25,14 @@ public:
 	unsigned int getBuffer()const { return mHandle; };
 };
 
+float interpConstant(float v1, float v2, float fac);
+float interpLinear(float v1, float v2, float fac);
+float interpLogarithmic(float v1, float v2, float fac);
+float waveSine(float x);
+float waveSquare(float x);
+float waveSawtooth(float x);
+float waveNoise(float x);
+
 struct Point {
 	float time;
 	float freq;
@@ -28,24 +40,20 @@ struct Point {
 	float phase = 0.0f;
 };
 
-enum InterType {
-	INTER_LINEAR,
-	INTER_LOG,
-	INTER_CONSTANT
-};
-
-enum WaveType {
-	WAVE_SINE,
-	WAVE_SQUARE,
-	WAVE_SAWTOOTH,
-	WAVE_NOISE
+struct Envelope {
+	float delayTime = 0.0f, delayAmplitude = 1.0f;
+	float attackTime = 0.0f, attackAmplitude = 1.0;;
+	float decayTime = 0.0f, decayAmplitude = 1.0f;
+	float releaseTime = 0.0f, releaseAmplitude = 0.0f;
 };
 
 struct Sweep {
 	Point* p1;
 	Point* p2;
-	InterType type;
-	WaveType wave;
+	float(*gain)(float, float, float) = interpConstant;
+	float(*freq)(float, float, float) = interpConstant;
+	float(*wave)(float) = waveSine;
+	Envelope adsr;
 };
 
 class ProceduralSound :public Sound {
