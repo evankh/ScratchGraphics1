@@ -60,6 +60,7 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 		generateNoteTable();
 	FileService& file = ServiceLocator::getFileService(mFilename.data());
 	if (file.good()) {
+		Envelope envelope;
 		while (file.good()) {
 			char* err;
 			Point fpoint;
@@ -103,6 +104,7 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 			}
 			else if (file.extract("Sweep \\S \\S \\I \\I\\L", &sweep)) {
 				Sweep s;
+				s.adsr = envelope;
 				s.p1 = &mPoints[sweep.p1];
 				s.p2 = &mPoints[sweep.p2];
 				if (strcmp(sweep.interp, "Constant") == 0) {	// Testing string equality, bleh
@@ -131,6 +133,7 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 					ServiceLocator::getLoggingService().error("Unrecognized waveform (defaulting to Sine)", sweep.waveform);
 				mSweeps.push_back(s);
 			}
+			else if (file.extract("Envelope \\F:\\F \\F:\\F \\F:\\F \\F:\\F\\L", &envelope));	// Will continue to use the envelope until another one is specified
 			else if (file.extract("\\S\\L", &err)) {
 				ServiceLocator::getLoggingService().error("Unexpected line in sound file", err);
 				delete err;
@@ -181,7 +184,7 @@ float ADSR(Envelope env, float time, float duration) {
 	if (time < env.attackTime)
 		return interpLinear(env.delayAmplitude, env.attackAmplitude, (time - env.delayTime) / (env.attackTime - env.delayTime));
 	if (time < env.decayTime)
-		return interpLinear(env.attackAmplitude,env.delayAmplitude, (time - env.attackTime) / (env.decayTime - env.attackTime));
+		return interpLinear(env.attackAmplitude, env.decayAmplitude, (time - env.attackTime) / (env.decayTime - env.attackTime));
 	if (duration < env.decayTime)
 		duration = env.decayTime;
 	if (time < duration)
@@ -207,13 +210,13 @@ void ProceduralSound::build() {
 		int startIndex = int(sweep.p1->time * sSampleRate);
 		float endTime = fmax(sweep.p2->time + sweep.adsr.releaseTime, sweep.p1->time + sweep.adsr.decayTime + sweep.adsr.releaseTime);
 		int endIndex = int(endTime * sSampleRate);
-		float duration = endTime - sweep.p1->time;
+		float duration = sweep.p2->time - sweep.p1->time;
 		sweep.p2->phase = fmod((sweep.p1->freq * (sweep.p2->time - sweep.p1->time) - sweep.p2->freq) * 2 * PI + sweep.p1->phase, 2 * PI);
 		for (int i = startIndex; i < endIndex; i++) {
-			float time = duration * (float)(i - startIndex) / (endIndex - startIndex);
+			float time = (endTime - sweep.p1->time) * (float)(i - startIndex) / (endIndex - startIndex);
 			float fac = (time - startTime) / (sweep.p2->time - startTime);
 			fac = fmax(fmin(fac, 1.0f), 0.0f);	// Clamp to [0,1]
-			mData[i] += ADSR(sweep.adsr, time, duration) * sweep.gain(sweep.p1->gain, sweep.p2->gain, fac) * sweep.wave(sweep.freq(sweep.p1->freq, sweep.p2->freq, fac) * time * 2 * PI + sweep.p1->phase);
+			mData[i] += ADSR(sweep.adsr, time, duration) * sweep.gain(sweep.p1->gain, sweep.p2->gain, fac) * sweep.wave(sweep.freq(sweep.p1->freq, sweep.p2->freq, fac) * (time+startTime) * 2 * PI + sweep.p1->phase);
 		}
 	}
 	// Analyze samples to find the largest float
