@@ -51,15 +51,22 @@ bool FileService::extract(const char* pattern, void* target) {
 	for (unsigned int tok = 0; pattern[tok] != '\0'; tok++) {
 		if (pattern[tok] == '\\') {
 			tok++;
-			bool strictlyNecessary = true;
+			bool strictlyNecessary = true, raw = false;
 			if (pattern[tok] == '?') {
 				strictlyNecessary = false;
+				tok++;
+			}
+			if (pattern[tok] == 'r') {
+				raw = true;
 				tok++;
 			}
 			switch (pattern[tok]) {
 			case 'I': {
 				int temp;
-				in >> temp;
+				if (raw)
+					in.read((char*)&temp, 4);
+				else
+					in >> temp;
 				// Not sure this is adequately robust, but it does work. Also puts all the responsibility on the caller to validate the results, but it already has all the responsibility for memory allocation, so this may not be a bad thing
 				if (in.fail()) {
 					in.clear();
@@ -76,7 +83,10 @@ bool FileService::extract(const char* pattern, void* target) {
 			}
 			case 'F': {
 				float temp;
-				in >> temp;
+				if (raw)
+					in.read((char*)&temp, 4);
+				else
+					in >> temp;
 				if (in.fail()) {
 					in.clear();
 					if (strictlyNecessary) {
@@ -88,6 +98,25 @@ bool FileService::extract(const char* pattern, void* target) {
 				else
 					if (target) *(float*)((char*)target + offset) = temp;
 				offset += sizeof(float);
+				break;
+			}
+			case 's': {
+				short temp;
+				if (raw)
+					in.read((char*)&temp, 2);
+				else
+					in >> temp;
+				if (in.fail()) {
+					in.clear();
+					if (strictlyNecessary) {
+						in.seekg(pos, in.beg);
+						return false;
+					}
+					if (target) *(short*)((char*)target + offset) = -1;
+				}
+				else
+					if (target) *(short*)((char*)target + offset) = temp;
+				offset += sizeof(short);
 				break;
 			}
 			case 'C': {

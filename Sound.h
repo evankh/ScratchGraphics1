@@ -20,7 +20,7 @@ protected:
 	float mGain = 1.0f;
 public:
 	~Sound();
-	void transfer();
+	virtual void transfer();
 	float getGain() const { return mGain; };
 	unsigned int getBuffer()const { return mHandle; };
 };
@@ -71,8 +71,13 @@ public:
 };
 
 class FileSound :public Sound {
+private:
+	short* mShortData;
+	int mNumChannels;
+	int mSampleRate;
 public:
 	FileSound(std::string filename);
+	virtual void transfer();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_SOUND__

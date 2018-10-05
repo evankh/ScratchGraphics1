@@ -27,10 +27,59 @@ void Sound::transfer() {
 	delete data;
 }
 
+void FileSound::transfer() {
+	if (mHandle) {
+		alDeleteBuffers(1, &mHandle);
+		mHandle = 0;
+	}
+	alGenBuffers(1, &mHandle);
+	ALenum format;
+	if (mNumChannels == 2)
+		format = AL_FORMAT_STEREO16;
+	else
+		format = AL_FORMAT_MONO16;
+	alBufferData(mHandle, format, mShortData, mNumSamples * sizeof(short), mSampleRate);
+}
+
 FileSound::FileSound(std::string filename) :Sound(filename) {
 	FileService& file = ServiceLocator::getFileService(mFilename.data());
 	if (file.good()) {
 		// Do stuff
+		int fileSize;
+		if (file.extract("RIFF\\rIWAVE", &fileSize)) {
+			struct {
+				int cksize;
+				short wFormatTag,
+					nChannels;
+				int nSamplesPerSec,
+					nAvgBytesPerSec;
+				short nBlockAlign,
+					wBitsPerSample;
+					/*cbSize,
+					wValidBitsPerSample;
+				int dwChannelMask;
+				long long SubFormat;*/	// Although the standard gives no indication of why these might not be present, my example file doesn't have them
+			} formatData;
+			if (file.extract("fmt \\rI\\rs\\rs\\rI\\rI\\rs\\rs", &formatData)) {
+				assert(formatData.wFormatTag == 0x0001);
+				assert(formatData.wBitsPerSample == 16);	// Should be reasonably straightforward to make it work with other types of data
+				mSampleRate = formatData.nSamplesPerSec;
+				mNumChannels = formatData.nChannels;
+				int dataSize;
+				if (file.extract("data\\rI", &dataSize)) {
+					mNumSamples = dataSize / 2;
+					mShortData = new short[mNumSamples];
+					for (int i = 0; i < dataSize / 2; i++)
+						file.extract("\\rs", &mShortData[i]);	// Do this more efficiently with e.g. memcpy or write a bulk extraction function in FileService
+					if (dataSize & 0x1)
+						file.extract("\\C", NULL);
+					transfer();
+				}
+			}
+		}
+		else {
+			ServiceLocator::getLoggingService().error("Not a valid WAV file", filename);
+		}
 	}
 	else {
 		ServiceLocator::getLoggingService().badFileError(mFilename);
