@@ -1,0 +1,67 @@
+Point time:0.0 note:A8 gain:0.0
+Point time:0.125 note:A8 gain:0.0
+Point time:0.25 note:A8 gain:0.0
+Point time:0.375 note:A8 gain:0.0
+Point time:0.5 note:A8 gain:0.0
+Point time:0.625 note:A8 gain:0.0
+Point time:0.75 note:A8 gain:0.0
+Point time:0.875 note:A8 gain:0.0
+Point time:1.0 note:A8 gain:0.0
+
+Point time:0.0 note:A7 gain:0.25
+Point time:1.0 note:A7 gain:0.25
+Point time:0.0 note:A6 gain:0.5
+Point time:1.0 note:A6 gain:0.5
+Point time:0.0 note:A5 gain:0.75
+Point time:1.0 note:A5 gain:0.75
+
+Point time:0.0 note:A4 gain:0.25
+Point time:0.125 note:A4 gain:0.25
+Point time:0.25 note:A4 gain:0.25
+Point time:0.375 note:A4 gain:0.25
+Point time:0.5 note:A4 gain:0.25
+Point time:0.625 note:A4 gain:0.25
+Point time:0.75 note:A4 gain:0.25
+Point time:0.875 note:A4 gain:0.25
+Point time:1.0 note:A4 gain:0.25
+
+Point time:0.0 note:A3 gain:0.75
+Point time:1.0 note:A3 gain:0.75
+Point time:0.0 note:A2 gain:0.5
+Point time:1.0 note:A2 gain:0.5
+Point time:0.0 note:A1 gain:0.25
+Point time:1.0 note:A1 gain:0.25
+
+Point time:0.0 note:A0 gain:0.0
+Point time:0.125 note:A0 gain:0.0
+Point time:0.25 note:A0 gain:0.0
+Point time:0.375 note:A0 gain:0.0
+Point time:0.5 note:A0 gain:0.0
+Point time:0.625 note:A0 gain:0.0
+Point time:0.75 note:A0 gain:0.0
+Point time:0.875 note:A0 gain:0.0
+Point time:1.0 note:A0 gain:0.0
+
+Sweep Logarithmic Sine 9 1
+Sweep Logarithmic Sine 11 2
+Sweep Logarithmic Sine 13 3
+Sweep Logarithmic Sine 15 4
+Sweep Logarithmic Sine 16 5
+Sweep Logarithmic Sine 17 6
+Sweep Logarithmic Sine 18 7
+Sweep Logarithmic Sine 19 8
+Sweep Logarithmic Sine 20 10
+Sweep Logarithmic Sine 21 12
+Sweep Logarithmic Sine 22 14
+
+Sweep Logarithmic Sine 24 16
+Sweep Logarithmic Sine 26 17
+Sweep Logarithmic Sine 28 18
+Sweep Logarithmic Sine 30 19
+Sweep Logarithmic Sine 31 20
+Sweep Logarithmic Sine 32 21
+Sweep Logarithmic Sine 33 22
+Sweep Logarithmic Sine 34 23
+Sweep Logarithmic Sine 35 25
+Sweep Logarithmic Sine 36 27
+Sweep Logarithmic Sine 37 29

@@ -5,6 +5,8 @@
 #include "Program.h"
 #include "ServiceLocator.h"
 #include "Shader.h"
+#include "Sound.h"
+#include "SoundHandler.h"
 #include "Texture.h"
 #include "Window.h"
 
@@ -34,10 +36,6 @@ void Game::load() {
 		mWindow->rename(window.title);
 		delete window.title;
 		mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
-		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.5f, 2.0f));
-		view = glm::rotate(view, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		mSceneCamera = new PerspCamera(view, mWindow->getWidth(), mWindow->getHeight(), 75.0f);
 		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
 		mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
 		mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
@@ -245,6 +243,8 @@ void Game::load() {
 						}
 					}
 					mCurrentLevel = mLevels.get("debug_world");
+					mSoundSystem.registerListener(mCurrentLevel->getCurrentCamera()->getPhysics());
+					mCurrentLevel->setBackgroundMusicVolume(0.25);
 				}
 				else {
 					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
@@ -275,6 +275,34 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
+			else if (index.extract("sounds:\"\\S\"\\L", &workingDirectory)) {
+				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
+				if (workingIndex.good()) {
+					while (workingIndex.good()) {
+						struct { char* name, *path; } soundData;
+						if (workingIndex.extract("//\\S\\L", NULL));
+						else if (workingIndex.extract("Procedural \"\\S\" \"\\S\"\\L", &soundData)) {
+							mSounds.add(soundData.name, new ProceduralSound(mAssetBasePath + workingDirectory + soundData.path));
+							delete soundData.name;
+							delete soundData.path;
+						}
+						else if (workingIndex.extract("File \"\\S\" \"\\S\"\\L", &soundData)) {
+							mSounds.add(soundData.name, new FileSound(mAssetBasePath + workingDirectory + soundData.path));
+							delete soundData.name;
+							delete soundData.path;
+						}
+						else if (workingIndex.extract("\\S\\L", &soundData.name)) {
+							ServiceLocator::getLoggingService().error("Unexpected line in sound index file", soundData.name);
+							delete soundData.name;
+						}
+					}
+				}
+				else {
+					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
+				}
+				workingIndex.close();
+				delete workingDirectory;
+			}
 			else if (index.extract("\\S\\L", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Unexpected line in base index file", workingDirectory);
 				delete workingDirectory;
@@ -293,6 +321,7 @@ void Game::cleanup() {
 	mFilters.clear_delete();
 	mPostShaders.clear();
 	mKernels.clear();
+	mSounds.clear();
 	mLevels.clear_delete();
 	for (auto item : mHUDItems)
 		delete item;
@@ -301,7 +330,6 @@ void Game::cleanup() {
 	mPrograms.clear_delete();
 	mShaders.clear();
 	mInputs.clear_delete();
-	delete mSceneCamera;
 	delete mScreenCamera;
 	//KeyboardHandler::unregisterReceiver(this);
 }
@@ -317,9 +345,10 @@ Game& Game::getInstance() {
 }
 
 void Game::update(float dt) {
+	mSoundSystem.update();
 	// Handle events
 	for (auto object : mCurrentLevel->getObjectList()) {
-		object->update(dt);
+		object.second->update(dt);	// A compelling reason to separate further into Components which can be updated individually
 	}
 }
 
@@ -337,7 +366,7 @@ void Game::render(float dt) {
 	// Set the active framebuffer to an intermediate one
 	mGameObjectsPost.enableDrawing();
 	for (auto object : mCurrentLevel->getObjectList()) {
-		object->render(mSceneCamera);
+		object.second->render(mCurrentLevel->getCurrentCamera());
 	}
 	mGameObjectsPost.process();
 
@@ -365,7 +394,8 @@ void Game::render(float dt) {
 void Game::resize(unsigned int width, unsigned int height) {
 	// Presumably OpenGL won't let me resize it to something impossible, so there's no need to check the dimensions
 	mWindow->resize(width, height);
-	mSceneCamera->resize(width, height);
+	for (auto a : mCurrentLevel->getCameraList())
+		a.second->resize(width, height);
 	mScreenCamera->resize(width, height);
 	mGameObjectsPost.resize(width, height);
 	mMenuPost.resize(width, height);

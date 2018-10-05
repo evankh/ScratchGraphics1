@@ -15,6 +15,7 @@ public:
 	bool extract(const char* pattern, void* target);
 	void restart();
 	bool putBack(const char* pattern);
+	bool putBack(const char pattern);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_FILE_SERVICE__

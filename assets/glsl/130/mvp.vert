@@ -13,7 +13,7 @@ out vec3 pView;
 
 uniform mat4 uM;
 uniform mat4 uVP;
-uniform vec4 uCamera;
+uniform vec3 uCamera;
 uniform vec3 uColor;
 
 void main() {

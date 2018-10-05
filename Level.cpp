@@ -1,11 +1,14 @@
 #include "Level.h"
+#include "Camera.h"
 #include "ServiceLocator.h"
+#include "Source.h"
 
 // I can't believe this actually works
 const NamedContainer<Geometry*>& Level::sGeometryLibrary = Game::getInstance().mGeometries;
 const NamedContainer<Program*>& Level::sProgramLibrary = Game::getInstance().mPrograms;
 const NamedContainer<Texture*>& Level::sTextureLibrary = Game::getInstance().mTextures;
 const NamedContainer<InputComponent*>& Level::sInputLibrary = Game::getInstance().mInputs;
+const SoundLibrary& Level::sSoundLibrary = Game::getInstance().mSounds;
 /* That thing you just said there? "Oh boy, I really don't want to fuck with this code"? Yeah, that's a good sign you should rethink how you're doing this part. */
 
 Level::Level(const char* filepath) {
@@ -13,15 +16,23 @@ Level::Level(const char* filepath) {
 	if (file.good()) {
 		char* objectName;
 		while (file.good()) {
-			if (file.extract("Object \"\\S\"", &objectName)) {
+			if (file.extract("//\\S\\L", NULL));
+			else if (file.extract("Object \"\\S\"", &objectName)) {
+				if (mSceneObjects.count(objectName)) {
+					ServiceLocator::getLoggingService().error("Redefining object", objectName);
+					delete objectName;
+					file.extract("\\S\\L", NULL);
+					continue;
+				}
 				// Set up variables and structs to read into
-				char* geomName, *progName, *texName, *inputName, *err;
+				char* geomName, *progName, *texName, *inputName, *soundName, *err;
 				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f }, col{ 0.0f,0.0f,0.0f };
 				float ang = 0.0f, mom = 0.0f;
 				Geometry* geom = NULL;
 				Program* program = NULL;
 				InputComponent* input = NULL;
 				Texture* texture = NULL;
+				std::vector<std::string> sounds;
 				bool valid = true, hasCol = false;
 				while (!file.extract("\\L", NULL)) {
 					if (file.extract(" geom:\"\\S\"", &geomName)) {
@@ -62,17 +73,25 @@ Level::Level(const char* filepath) {
 						}
 					}
 					else if (file.extract(" col:(\\F,\\F,\\F)", &col)) { hasCol = true; }
-					else if (file.extract(" pos:(\\F,\\F,\\F)", &pos)) {}	// Not sure I actually need to do anything for the raw data?
-					else if (file.extract(" vel:(\\F,\\F,\\F)", &vel)) {}
-					else if (file.extract(" acc:(\\F,\\F,\\F)", &acc)) {}
-					else if (file.extract(" rot:(\\F,\\F,\\F)", &rot)) {}
-					else if (file.extract(" ang:\\F", &ang)) {}
-					else if (file.extract(" axis:(\\F,\\F,\\F)", &axis)) {}
-					else if (file.extract(" mom:\\F", &mom)) {}
+					else if (file.extract(" sounds:(", NULL)) {
+						while (file.extract("\"\\S\"", &soundName)) {
+							sounds.push_back(soundName);
+							delete soundName;
+							file.extract(",", NULL);	// No checking to make sure it's properly formatted
+						}
+						file.extract(")", NULL);
+					}
+					else if (file.extract(" pos:(\\F,\\F,\\F)", &pos));
+					else if (file.extract(" vel:(\\F,\\F,\\F)", &vel));
+					else if (file.extract(" acc:(\\F,\\F,\\F)", &acc));
+					else if (file.extract(" rot:(\\F,\\F,\\F)", &rot));
+					else if (file.extract(" ang:\\F", &ang));
+					else if (file.extract(" axis:(\\F,\\F,\\F)", &axis));
+					else if (file.extract(" mom:\\F", &mom));
 					else if (file.extract(" scl:\\F", &scl.x)) {
 						scl.z = scl.y = scl.x;
 					}
-					else if (file.extract(" scl:(\\F,\\F,\\F)", &scl)) {}
+					else if (file.extract(" scl:(\\F,\\F,\\F)", &scl));
 					else if (file.extract(" input:\"\\S\"", &inputName)) {
 						if (input = sInputLibrary.get(inputName))
 							delete inputName;
@@ -114,18 +133,81 @@ Level::Level(const char* filepath) {
 					glm::vec3* color = NULL;
 					if (hasCol) color = new glm::vec3(col.x, col.y, col.z);
 					// Also store velocity
-					mGameObjects.push_back(new GameObject(geom, program, physics, input, texture, color));
+					GameObject* object = new GameObject(geom, program, physics, input, texture, color);
+					for (auto sound : sounds) {
+						if (sSoundLibrary.get(sound))
+							object->registerSound(sound, sSoundLibrary.get(sound));
+						else
+							ServiceLocator::getLoggingService().error("Sound not found", sound);
+					}
+					mSceneObjects[objectName] = object;
 				}
 				// Cleanup
 				delete objectName;
 			}
-			else if (file.extract("//\\S\\L", NULL));
+			else if (file.extract("Camera \"\\S\"", &objectName)) {
+				if (mSceneCameras.count(objectName)) {
+					ServiceLocator::getLoggingService().error("Redefining camera", objectName);
+					delete objectName;
+					file.extract("\\S\\L", NULL);
+					continue;
+				}
+				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, at{ 0.0f,1.0f,0.0f };
+				float fov = 75.0;
+				char* err;
+				while (!file.extract("\\L", NULL)) {
+					if (file.extract(" pos:(\\F,\\F,\\F)", &pos));
+					else if (file.extract(" at:(\\F,\\F,\\F)", &at));
+					else if (file.extract(" fov:\\F", &fov));
+					else if (file.extract("\\S:", &err)) {
+						ServiceLocator::getLoggingService().error("Unexpected keyword in line", err);
+						delete err;
+						if (file.extract("\\S ", &err)) {
+							ServiceLocator::getLoggingService().error("Skipping parameter", err);
+							delete err;
+							file.putBack(" ");	// To continue with proper parsing
+						}
+					}
+					else if (file.extract("\\?S\\L", &err)) {
+						if (err) {
+							ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line (skipping line)", err);
+							delete err;
+						}
+						file.putBack("\n");
+						break;
+					}
+				}
+				PerspCamera* camera = new PerspCamera(new PhysicsComponent({ pos.x,pos.y,pos.z }, { at.x,at.y,at.z }), 800, 600, fov);	// How do I get these values in here?
+				mSceneCameras[objectName] = camera;
+				delete objectName;
+			}
+			else if (file.extract("Music \"\\S\"", &objectName)) {
+				if (mBackgroundMusic) {
+					ServiceLocator::getLoggingService().error("Attempted redefinition of background music", objectName);
+					delete objectName;
+				}
+				else if (mBackgroundMusic = sSoundLibrary.get(objectName))
+					delete objectName;
+				else {
+					ServiceLocator::getLoggingService().error("Background music not found", objectName);
+					delete objectName;
+				}
+			}
 			else if (file.extract("\\?S\\L", &objectName)) {
 				if (objectName) {
 					ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
 					delete objectName;
 				}
 			}
+		}
+		if (mSceneCameras.count("main"))
+			mCurrentCamera = mSceneCameras.at("main");
+		else
+			ServiceLocator::getLoggingService().error("No camera \"main\" defined in level", filepath);
+		if (mBackgroundMusic) {
+			mSceneAudio = new Source(mCurrentCamera->getPhysics(), true);
+			mSceneAudio->update();
+			mSceneAudio->playSound(mBackgroundMusic);
 		}
 	}
 	else {
@@ -137,7 +219,15 @@ Level::Level(const char* filepath) {
 Level::Level(std::string filepath) :Level(filepath.data()) {}
 
 Level::~Level() {
-	for (auto object : mGameObjects)
-		delete object;
-	mGameObjects.clear();
+	for (auto object : mSceneObjects)
+		delete object.second;
+	mSceneObjects.clear();
+	for (auto camera : mSceneCameras)
+		delete camera.second;
+	mSceneCameras.clear();
+	if (mSceneAudio) delete mSceneAudio;
+}
+
+void Level::setBackgroundMusicVolume(float volume) {
+	mSceneAudio->setVolume(volume);
 }

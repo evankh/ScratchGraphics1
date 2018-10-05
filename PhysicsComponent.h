@@ -7,15 +7,18 @@ class Bounds;
 
 class PhysicsComponent {
 private:
-	glm::mat4 mModelMatrix;
+	//glm::mat4 mModelMatrix;
+	glm::vec3 mScale;
+	glm::vec3 mPosition;
 	glm::vec3 mVelocity;
 	glm::vec3 mAcceleration;
+	glm::mat4 mRotation;
 	glm::vec3 mAxis;
 	float mAngularVelocity;
 	Bounds* mBounds = NULL;
 public:
 	PhysicsComponent();
-	PhysicsComponent(glm::mat4 &mm);
+	PhysicsComponent(glm::vec3 pos, glm::vec3 towards);	// For a Camera
 	PhysicsComponent(glm::vec3 axis, float aVel);	// For our debug rotating objects
 	PhysicsComponent(glm::vec3 vel, glm::vec3 acc, glm::vec3 axis, float aVel);	// For reading them in from Level files (MM is taken care of through transform functions)
 	~PhysicsComponent();
@@ -23,9 +26,11 @@ public:
 	void translate(glm::vec3 dxyz);
 	void rotate(glm::vec3 axis, float degrees);
 	void scale(glm::vec3 scale);
-	glm::mat4& getModelMatrix();
-	glm::mat4& getInverseModelMatrix();
-	glm::vec4 getPosition();
+	glm::mat4 getModelMatrix();
+	glm::mat4 getInverseModelMatrix();
+	glm::vec3 getPosition() const { return mPosition; };
+	glm::vec3 getVelocity() const { return mVelocity; };
+	float* getOrientationVectors() const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PHYSICS_COMPONENT__

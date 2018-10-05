@@ -1,0 +1,16 @@
+Point time:0.0 note:A4
+Point time:1.0 note:A4
+
+Point time:2.0 note:A4 gain:0.0
+Point time:2.1 note:A4 gain:2.0
+Point time:2.2 note:A4 gain:1.0
+Point time:3.0 note:A4 gain:1.0
+Point time:3.05 note:A4 gain:0.0
+
+Point time:4.0 note:A4 gain:0.0
+
+Sweep Constant Sine 0 1
+Sweep Linear Sine 2 3
+Sweep Linear Sine 3 4
+Sweep Linear Sine 4 5
+Sweep Linear Sine 5 6

@@ -1,0 +1,25 @@
+Point time:0.0 note:A3
+Point time:0.5 note:C3
+Point time:1.0 note:G3
+Point time:2.0 note:G2
+Point time:2.25 note:A0 gain:0.0
+Point time:2.5 note:B3
+Point time:3.5 note:A3
+Point time:4.25 note:A0 gain:0.0
+Point time:5.0 note:A0 gain:0.0
+
+Point time:0.0 note:A2 gain:0.5
+Point time:1.0 note:E2 gain:0.5
+Point time:2.5 note:B2 gain:0.5
+Point time:4.25 note:A0 gain:0.5
+
+Sweep Constant Sine 0 1
+Sweep Constant Sine 1 2
+Sweep Constant Sine 2 3
+Sweep Constant Sine 3 4
+Sweep Constant Sine 5 6
+Sweep Constant Sine 6 7
+
+Sweep Constant Sine 9 10
+Sweep Constant Sine 10 11
+Sweep Constant Sine 11 12
