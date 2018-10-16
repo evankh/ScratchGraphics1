@@ -1,6 +1,4 @@
 #include "Geometry.h"
-//#include "Program.h"
-//#include "Camera.h"
 #include "ServiceLocator.h"
 #include "GL/glew.h"
 #include <cassert>
@@ -25,6 +23,12 @@ const unsigned int ATTRIB_SIZES[16] = {
 	4,
 	4
 };
+
+float* screenQuadData = new float[20] { -1.0f,-1.0f,0.0f, 0.0f,0.0f, 1.0f,-1.0f,0.0f, 1.0f,0.0f, -1.0f,1.0f,0.0f, 0.0f,1.0f, 1.0f,1.0f,0.0f, 1.0f,1.0f };
+float* unitQuadData = new float[8] { 0.0f,0.0f, 1.0f,0.0f, 0.0f,1.0f, 1.0f,1.0f };	// Position will be the same as texcoord, and I'm counting on whatever shader knowing this
+unsigned int* Geometry::sQuadTris = new unsigned int[6] { 0,1,2, 2,1,3 };
+Geometry Geometry::sScreenSpaceQuad = Geometry(4, screenQuadData, 2, sQuadTris, { A_POSITION,A_TEXCOORD0 });
+Geometry Geometry::sUnitQuad = Geometry(4, unitQuadData, 2, sQuadTris, { A_TEXCOORD0 });
 
 Geometry::Geometry() {
 	mNumVerts = 0;
@@ -146,7 +150,7 @@ Geometry::~Geometry() {
 	cleanup();
 }
 
-void Geometry::transfer() {
+void Geometry::transfer() const {
 	if (!mHandles.good) {
 		glGenBuffers(2, (unsigned int*)&mHandles);
 		mHandles.good = true;
@@ -176,31 +180,23 @@ void Geometry::transfer() {
 }
 
 void Geometry::cleanup() {
-	// Objects won't be managing their own CPU-side data, so that we can give the same geometry to multiple objects
-	// Actually, should they ever be? I'm not certain. It seems like we might often want to reuse geometry data , i.e. for particles
-	/*if (mVertexData) {
+	if (mVertexData) {
 		delete[] mVertexData;
 		mVertexData = NULL;
 	}
-	if (mTriData) {
+	if (mTriData && mTriData != sQuadTris) {
 		delete[] mTriData;
 		mTriData = NULL;
-	}*/
+	}
 	if (mHandles.good) {
 		glDeleteBuffers(2, (unsigned int*)&mHandles);
 		glDeleteVertexArrays(1, &mHandles.vaoHandle);
 	}
 }
 
-//#include "glm/gtc/type_ptr.hpp"
-
-void Geometry::render() {
-	/*if (mDisplay) {
-		glUseProgram(mDisplay->mHandle);
-		//c->transfer();
-		glm::mat4 mvp = c->mViewProjectionMatrix * mModelMatrix;
-		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
-	}*/
+void Geometry::render() const {
+	if (!mHandles.good)
+		transfer();
 	glBindVertexArray(mHandles.vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mHandles.indexHandle);
 	glDrawElements(GL_TRIANGLES, 3 * mNumTris, GL_UNSIGNED_INT, 0);

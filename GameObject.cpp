@@ -6,7 +6,7 @@
 #include "Source.h"
 #include "Texture.h"
 
-GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture, glm::vec3* color) {
+GameObject::GameObject(const Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture, glm::vec3* color) {
 	mGeometry = geometry;
 	if (mGeometry) mGeometry->transfer();
 	mDisplay = display;

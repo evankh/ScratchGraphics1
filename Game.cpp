@@ -1,7 +1,9 @@
 #include "Game.h"
+#include "Geometry.h"
 #include "InputComponent.h"
 #include "KeyboardHandler.h"
 #include "Level.h"
+#include "UI/Menu.h"
 #include "Program.h"
 #include "ServiceLocator.h"
 #include "Shader.h"
@@ -35,7 +37,6 @@ void Game::load() {
 		mWindow->resize(window.w, window.h);	// Not sure why this doesn't work on the first load
 		mWindow->rename(window.title);
 		delete window.title;
-		mScreenCamera = new OrthoCamera(mWindow->getWidth(), mWindow->getHeight());
 		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
 		mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
 		mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
@@ -117,7 +118,7 @@ void Game::load() {
 						// Extract and load all versions
 						struct { int version; char* filepath; } versionedFile;
 						while (workingIndex.extract(" \\I:\"\\S\"", &versionedFile)) {
-							mShaders.add(shaderName, versionedFile.version, new Shader((mAssetBasePath + workingDirectory + versionedFile.filepath).data(), type));
+							mShaders.add(shaderName, versionedFile.version, new Shader(mAssetBasePath + workingDirectory + versionedFile.filepath, type));
 							delete versionedFile.filepath;
 						}
 						delete shaderName;
@@ -323,14 +324,15 @@ void Game::cleanup() {
 	mKernels.clear();
 	mSounds.clear();
 	mLevels.clear_delete();
-	for (auto item : mHUDItems)
-		delete item;
-	mHUDItems.clear();
+	while (mCurrentMenu) {
+		auto top = mCurrentMenu;
+		mCurrentMenu = top->mParent;
+		delete top;
+	}
 	mGeometries.clear_delete();
 	mPrograms.clear_delete();
 	mShaders.clear();
 	mInputs.clear_delete();
-	delete mScreenCamera;
 	//KeyboardHandler::unregisterReceiver(this);
 }
 
@@ -370,24 +372,19 @@ void Game::render(float dt) {
 	}
 	mGameObjectsPost.process();
 
-	if (mIsMenuActive)
+	if (mCurrentMenu)
 		mMenuPost.enableDrawing();
 	else
 		mWindow->enableDrawing();
 	mFilters.get("none")->use();
 	mGameObjectsPost.draw();
-	for (auto hud : mHUDItems) {
-		hud->render(mScreenCamera);
-	}
 
-	if (mIsMenuActive) {
+	if (mCurrentMenu) {
+		mCurrentMenu->draw();
 		mMenuPost.process();
 		mWindow->enableDrawing();
 		mFilters.get("none")->use();
 		mMenuPost.draw();
-//		for (auto item : mCurrentMenu->items()) {
-//			item.render(mScreenCamera);
-//		}
 	}
 }
 
@@ -396,10 +393,9 @@ void Game::resize(unsigned int width, unsigned int height) {
 	mWindow->resize(width, height);
 	for (auto a : mCurrentLevel->getCameraList())
 		a.second->resize(width, height);
-	mScreenCamera->resize(width, height);
 	mGameObjectsPost.resize(width, height);
 	mMenuPost.resize(width, height);
-	//mActiveMenu.layout(width, height);	// Yikes, that's gonna be a motherfucker of a function
+	if (mCurrentMenu) mCurrentMenu->layout(width, height);
 }
 
 void Game::reloadAll() {

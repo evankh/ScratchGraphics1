@@ -3,8 +3,10 @@
 
 #include "Camera.h"
 class GameObject;
+class Geometry;
 #include "KernelManager.h"
 class Level;
+class Menu;
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
 class Program;
@@ -28,25 +30,24 @@ class Game :public Receiver {
 private:
 	Game();
 	~Game();
-	Window* mWindow;
-	OrthoCamera* mScreenCamera;
-	// I guess I could also do a std::vector<Camera> & a Camera* active...
+	// Managers & Libraries
 	ShaderManager mShaders;
 	NamedContainer<Program*> mPrograms = NamedContainer<Program*>(NULL);
 	NamedContainer<Geometry*> mGeometries = NamedContainer<Geometry*>(NULL);
 	NamedContainer<Level*> mLevels = NamedContainer<Level*>(NULL);
-	Level* mCurrentLevel;
 	ShaderManager mPostShaders;	// Do I need a new container type to handle matching sample sizes? Probably.
 	NamedContainer<Program*> mFilters = NamedContainer<Program*>(NULL);
 	KernelManager mKernels;
 	NamedContainer<InputComponent*> mInputs = NamedContainer<InputComponent*>(NULL);
 	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
+	// Actual game information;
+	Window* mWindow;
+	Level* mCurrentLevel;
 	PostProcessingPipeline mGameObjectsPost;
-	SoundLibrary mSounds;
-	std::vector<GameObject*> mHUDItems;	// Yeeeaaah, that's gonna hafta go pretty soon
+	Menu* mCurrentMenu = NULL;
 	PostProcessingPipeline mMenuPost;
+	SoundLibrary mSounds;
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
-	bool mIsMenuActive = false;
 	const std::string mAssetBasePath = "assets/";
 	const std::string mIndexFilename = "index.txt";
 public:

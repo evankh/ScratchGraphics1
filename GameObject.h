@@ -12,7 +12,7 @@ class Source;
 
 class GameObject {
 private:
-	Geometry* mGeometry;
+	const Geometry* mGeometry;
 	Program* mDisplay;
 	PhysicsComponent* mPhysicsComponent;
 	InputComponent* mInputComponent;
@@ -20,9 +20,8 @@ private:
 	glm::vec3* mColor;	// Temporary
 	Source* mSource;
 	SoundLibrary mSounds;
-	bool hasPlayed = false;	// Temporary
 public:
-	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture = NULL, glm::vec3* color = NULL);
+	GameObject(const Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture = NULL, glm::vec3* color = NULL);
 	~GameObject();
 	void update(float dt);
 	void render(Camera* c);

@@ -1,10 +1,7 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
 #define __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
 
-#include "Geometry.h"
-
 class FrameBuffer {
-	static Geometry sMagicQuad;
 private:
 	unsigned int mHandle;
 	unsigned int mColorTextureHandle;
