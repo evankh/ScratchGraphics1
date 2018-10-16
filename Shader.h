@@ -6,6 +6,7 @@
 class Shader {
 	friend class Program;
 private:
+	Shader(const char* shader, unsigned int type);
 	std::string mFilepath;
 	unsigned int mType;
 	unsigned int mHandle;

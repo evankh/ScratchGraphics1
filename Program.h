@@ -2,10 +2,12 @@
 #define __EKH_SCRATCH_GRAPHICS_1_PROGRAM__
 
 class Shader;
-#include "glm/matrix.hpp"	// Probably not ideal, should break this file out into separate files for each subclass, which will only include the files necessary for its own arguments
 
 class Program {
+	static Program* sScreenDraw;
+	static void generateScreenDrawProgram();
 private:
+	Program(const char* vs, const char* fs);
 	unsigned int mHandle;
 	Shader* mVS;
 	Shader* mGS;
@@ -22,11 +24,12 @@ public:
 	void link();
 	void validate();
 	// I'm wondering if maybe subclassing for each type of uniforms is the right way to go? Should something else be sending uniforms?
-	void use();
-	void sendUniform(const char* name, const float value);
-	void sendUniform(const char* name, const float* matrix);
-	void sendUniform(const char* name, const int size, const float* value);
-	void sendUniform(const char* name, const unsigned int value);
+	void use() const;	// I'm not sure if it's correct to call this const, because while it's not changing the Program object, it is affecting the OpenGL state.
+	void sendUniform(const char* name, const float value) const;	// Same goes for the uniforms
+	void sendUniform(const char* name, const float* matrix) const;
+	void sendUniform(const char* name, const int size, const float* value) const;
+	void sendUniform(const char* name, const unsigned int value) const;
+	static const Program* getScreenDraw() { return sScreenDraw; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PROGRAM__

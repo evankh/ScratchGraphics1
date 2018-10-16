@@ -1,0 +1,16 @@
+Frame "block" left:0 top:0 width:100 height:100 direction:Vertical spacing:10 align:Left {
+	Frame "slider" direction:Horizontal spacing:10 align:Top {
+		Text "Cube X",
+		Slider "cube_x" min:-3.0 max:3.0 default:0.0
+	},
+	Frame "value" direction:Horizontal spacing:10 align:Top {
+		Text "Cube Y",
+		Value "cube_y" float
+	},
+	Frame "number" direction:Horizontal spacing:10 align:Top {
+		Text "GameObjects"
+		Value "num_objects" int
+	}
+}
+Image "image" right:800 centerY:300 width:100 height:100 src:"debug"
+Button "reset" left:10 bottom:590 width:50 height:20 text:"Reset"

@@ -5,10 +5,6 @@
 
 #define NULL 0
 
-float magicQuadData[20] = { -1.0f,-1.0f,0.0f, 0.0f,0.0f, 1.0f,-1.0f,0.0f, 1.0f,0.0f, -1.0f,1.0f,0.0f, 0.0f,1.0f, 1.0f,1.0f,0.0f, 1.0f,1.0f };
-unsigned int magicQuadFaces[6] = { 0,1,2, 2,1,3 };
-Geometry FrameBuffer::sMagicQuad = Geometry(4, magicQuadData, 2, magicQuadFaces, { A_POSITION,A_TEXCOORD0 });
-
 FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale = 1.0f) {
 	mRelativeScale = scale;
 	mWidth = (int)(mRelativeScale * windowWidth);
@@ -51,7 +47,7 @@ FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, fl
 			break;
 		}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	sMagicQuad.transfer();
+	Geometry::getScreenQuad()->transfer();
 }
 
 FrameBuffer::~FrameBuffer() {
@@ -72,7 +68,7 @@ void FrameBuffer::draw() {
 	glBindTexture(GL_TEXTURE_2D, mColorTextureHandle);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
-	sMagicQuad.render();
+	Geometry::getScreenQuad()->render();
 	glActiveTexture(GL_TEXTURE0);
 }
 

@@ -13,6 +13,8 @@ Point time:1.0 note:E2 gain:0.5
 Point time:2.5 note:B2 gain:0.5
 Point time:4.25 note:A0 gain:0.5
 
+Envelope 0.0:0.0 0.05:1.0 0.05:1.0 0.05:0.0
+
 Sweep Constant Sine 0 1
 Sweep Constant Sine 1 2
 Sweep Constant Sine 2 3
