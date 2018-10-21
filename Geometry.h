@@ -32,6 +32,9 @@ struct GeometryHandles {
 };
 
 class Geometry {
+	static unsigned int* sQuadTris;
+	static Geometry sScreenSpaceQuad;
+	static Geometry sUnitQuad;
 private:
 	unsigned int mNumVerts = 0;
 	float* mVertexData;
@@ -39,17 +42,19 @@ private:
 	unsigned int* mTriData;
 	std::vector<ATTRIB_INDEX> mProperties;
 	unsigned int mVertexSize = 0;
-	GeometryHandles mHandles;
+	mutable GeometryHandles mHandles;	// That's not cheating, is it? It makes sense that external code doesn't care whether the Geometry's been transferred or not, right?
 public:
 	Geometry();
 	Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
 	Geometry(const char* filename);
 	//Geometry(std::vector<Vertex> vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
 	~Geometry();
-	void transfer();
+	void transfer() const;
 	void cleanup();
-	void render();
+	void render() const;
 	//void setDisplay(Program* display);
+	static const Geometry* getScreenQuad() { return &sScreenSpaceQuad; };
+	static const Geometry* getUnitQuad() { return &sUnitQuad; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GEOMETRY__

@@ -6,7 +6,11 @@
 #include "State.h"
 #include "Texture.h"
 
+<<<<<<< HEAD
 GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent input, Texture* texture, glm::vec3* color) {
+=======
+GameObject::GameObject(const Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture, glm::vec3* color) {
+>>>>>>> remotes/ScratchGraphics1/master
 	mGeometry = geometry;
 	if (mGeometry) mGeometry->transfer();
 	mDisplay = display;

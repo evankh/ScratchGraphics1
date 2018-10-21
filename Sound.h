@@ -57,12 +57,11 @@ struct Sweep {
 };
 
 class ProceduralSound :public Sound {
-private:
 	static bool sHaveGeneratedNoteTable;
 	static std::map<std::string, float>* sNoteTable;
 	static std::vector<std::string> sNoteNames;
 	static void generateNoteTable();
-
+private:
 	std::vector<Point> mPoints;
 	std::vector<Sweep> mSweeps;
 	void build();

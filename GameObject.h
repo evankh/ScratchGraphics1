@@ -16,18 +16,23 @@ typedef void(*InputComponent)(State*, EventQueue&);
 
 class GameObject :public Receiver {
 private:
-	Geometry* mGeometry;
+	const Geometry* mGeometry;
 	Program* mDisplay;
 	PhysicsComponent* mPhysicsComponent;
 	Texture* mTexture;
 	glm::vec3* mColor;	// Temporary
 	Source* mSource;
 	SoundLibrary mSounds;
+<<<<<<< HEAD
 	InputComponent mInputComponent;
 	State* mState;
 	EventQueue mEventQueue;
 public:
 	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent input, Texture* texture = NULL, glm::vec3* color = NULL);
+=======
+public:
+	GameObject(const Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture = NULL, glm::vec3* color = NULL);
+>>>>>>> remotes/ScratchGraphics1/master
 	~GameObject();
 	void update(float dt);
 	void render(Camera* c);
