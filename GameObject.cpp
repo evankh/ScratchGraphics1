@@ -1,12 +1,12 @@
 #include "GameObject.h"
 #include "Camera.h"
 #include "Geometry.h"
-#include "InputComponent.h"
 #include "Program.h"
 #include "Source.h"
+#include "State.h"
 #include "Texture.h"
 
-GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent* input, Texture* texture, glm::vec3* color) {
+GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, InputComponent input, Texture* texture, glm::vec3* color) {
 	mGeometry = geometry;
 	if (mGeometry) mGeometry->transfer();
 	mDisplay = display;
@@ -24,7 +24,22 @@ GameObject::~GameObject() {
 }
 
 void GameObject::update(float dt) {
-	if (mInputComponent) mInputComponent->update(this/*mState*/);
+	// This sort of thing will get moved to State
+	while (!mEventQueue.isEmpty()) {
+		Event e = mEventQueue.pop();
+		if (e.mType == EKH_EVENT_KEY_PRESSED && e.mData.keyboard.key == 'W') {
+			translate({ 0.0,0.1,0.0 });
+		}
+		Sound* s = NULL;
+		if (e.mType == EKH_EVENT_PLAY_SOUND_REQUEST && (s = mSounds.get(e.mData.sound.name))) {
+			mSource->setVolume(e.mData.sound.gain);
+			mSource->playSound(s);
+		}
+	}
+	// vvv State transitions happen here vvv
+	if (mInputComponent) mInputComponent(mState, mEventQueue);	// mState will change itself and its update function depending on what events it receives
+	// vvv Wait, what does this even do since PhysicsComponent is still there? vvv
+	if (mState) mState->update(dt);
 	if (mPhysicsComponent) mPhysicsComponent->update(dt);
 	if (mSource) mSource->update();
 }
@@ -32,11 +47,6 @@ void GameObject::update(float dt) {
 void GameObject::registerSound(std::string name, Sound* sound) {
 	if (!mSource) mSource = new Source(mPhysicsComponent, false);
 	mSounds.add(name, sound);
-}
-
-void GameObject::playSound(std::string name) {
-	if (auto sound = mSounds.get(name))
-		mSource->playSound(sound);
 }
 
 #include "glm\gtc\type_ptr.hpp"

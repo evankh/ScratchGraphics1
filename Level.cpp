@@ -7,7 +7,7 @@
 const NamedContainer<Geometry*>& Level::sGeometryLibrary = Game::getInstance().mGeometries;
 const NamedContainer<Program*>& Level::sProgramLibrary = Game::getInstance().mPrograms;
 const NamedContainer<Texture*>& Level::sTextureLibrary = Game::getInstance().mTextures;
-const NamedContainer<InputComponent*>& Level::sInputLibrary = Game::getInstance().mInputs;
+const NamedContainer<InputComponent>& Level::sInputLibrary = Game::getInstance().mInputs;
 const SoundLibrary& Level::sSoundLibrary = Game::getInstance().mSounds;
 /* That thing you just said there? "Oh boy, I really don't want to fuck with this code"? Yeah, that's a good sign you should rethink how you're doing this part. */
 
@@ -30,7 +30,7 @@ Level::Level(const char* filepath) {
 				float ang = 0.0f, mom = 0.0f;
 				Geometry* geom = NULL;
 				Program* program = NULL;
-				InputComponent* input = NULL;
+				InputComponent input = NULL;
 				Texture* texture = NULL;
 				std::vector<std::string> sounds;
 				bool valid = true, hasCol = false;

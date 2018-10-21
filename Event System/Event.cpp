@@ -11,5 +11,8 @@ Event::Event(EventType type, EventData* data) {
 	case EKH_EVENT_BUTTON_RELEASED:
 		mData.mouse = *(MouseData*)data;
 		break;
+	case EKH_EVENT_PLAY_SOUND_REQUEST:
+		mData.sound = *(SoundData*)data;
+		break;
 	}
 }
