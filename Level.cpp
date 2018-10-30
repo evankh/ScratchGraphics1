@@ -2,12 +2,14 @@
 #include "Camera.h"
 #include "ServiceLocator.h"
 #include "Source.h"
+// Need to find a better way to include these - probably a library like the others, containing maybe factory methods for the entry point to each state machine?
+#include "Sample States/PlayerStates.h"
 
 // I can't believe this actually works
 const NamedContainer<Geometry*>& Level::sGeometryLibrary = Game::getInstance().mGeometries;
 const NamedContainer<Program*>& Level::sProgramLibrary = Game::getInstance().mPrograms;
 const NamedContainer<Texture*>& Level::sTextureLibrary = Game::getInstance().mTextures;
-const NamedContainer<InputComponent>& Level::sInputLibrary = Game::getInstance().mInputs;
+//const NamedContainer<InputComponent>& Level::sInputLibrary = Game::getInstance().mInputs;
 const SoundLibrary& Level::sSoundLibrary = Game::getInstance().mSounds;
 /* That thing you just said there? "Oh boy, I really don't want to fuck with this code"? Yeah, that's a good sign you should rethink how you're doing this part. */
 
@@ -30,7 +32,8 @@ Level::Level(const char* filepath) {
 				float ang = 0.0f, mom = 0.0f;
 				Geometry* geom = NULL;
 				Program* program = NULL;
-				InputComponent input = NULL;
+				//InputComponent input = NULL;
+				bool isPlayer = false;	// Weird
 				Texture* texture = NULL;
 				std::vector<std::string> sounds;
 				bool valid = true, hasCol = false;
@@ -93,8 +96,10 @@ Level::Level(const char* filepath) {
 					}
 					else if (file.extract(" scl:(\\F,\\F,\\F)", &scl));
 					else if (file.extract(" input:\"\\S\"", &inputName)) {
-						if (input = sInputLibrary.get(inputName))
+						if (strcmp(inputName, "player") == 0) {
+							isPlayer = true;
 							delete inputName;
+						}
 						else {
 							ServiceLocator::getLoggingService().error("Input component not found", inputName);
 							delete inputName;
@@ -133,7 +138,11 @@ Level::Level(const char* filepath) {
 					glm::vec3* color = NULL;
 					if (hasCol) color = new glm::vec3(col.x, col.y, col.z);
 					// Also store velocity
-					GameObject* object = new GameObject(geom, program, physics, input, texture, color);
+					GameObject* object = new GameObject(geom, program, physics, /*input, */texture, color);
+					if (isPlayer)
+						object->setState(PlayerState::getEntry(object));
+					else
+						object->setState(PassThruState::getEntry(object));
 					for (auto sound : sounds) {
 						if (sSoundLibrary.get(sound))
 							object->registerSound(sound, sSoundLibrary.get(sound));

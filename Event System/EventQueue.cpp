@@ -10,5 +10,5 @@ Event EventQueue::pop() {
 		mEventQueue.pop();
 		return next;
 	}
-	return Event(EKH_EVENT_NONE, &EventData());
+	return Event();
 }

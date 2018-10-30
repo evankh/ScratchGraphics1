@@ -38,7 +38,7 @@ private:
 	ShaderManager mPostShaders;	// Do I need a new container type to handle matching sample sizes? Probably.
 	NamedContainer<Program*> mFilters = NamedContainer<Program*>(NULL);
 	KernelManager mKernels;
-	NamedContainer<InputComponent*> mInputs = NamedContainer<InputComponent*>(NULL);
+	//NamedContainer<InputComponent> mInputs = NamedContainer<InputComponent>(NULL);
 	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
 	// Actual game information;
 	Window* mWindow;

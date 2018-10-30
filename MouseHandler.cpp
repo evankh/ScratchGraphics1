@@ -27,7 +27,7 @@ void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int m
 	data.edge = edge;
 	data.mouse_x = mouse_x;
 	data.mouse_y = mouse_y;
-	sEvents.push(Event(sButtonStatus[button] ? EKH_EVENT_BUTTON_PRESSED : EKH_EVENT_BUTTON_RELEASED, &data));
+	sEvents.push(Event(sButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, data));
 }
 
 void MouseHandler::handleMove(int mouse_x, int mouse_y) {

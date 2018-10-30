@@ -15,6 +15,7 @@ private:
 public:
 	static KeyboardHandler& getInstance();
 	bool getKeyStatus(char key) { return sKeyStatus[key]; };
+	void registerReceiver(const char* interested, Receiver* receiver);
 	void registerReceiver(char interested, Receiver* receiver);
 };
 

@@ -1,6 +1,5 @@
 #include "Game.h"
 #include "Geometry.h"
-#include "InputComponent.h"
 #include "KeyboardHandler.h"
 #include "Level.h"
 #include "UI/Menu.h"
@@ -38,8 +37,8 @@ void Game::load() {
 		mWindow->rename(window.title);
 		delete window.title;
 		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
-		mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
-		mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
+		//mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
+		//mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
 		//mInputs.add("mouse", new KeyboardInputComponent(2, { true,true,false,false,false }));	// Need a different way to do that
 		// Loading asset directories
 		char* workingDirectory;
@@ -319,20 +318,20 @@ void Game::load() {
 void Game::cleanup() {
 	mGameObjectsPost.clear();
 	mMenuPost.clear();
-	mFilters.clear_delete();
+	mFilters.clear();
 	mPostShaders.clear();
 	mKernels.clear();
 	mSounds.clear();
-	mLevels.clear_delete();
+	mLevels.clear();
 	while (mCurrentMenu) {
 		auto top = mCurrentMenu;
 		mCurrentMenu = top->mParent;
 		delete top;
 	}
-	mGeometries.clear_delete();
-	mPrograms.clear_delete();
+	mGeometries.clear();
+	mPrograms.clear();
 	mShaders.clear();
-	mInputs.clear_delete();
+	//mInputs.clear();
 	//KeyboardHandler::unregisterReceiver(this);
 }
 
@@ -348,7 +347,12 @@ Game& Game::getInstance() {
 
 void Game::update(float dt) {
 	mSoundSystem.update();
-	// Handle events
+	// Collision detection
+	for (auto object : mCurrentLevel->getObjectList()) {
+		if (object.second->floorCollision(0.0f))
+			object.second->handle(Event(CollisionData()));
+	}
+	// Object updates
 	for (auto object : mCurrentLevel->getObjectList()) {
 		object.second->update(dt);	// A compelling reason to separate further into Components which can be updated individually
 	}
@@ -406,7 +410,7 @@ void Game::reloadAll() {
 
 void Game::handle(Event event) {
 	switch (event.mType) {
-	case EKH_EVENT_KEY_PRESSED:
+	case EventType::KEY_PRESSED:
 		switch (event.mData.keyboard.key) {
 		case 'r':
 			reloadAll();

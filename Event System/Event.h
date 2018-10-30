@@ -1,49 +1,57 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_EVENT__
 #define __EKH_SCRATCH_GRAPHICS_1_EVENT__
 
-enum EventType {
-	EKH_EVENT_NONE,
-	EKH_EVENT_KEY_PRESSED,
-	EKH_EVENT_KEY_RELEASED,
-	EKH_EVENT_KEY_HELD,
-	EKH_EVENT_BUTTON_PRESSED,
-	EKH_EVENT_BUTTON_RELEASED,
-	EKH_EVENT_BUTTON_HELD,
-	EKH_EVENT_PLAY_SOUND_REQUEST
+enum class EventType {
+	INVALID = -1,
+	NONE,
+	KEY_PRESSED,
+	KEY_RELEASED,
+	KEY_HELD,
+	BUTTON_PRESSED,
+	BUTTON_RELEASED,
+	BUTTON_HELD,
+	PLAY_SOUND_REQUEST,
+	COLLISION
 };
 
 enum MouseButton;
 
-struct EventData {};
+struct EmptyData {};
 
-struct KeyboardData :public EventData {
+struct KeyboardData {
 	char key;
 	int mouse_x, mouse_y;
 };
 
-struct MouseData :public EventData {
+struct MouseData {
 	MouseButton button;
 	int edge;
 	int mouse_x, mouse_y;
 };
 
-struct SoundData :public EventData {
+struct SoundData {
 	const char* name;
 	float gain;
+};
+
+struct CollisionData {
+	float floorheight;
 };
 
 struct Event {
 	EventType mType;
 	union Data {
+		EmptyData empty;
 		KeyboardData keyboard;
 		MouseData mouse;
 		SoundData sound;
+		CollisionData collision;
 	} mData;
-	// Why am I doing such weird things with inheritance?
-	// Is it all so I can have one function here?
-	// I don't like that, especially since I'm not sure how much data from the passed in reference
-	// is actually being copied into the Event object
-	Event(EventType type, EventData* data);
+	Event() :mType(EventType::NONE) { mData.empty = EmptyData(); };
+	Event(EventType type, KeyboardData data) :mType(type) { mData.keyboard = data; };
+	Event(EventType type, MouseData data) :mType(type) { mData.mouse = data; };
+	Event(SoundData data) :mType(EventType::PLAY_SOUND_REQUEST) { mData.sound = data; };
+	Event(CollisionData data) :mType(EventType::COLLISION) { mData.collision = data; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_EVENT__
