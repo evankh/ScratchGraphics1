@@ -50,6 +50,7 @@ private:
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
 	const std::string mAssetBasePath = "assets/";
 	const std::string mIndexFilename = "index.txt";
+	bool mDebugMode = false;
 public:
 	static Game& getInstance();
 	void init();

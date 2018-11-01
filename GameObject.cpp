@@ -30,6 +30,7 @@ GameObject::~GameObject() {
 }
 
 void GameObject::update(float dt) {
+	mHasCollision = false;
 	while (!mEventQueue.isEmpty()) {
 		Event e = mEventQueue.pop();
 		Sound* s = NULL;
@@ -46,6 +47,8 @@ void GameObject::update(float dt) {
 				mState->enter(mPhysicsComponent);
 			}
 		}
+		if (e.mType == EventType::COLLISION)
+			mHasCollision = true;
 	}
 	if (mState) mState->update(mPhysicsComponent, dt);
 	if (mAudioComponent) mAudioComponent->update();

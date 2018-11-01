@@ -26,18 +26,21 @@ private:
 	//InputComponent mInputComponent;
 	State* mState;
 	EventQueue mEventQueue;
+	bool mHasCollision = false;
 public:
-	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, /*InputComponent input, */Texture* texture = NULL, glm::vec3* color = NULL);
+	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture = NULL, glm::vec3* color = NULL);
 	~GameObject();
 	void update(float dt);
 	void render(Camera* c);
 	virtual void handle(const Event e);
 	void setState(State* state);	// Probably should be private or something, could completely change the type of the object if given the wrong type of State
+	PhysicsComponent* getPhysicsComponent() const { return mPhysicsComponent; };
+	Bounds* getBounds()const { return mPhysicsComponent->getBounds(); };
 	void registerSound(std::string name, Sound* sound);
 	void translate(glm::vec3 dxyz) { mPhysicsComponent->translate(dxyz); };
 	void rotate(glm::vec3 axis, float degrees) { mPhysicsComponent->rotate(axis, degrees); };
 	void scale(glm::vec3 scale) { mPhysicsComponent->scale(scale); };
-	bool floorCollision(float z) { return mPhysicsComponent->getPosition().z <= z; };
+	bool hasCollision() { return mHasCollision; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__

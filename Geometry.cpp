@@ -30,6 +30,7 @@ unsigned int* Geometry::sQuadTris = new unsigned int[6] { 0,1,2, 2,1,3 };
 Geometry Geometry::sScreenSpaceQuad = Geometry(4, screenQuadData, 2, sQuadTris, { A_POSITION,A_TEXCOORD0 });
 Geometry Geometry::sUnitQuad = Geometry(4, unitQuadData, 2, sQuadTris, { A_TEXCOORD0 });
 
+[[deprecated("probably")]]
 Geometry::Geometry() {
 	mNumVerts = 0;
 	mVertexData = NULL;
@@ -39,6 +40,7 @@ Geometry::Geometry() {
 	mHandles.good = false;
 }
 
+[[deprecated("probably")]]
 Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) {
 	mNumVerts = numverts;
 	mVertexData = vertexData;
@@ -159,10 +161,11 @@ void Geometry::transfer() const {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mHandles.indexHandle);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mNumTris * 3 * sizeof(unsigned int), mTriData, GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		/*glNamedBufferData(mHandles.vboHandle, mNumVerts*mVertexSize*sizeof(float), mVertexData, GL_STATIC_DRAW);
+		glNamedBufferData(mHandles.indexHandle, mNumTris * 3 * sizeof(unsigned int), mTriData, GL_STATIC_DRAW);*/
 
 		glGenVertexArrays(1, &mHandles.vaoHandle);
 		glBindVertexArray(mHandles.vaoHandle);
-		glBindBuffer(GL_ARRAY_BUFFER, mHandles.vboHandle);
 		unsigned int offset = 0;
 		for (auto property : mProperties) {
 			glEnableVertexAttribArray(property);	// I think this is the problem line that requires explicit location
@@ -202,4 +205,176 @@ void Geometry::render() const {
 	glDrawElements(GL_TRIANGLES, 3 * mNumTris, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+#ifndef PI
+#define PI 3.141592f
+#endif//PI
+
+void Geometry::drawUnitSphere() {
+	static GeometryHandles handles;
+	int numSegments = 16, numStacks = 8;
+	int fansize = numSegments + 2;
+	int stripsize = 2 * numSegments + 2;
+	int off1 = 0 * (stripsize)+fansize;
+	int off2 = 1 * (stripsize)+fansize;
+	int off3 = (numStacks - 2)*(stripsize)+fansize;
+	if (!handles.good) {
+		// Create & transfer
+		int numVerts = 2 + numSegments * (numStacks - 1);
+		int numIndices = 2 * numStacks*numSegments + 2 * numStacks - 2 * numSegments;
+		float* vertexData = new float[3 * numVerts];
+		unsigned int* indexData = new unsigned int[numIndices];
+		int vertiter = 0, indexiter = 0;
+		vertexData[vertiter++] = 0.0f;
+		vertexData[vertiter++] = 0.0f;
+		vertexData[vertiter++] = 1.0f;
+		for (int stack = 1; stack < numStacks; stack++) {
+			for (int seg = 0; seg < numSegments; seg++) {
+				float theta = (float)seg / numSegments * 2 * PI;
+				float phi = PI / 2 - (float)stack / numStacks * PI;
+				vertexData[vertiter++] = cosf(theta)*cosf(phi);
+				vertexData[vertiter++] = sinf(theta)*cosf(phi);
+				vertexData[vertiter++] = sinf(phi);
+			}
+		}
+		vertexData[vertiter++] = 0.0f;
+		vertexData[vertiter++] = 0.0f;
+		vertexData[vertiter++] = -1.0f;
+		for (int i = 0; i <= numSegments; i++)
+			indexData[indexiter++] = i;
+		indexData[indexiter++] = 1;
+		for (int stack = 0; stack < numStacks - 2; stack++) {
+			for (int seg = 1; seg <= numSegments; seg++) {
+				indexData[indexiter++] = stack*numSegments + seg;
+				indexData[indexiter++] = stack*numSegments + seg + numSegments;
+			}
+			indexData[indexiter++] = stack*numSegments + 1;
+			indexData[indexiter++] = stack*numSegments + numSegments + 1;
+		}
+		indexData[indexiter++] = (numStacks - 1)*numSegments + 1;
+		indexData[indexiter++] = (numStacks - 2)*numSegments + 1;
+		for (int i = numSegments; i >= 1; i--)
+			indexData[indexiter++] = (numStacks - 2)*numSegments + i;
+		// Now transfer
+		glGenBuffers(2, (unsigned int*)&handles);
+		//glNamedBufferData(handles.vboHandle, numVerts * 3 * sizeof(float), vertexData, GL_STATIC_DRAW);
+		//glNamedBufferData(handles.indexHandle, numIndices * sizeof(unsigned int), indexData, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, handles.vboHandle);
+		glBufferData(GL_ARRAY_BUFFER, numVerts * 3 * sizeof(float), vertexData, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.indexHandle);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices*sizeof(unsigned int), indexData, GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		glGenVertexArrays(1, &handles.vaoHandle);
+		handles.good = true;
+		glBindVertexArray(handles.vaoHandle);
+		glBindBuffer(GL_ARRAY_BUFFER, handles.vboHandle);
+		glEnableVertexAttribArray(A_POSITION);
+		glVertexAttribPointer(A_POSITION, ATTRIB_SIZES[A_POSITION], GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		delete[] vertexData;
+		delete[] indexData;
+	}
+	// Proceed to draw
+	// Create & transfer a uniform matrix containing the size & location information...
+	glBindVertexArray(handles.vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.indexHandle);
+	glDrawElements(GL_TRIANGLE_FAN, fansize, GL_UNSIGNED_INT, 0);
+	for (int i = 0; i < numStacks - 2; i++)
+		glDrawElements(GL_TRIANGLE_STRIP, stripsize, GL_UNSIGNED_INT, (void*)((i*(stripsize) + fansize)*sizeof(unsigned int)));
+	glDrawElements(GL_TRIANGLE_FAN, fansize, GL_UNSIGNED_INT, (void*)(off3*sizeof(unsigned int)));
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Geometry::drawUnitBox() {
+	static float* vertexData = new float[24]{0,0,0, 1,0,0, 0,1,0, 1,1,0, 0,0,1, 1,0,1, 0,1,1, 1,1,1};
+	static unsigned int* triData = new unsigned int[36]{0,2,1, 1,2,3, 0,1,4, 4,1,5, 0,4,2, 2,4,6, 4,5,6, 6,5,7, 1,3,5, 5,3,7, 3,2,7, 7,2,6};
+	static Geometry box(8, vertexData, 12, triData, { A_POSITION });
+	box.transfer();
+	box.render();
+}
+
+void Geometry::drawUnitCylinder() {
+	static GeometryHandles handles;
+	int resolution = 16;
+	if (!handles.good) {
+		float* vertexData = new float[2 * 3 * resolution];
+		unsigned int* indexData = new unsigned int[4 * resolution + 2];
+		int vertiter = 0, indexiter = 0;
+		for (float z = 1.0f; z > -2.0f; z -= 2.0f) {
+			for (int i = 0; i < resolution; i++) {
+				vertexData[vertiter++] = cosf((float)i / resolution * 2 * PI);
+				vertexData[vertiter++] = sinf((float)i / resolution * 2 * PI);
+				vertexData[vertiter++] = z;
+			}
+		}
+		for (int i = 0; i < resolution; i++)
+			indexData[indexiter++] = i;
+		for (int i = 0; i < resolution; i++) {
+			indexData[indexiter++] = i;
+			indexData[indexiter++] = resolution + i;
+		}
+		indexData[indexiter++] = 0;
+		indexData[indexiter++] = resolution;
+		for (int i = 0; i < resolution; i++)
+			indexData[indexiter++] = 2 * resolution - i - 1;
+
+		glGenBuffers(2, (unsigned int*)&handles);
+		//glNamedBufferData(handles.vboHandle, numVerts * 3 * sizeof(float), vertexData, GL_STATIC_DRAW);
+		//glNamedBufferData(handles.indexHandle, numIndices * sizeof(unsigned int), indexData, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, handles.vboHandle);
+		glBufferData(GL_ARRAY_BUFFER, 2 * 3 * resolution * sizeof(float), vertexData, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.indexHandle);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, (4 * resolution + 2) * sizeof(unsigned int), indexData, GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		glGenVertexArrays(1, &handles.vaoHandle);
+		handles.good = true;
+		glBindVertexArray(handles.vaoHandle);
+		glBindBuffer(GL_ARRAY_BUFFER, handles.vboHandle);
+		glEnableVertexAttribArray(A_POSITION);
+		glVertexAttribPointer(A_POSITION, ATTRIB_SIZES[A_POSITION], GL_FLOAT, GL_FALSE, ATTRIB_SIZES[A_POSITION] * sizeof(float), 0);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		delete[] vertexData;
+	}
+	glBindVertexArray(handles.vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.indexHandle);
+	glDrawElements(GL_TRIANGLE_FAN, resolution, GL_UNSIGNED_INT, 0);
+	//glDrawArrays(GL_POINTS, 0, 2 * resolution);
+	glDrawElements(GL_TRIANGLE_STRIP, 2 * resolution + 2, GL_UNSIGNED_INT, (void*)(resolution*sizeof(unsigned int)));
+	glDrawElements(GL_TRIANGLE_FAN, resolution, GL_UNSIGNED_INT, (unsigned int*)((3 * resolution + 2)*sizeof(unsigned int)));
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Geometry::drawAxes() {
+	static GeometryHandles handles;
+	if (!handles.good) {
+		float* vertexData = new float[36]{ 0,0,0, 1,0,0, 1,0,0, 1,0,0, 0,0,0, 0,1,0, 0,1,0, 0,1,0, 0,0,0, 0,0,1, 0,0,1, 0,0,1 };
+		glGenBuffers(1, &handles.vboHandle);
+		glBindBuffer(GL_ARRAY_BUFFER, handles.vboHandle);
+		glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(float), vertexData, GL_STATIC_DRAW);
+		glBindBuffer(GL_VERTEX_ARRAY, 0);
+
+		glGenVertexArrays(1, &handles.vaoHandle);
+		handles.good = true;
+		glBindVertexArray(handles.vaoHandle);
+		glBindBuffer(GL_VERTEX_ARRAY, handles.vboHandle);
+		glEnableVertexAttribArray(A_POSITION);
+		glEnableVertexAttribArray(A_COLOR0);
+		glVertexAttribPointer(A_POSITION, ATTRIB_SIZES[A_POSITION], GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+		glVertexAttribPointer(A_COLOR0, ATTRIB_SIZES[A_COLOR0], GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(ATTRIB_SIZES[A_POSITION]*sizeof(float)));
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		delete[] vertexData;
+	}
+	glBindVertexArray(handles.vaoHandle);
+	glDrawArrays(GL_LINES, 0, 6);
+	glBindVertexArray(0);
 }

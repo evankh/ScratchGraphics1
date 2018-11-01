@@ -2,6 +2,8 @@
 #define __EKH_SCRATCH_GRAPHICS_1_GEOMETRY__
 
 #include <vector>
+#include <glm/matrix.hpp>
+
 enum ATTRIB_INDEX
 {
 	A_POSITION,		// vertex location, point in space
@@ -47,14 +49,16 @@ public:
 	Geometry();
 	Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
 	Geometry(const char* filename);
-	//Geometry(std::vector<Vertex> vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
 	~Geometry();
 	void transfer() const;
 	void cleanup();
 	void render() const;
-	//void setDisplay(Program* display);
 	static const Geometry* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const Geometry* getUnitQuad() { return &sUnitQuad; };
+	static void drawUnitSphere();
+	static void drawUnitCylinder();
+	static void drawUnitBox();
+	static void drawAxes();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GEOMETRY__

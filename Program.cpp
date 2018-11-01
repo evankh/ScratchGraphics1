@@ -59,7 +59,7 @@ Program::Program(Shader* vs, Shader* gs, Shader* fs) {
 	if (mFS) glDetachShader(mHandle, mFS->mHandle);
 }
 
-// Deprecated
+[[deprecated]]
 Program::Program(char* vsFilepath, char* fsFilepath) {
 	mHandle = glCreateProgram();
 	mVS = new Shader(vsFilepath, GL_VERTEX_SHADER);
@@ -150,10 +150,12 @@ void Program::sendUniform(const char* name, const float* matrix) const {
 
 void Program::sendUniform(const char* name, const int size, const float* value) const {
 	int handle = glGetUniformLocation(mHandle, name);
-	if (handle != -1) glUniform1fv(handle, size, value);
-	bool x = glGetError() == GL_INVALID_VALUE;	// DEBUG: trying to figure out why colors don't work
-	bool y = glGetError() == GL_INVALID_OPERATION;
-	bool z = glGetError() == GL_NONE;
+	if (handle != -1) {
+		if (size == 1) glUniform1fv(handle, 1, value);
+		else if (size == 2) glUniform2fv(handle, 1, value);
+		else if (size == 3) glUniform3fv(handle, 1, value);
+		else if (size == 4) glUniform4fv(handle, 1, value);
+	}
 }
 
 void Program::sendUniform(const char* name, const unsigned int value) const {

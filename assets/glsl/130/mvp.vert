@@ -14,11 +14,10 @@ out vec3 pView;
 uniform mat4 uM;
 uniform mat4 uVP;
 uniform vec3 uCamera;
-uniform vec3 uColor;
 
 void main() {
 	pPosition = uM * vec4(iPosition, 1.0);
-	pColor = uColor;
+	pColor = iColor;
 	pNormal = (uM * vec4(iNormal, 0.0)).xyz;
 	pTexCoord = iTexCoord;
 	pView = uCamera.xyz - pPosition.xyz;

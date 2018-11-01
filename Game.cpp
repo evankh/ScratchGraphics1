@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Bounds.h"
 #include "Geometry.h"
 #include "KeyboardHandler.h"
 #include "Level.h"
@@ -18,7 +19,7 @@ Game::Game() {
 	// ?
 	// I guess this would be the spot for the initialization of everything: Loading assets, starting services, initializing rendering, etc.
 //	mWindow = new Window(800, 600, "Game owns this window");
-	KeyboardHandler::getInstance().registerReceiver('r', this);
+	KeyboardHandler::getInstance().registerReceiver("rb", this);
 	KeyboardHandler::getInstance().registerReceiver(27, this);
 }
 
@@ -331,8 +332,6 @@ void Game::cleanup() {
 	mGeometries.clear();
 	mPrograms.clear();
 	mShaders.clear();
-	//mInputs.clear();
-	//KeyboardHandler::unregisterReceiver(this);
 }
 
 Game::~Game() {
@@ -348,15 +347,32 @@ Game& Game::getInstance() {
 void Game::update(float dt) {
 	mSoundSystem.update();
 	// Collision detection
-	for (auto object : mCurrentLevel->getObjectList()) {
-		if (object.second->floorCollision(0.0f))
-			object.second->handle(Event(CollisionData()));
+	// Yo, I just really want to do this in the least efficient way possible
+	auto objects = mCurrentLevel->getObjectList();
+	// A compelling reason to separate out PhysicsComponents, and possibly Bounds
+	for (auto i = objects.begin(); i != objects.end(); i++) {
+		if (i->second->getBounds()) {
+			for (auto j = i; j != objects.end(); j++) {
+				if (j->second->getBounds()) {
+					if (collides(i->second->getBounds(), j->second->getBounds())) {
+						CollisionData collision;
+						collision.first = i->second->getPhysicsComponent();
+						collision.second = j->second->getPhysicsComponent();
+						i->second->handle(Event(collision));
+						j->second->handle(Event(collision));
+					}
+				}
+			}
+		}
 	}
 	// Object updates
 	for (auto object : mCurrentLevel->getObjectList()) {
 		object.second->update(dt);	// A compelling reason to separate further into Components which can be updated individually
 	}
 }
+
+// Hey look, time to bring this back in again
+#include <glm/gtc/type_ptr.hpp>
 
 void Game::render(float dt) {
 	// A broad sketch of the rendering process follows:
@@ -373,6 +389,31 @@ void Game::render(float dt) {
 	mGameObjectsPost.enableDrawing();
 	for (auto object : mCurrentLevel->getObjectList()) {
 		object.second->render(mCurrentLevel->getCurrentCamera());
+	}
+
+	float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
+	if (mDebugMode) {
+		auto program = mPrograms.get("debug_bbs");
+		program->use();
+		program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
+		for (auto object : mCurrentLevel->getObjectList()) {
+			if (object.second->hasCollision())
+				program->sendUniform("uDebugColor", 4, debug_collision);
+			else
+				program->sendUniform("uDebugColor", 4, debug_nocollision);
+			program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
+			object.second->getBounds()->debugDraw();
+		}
+
+		program = mPrograms.get("debug_axes");
+		program->use();
+		program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
+		program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
+		Geometry::drawAxes();
+		for (auto object : mCurrentLevel->getObjectList()) {
+			program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
+			Geometry::drawAxes();
+		}
 	}
 	mGameObjectsPost.process();
 
@@ -415,8 +456,16 @@ void Game::handle(Event event) {
 		case 'r':
 			reloadAll();
 			break;
+		case 'b':
+			mDebugMode = !mDebugMode;
+			if (mDebugMode)
+				ServiceLocator::getLoggingService().log("======== DEBUG ON ========");
+			else
+				ServiceLocator::getLoggingService().log("======== DEBUG OFF ========");
+			break;
 		case 27:
 			// Pause / unpause
+			// In a comment around here somewhere I have the code snippet to push a menu on the stack
 			break;
 		}
 		break;

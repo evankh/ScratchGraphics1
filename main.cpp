@@ -95,7 +95,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glutMouseFunc(game_mouse_wrapper);
 		glutMotionFunc(game_movement_wrapper);
 #pragma endregion
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
@@ -103,6 +103,8 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_MULTISAMPLE);
+		glEnable(GL_PROGRAM_POINT_SIZE);
+		glPointSize(3.0f);
 		//glEnable(GL_FRAMEBUFFER_SRGB);
 		//Not so sure about this one
 		glActiveTexture(GL_TEXTURE0);

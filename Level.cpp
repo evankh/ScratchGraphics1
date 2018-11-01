@@ -1,4 +1,5 @@
 #include "Level.h"
+#include "Bounds.h"
 #include "Camera.h"
 #include "ServiceLocator.h"
 #include "Source.h"
@@ -27,18 +28,26 @@ Level::Level(const char* filepath) {
 					continue;
 				}
 				// Set up variables and structs to read into
-				char* geomName, *progName, *texName, *inputName, *soundName, *err;
+				char* geomName, *progName, *texName, *inputName, *soundName, *boundsName, *err;
 				struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f }, col{ 0.0f,0.0f,0.0f };
 				float ang = 0.0f, mom = 0.0f;
 				Geometry* geom = NULL;
 				Program* program = NULL;
-				//InputComponent input = NULL;
+				Bounds* bounds = NULL;
 				bool isPlayer = false;	// Weird
 				Texture* texture = NULL;
 				std::vector<std::string> sounds;
 				bool valid = true, hasCol = false;
 				while (!file.extract("\\L", NULL)) {
-					if (file.extract(" geom:\"\\S\"", &geomName)) {
+					if (file.extract(" bounds:\\S ", &boundsName)) {
+						if (strcmp(boundsName, "Sphere") == 0)
+							bounds = new BoundingSphere({ 0.0f,0.0f,0.0f }, 1.0f);
+						else
+							ServiceLocator::getLoggingService().error("Unknown bounding box type", boundsName);
+						delete[] boundsName;
+						file.putBack(' ');
+					}
+					else if (file.extract(" geom:\"\\S\"", &geomName)) {
 						// Check if the geometry exists in the geometry library
 						// If so, save a reference to it to pass to the GameObject constructor
 						// If not, raise an error and break, set a bool so we can skip the construction of the object, and eat the rest of the line
@@ -103,7 +112,7 @@ Level::Level(const char* filepath) {
 						else {
 							ServiceLocator::getLoggingService().error("Input component not found", inputName);
 							delete inputName;
-							valid = false;	// Actually it is probably fine to be valid as long as an error mesage is printed
+							//valid = false;	// Actually it is probably fine to be valid as long as an error mesage is printed
 							file.extract("\\?S\\L", NULL);
 							break;
 						}
@@ -131,7 +140,7 @@ Level::Level(const char* filepath) {
 					// Construction of the actual object
 					// It actually looks safe for any of the components to be NULL so the validity checking may not be necessary
 					// I'm really not sure about the whole PhysicsComponent Library concept, it seems perfectly plausible to generate them here on the fly, and wouldn't allow multiple objects to be pointing to the same PhysicsComponent
-					PhysicsComponent* physics = new PhysicsComponent({ vel.x,vel.y,vel.z }, { acc.x,acc.y,acc.z }, { axis.x, axis.y, axis.z }, mom);
+					PhysicsComponent* physics = new PhysicsComponent(bounds, { vel.x,vel.y,vel.z }, { acc.x,acc.y,acc.z }, { axis.x, axis.y, axis.z }, mom);
 					physics->scale({ scl.x,scl.y,scl.z });
 					physics->rotate({ rot.x,rot.y,rot.z }, ang);
 					physics->translate({ pos.x,pos.y,pos.z });

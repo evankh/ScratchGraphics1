@@ -23,7 +23,11 @@ PhysicsComponent::PhysicsComponent(glm::vec3 axis, float aVel) :PhysicsComponent
 	mAngularVelocity = aVel;
 }
 
-PhysicsComponent::PhysicsComponent(glm::vec3 vel, glm::vec3 acc, glm::vec3 axis, float aVel) :PhysicsComponent() {
+PhysicsComponent::PhysicsComponent(Bounds* bounds, glm::vec3 vel, glm::vec3 acc, glm::vec3 axis, float aVel) :PhysicsComponent() {
+	if (bounds) {
+		delete mBounds;
+		mBounds = bounds;
+	}
 	mVelocity = vel;
 	mAcceleration = acc;
 	mAxis = axis;

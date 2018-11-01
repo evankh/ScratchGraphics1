@@ -35,7 +35,7 @@ struct SoundData {
 };
 
 struct CollisionData {
-	float floorheight;
+	class PhysicsComponent* first, *second;
 };
 
 struct Event {
