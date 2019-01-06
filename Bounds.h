@@ -81,6 +81,13 @@ public:
 	bool collides(ArbitraryBoundingBox*);
 	virtual void debugDraw();
 	AABB() :Bounds(BoundsType::AA_BOX) {};
+	void update(float vert[3]);
+	void setMinX(float x) { mMin.x = x; };
+	void setMinY(float y) { mMin.y = y; };
+	void setMinZ(float z) { mMin.z = z; };
+	void setMaxX(float x) { mMin.x = x; };
+	void setMaxY(float y) { mMin.y = y; };
+	void setMaxZ(float z) { mMin.z = z; };
 };
 
 class ArbitraryBoundingCylinder :public Bounds {

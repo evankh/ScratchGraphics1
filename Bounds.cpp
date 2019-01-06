@@ -10,7 +10,7 @@ void AABoundingCylinder::debugDraw() {
 }
 
 void AABB::debugDraw() {
-	Geometry::drawUnitBox();//mMin, mMax);
+	Geometry::drawBox(mMin, mMax);
 }
 
 void ArbitraryBoundingCylinder::debugDraw() {
@@ -19,6 +19,21 @@ void ArbitraryBoundingCylinder::debugDraw() {
 
 void ArbitraryBoundingBox::debugDraw() {
 	Geometry::drawUnitBox();//mBox.mMin, mBox.mMax, mTransform);
+}
+
+void AABB::update(float vert[3]) {
+	if (vert[0] < mMin.x)
+		mMin.x = vert[0];
+	if (vert[0] > mMax.x)
+		mMax.x = vert[0];
+	if (vert[1] < mMin.y)
+		mMin.y = vert[1];
+	if (vert[1] > mMax.y)
+		mMax.y = vert[1];
+	if (vert[2] < mMin.z)
+		mMin.z = vert[2];
+	if (vert[2] > mMax.z)
+		mMax.z = vert[2];
 }
 
 bool collides(Bounds* a, Bounds* b) {

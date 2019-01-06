@@ -1,4 +1,5 @@
 #include "Geometry.h"
+#include "Bounds.h"
 #include "ServiceLocator.h"
 #include "GL/glew.h"
 #include <cassert>
@@ -30,7 +31,6 @@ unsigned int* Geometry::sQuadTris = new unsigned int[6] { 0,1,2, 2,1,3 };
 Geometry Geometry::sScreenSpaceQuad = Geometry(4, screenQuadData, 2, sQuadTris, { A_POSITION,A_TEXCOORD0 });
 Geometry Geometry::sUnitQuad = Geometry(4, unitQuadData, 2, sQuadTris, { A_TEXCOORD0 });
 
-[[deprecated("probably")]]
 Geometry::Geometry() {
 	mNumVerts = 0;
 	mVertexData = NULL;
@@ -38,9 +38,9 @@ Geometry::Geometry() {
 	mTriData = NULL;
 	mProperties = {};
 	mHandles.good = false;
+	mBoundingBox = NULL;
 }
 
-[[deprecated("probably")]]
 Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) {
 	mNumVerts = numverts;
 	mVertexData = vertexData;
@@ -50,6 +50,7 @@ Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtri
 	mHandles.good = false;
 	for (auto attrib : mProperties)
 		mVertexSize += ATTRIB_SIZES[(int)attrib];
+	mBoundingBox = NULL;
 }
 
 Geometry::Geometry(const char* filename) :Geometry() {
@@ -73,12 +74,16 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		file.restart();
 		int positer = 0, normiter = 0, texiter = 0, faceiter = 0;
 		char* err;
+		mBoundingBox = new AABB();
 		V3* positions = new V3[numpos];
 		V3* normals = new V3[numnorm];
 		V2* texcoords = new V2[numtex];
 		Face* faces = new Face[numface];
 		while (file.good()) {
-			if (file.extract("v \\F \\F \\F\\L", &positions[positer])) positer++;
+			if (file.extract("v \\F \\F \\F\\L", &positions[positer])) {
+				mBoundingBox->update((float*)&positions[positer]);
+				positer++;
+			}
 			else if (file.extract("vn \\F \\F \\F\\L", &normals[normiter])) normiter++;
 			else if (file.extract("vt \\F \\F\\L", &texcoords[texiter])) texiter++;
 			else if (file.extract("#\\S\\L", NULL));
@@ -145,11 +150,13 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		file.close();
 	} else {
 		ServiceLocator::getLoggingService().badFileError(filename);
+		mBoundingBox = NULL;
 	}
 }
 
 Geometry::~Geometry() {
 	cleanup();
+	if (mBoundingBox) delete mBoundingBox;
 }
 
 void Geometry::transfer() const {
@@ -288,6 +295,16 @@ void Geometry::drawUnitSphere() {
 	glDrawElements(GL_TRIANGLE_FAN, fansize, GL_UNSIGNED_INT, (void*)(off3*sizeof(unsigned int)));
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Geometry::drawBox(glm::vec3 min, glm::vec3 max) {
+	float* vertexData = new float[24]{ min.x,min.y,min.z, max.x,min.y,min.z, min.x,max.y,min.z, max.x,max.y,min.z,
+		min.x,min.y,max.z, max.x,min.y,max.z, min.x,max.y,max.z, max.x,max.y,max.z };
+	unsigned int* triData = new unsigned int[36]{ 0,2,1, 1,2,3, 0,1,4, 4,1,5, 0,4,2, 2,4,6, 4,5,6, 6,5,7, 1,3,5, 5,3,7, 3,2,7, 7,2,6 };
+	Geometry box(8, vertexData, 12, triData, { A_POSITION });
+	box.transfer();
+	box.render();
+	box.cleanup();
 }
 
 void Geometry::drawUnitBox() {

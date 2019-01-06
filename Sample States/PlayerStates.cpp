@@ -9,6 +9,25 @@ PlayerState* PlayerState::getEntry(GameObject* owner) {
 }
 
 PlayerState* PlayerOnFloor::handleEvent(Event event) {
+	if (event.mType == EventType::COMMAND) {
+		// Probably will only work for joystick input, since W & S aren't mutually exclusive like up/down positions of the stick, nor automatically restting
+		switch (event.mData.command.command) {
+		case Command::MOVE_FORWARD:
+			dy = event.mData.command.factor;
+			break;
+		case Command::MOVE_LEFT:
+			dx = -event.mData.command.factor;
+			break;
+		case Command::MOVE_BACKWARD:
+			dy = -event.mData.command.factor;
+			break;
+		case Command::MOVE_RIGHT:
+			dx = event.mData.command.factor;
+			break;
+		case Command::JUMP:
+			return new PlayerJumping(dx, dy);
+		}
+	}
 	if (event.mType == EventType::KEY_PRESSED) {
 		switch (event.mData.keyboard.key) {
 		case 'w':
@@ -18,13 +37,11 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 			dx -= 1.0f;
 			break;
 		case 's':
-			dy -= 1.0f;
-			break;
-		case 'd':
 			dx += 1.0f;
 			break;
-		case ' ':
-			return new PlayerJumping(dx, dy);
+		case 'd':
+			dy -= 1.0f;
+			break;
 		}
 	}
 	if (event.mType == EventType::KEY_RELEASED) {

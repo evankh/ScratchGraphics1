@@ -12,8 +12,9 @@
 #include "Texture.h"
 #include "Window.h"
 
+#include <thread>	// An experiment
+
 #include "GL\glew.h"	// I literally just need this for GL_VERTEX_SHADER, which is a bit annoying
-#include "glm\gtc\matrix_transform.hpp"	// And this one only for the mSceneCamera transforms, which should be done elsewhere
 
 Game::Game() {
 	// ?
@@ -37,10 +38,6 @@ void Game::load() {
 		mWindow->resize(window.w, window.h);	// Not sure why this doesn't work on the first load
 		mWindow->rename(window.title);
 		delete window.title;
-		// Loading InputComponents - I think this will not last long, I will switch over to function pointers instead ( (void)update(State*,Event) or similar )
-		//mInputs.add("player1", new KeyboardInputComponent(4,"wasd"));
-		//mInputs.add("player2", new KeyboardInputComponent(4, "ijkl"));
-		//mInputs.add("mouse", new KeyboardInputComponent(2, { true,true,false,false,false }));	// Need a different way to do that
 		// Loading asset directories
 		char* workingDirectory;
 		while (index.good()) {
@@ -304,6 +301,9 @@ void Game::load() {
 				workingIndex.close();
 				delete workingDirectory;
 			}
+			else if (index.extract("bindings:\"\\S\"\\L", &workingDirectory)) {
+				// One file, or an index with a bunch of profiles?
+			}
 			else if (index.extract("\\S\\L", &workingDirectory)) {
 				ServiceLocator::getLoggingService().error("Unexpected line in base index file", workingDirectory);
 				delete workingDirectory;
@@ -324,11 +324,11 @@ void Game::cleanup() {
 	mKernels.clear();
 	mSounds.clear();
 	mLevels.clear();
-	while (mCurrentMenu) {
+	/*while (mCurrentMenu) {
 		auto top = mCurrentMenu;
 		mCurrentMenu = top->mParent;
 		delete top;
-	}
+	}*/
 	mGeometries.clear();
 	mPrograms.clear();
 	mShaders.clear();
@@ -348,26 +348,30 @@ void Game::update(float dt) {
 	mSoundSystem.update();
 	// Collision detection
 	// Yo, I just really want to do this in the least efficient way possible
-	auto objects = mCurrentLevel->getObjectList();
-	// A compelling reason to separate out PhysicsComponents, and possibly Bounds
-	for (auto i = objects.begin(); i != objects.end(); i++) {
-		if (i->second->getBounds()) {
-			for (auto j = i; j != objects.end(); j++) {
-				if (j->second->getBounds()) {
-					if (collides(i->second->getBounds(), j->second->getBounds())) {
-						CollisionData collision;
-						collision.first = i->second->getPhysicsComponent();
-						collision.second = j->second->getPhysicsComponent();
-						i->second->handle(Event(collision));
-						j->second->handle(Event(collision));
+	if (mCurrentLevel) {
+		auto objects = mCurrentLevel->getObjectList();
+		// A compelling reason to separate out PhysicsComponents, and possibly Bounds
+		for (auto i = objects.begin(); i != objects.end(); i++) {
+			if (i->second->getBounds()) {
+				for (auto j = i; j != objects.end(); j++) {
+					if (j->second->getBounds()) {
+						if (collides(i->second->getBounds(), j->second->getBounds())) {
+							CollisionData collision;
+							collision.first = i->second->getPhysicsComponent();
+							collision.second = j->second->getPhysicsComponent();
+							i->second->handle(Event(collision));
+							j->second->handle(Event(collision));
+						}
 					}
 				}
 			}
 		}
-	}
-	// Object updates
-	for (auto object : mCurrentLevel->getObjectList()) {
-		object.second->update(dt);	// A compelling reason to separate further into Components which can be updated individually
+		if (!mPaused) {
+			// Object updates
+			for (auto object : mCurrentLevel->getObjectList()) {
+				object.second->update(dt);	// A compelling reason to separate further into Components which can be updated individually
+			}
+		}
 	}
 }
 
@@ -387,32 +391,33 @@ void Game::render(float dt) {
 
 	// Set the active framebuffer to an intermediate one
 	mGameObjectsPost.enableDrawing();
-	for (auto object : mCurrentLevel->getObjectList()) {
-		object.second->render(mCurrentLevel->getCurrentCamera());
-	}
+	if (mCurrentLevel) {
+		for (auto object : mCurrentLevel->getObjectList())
+			object.second->render(mCurrentLevel->getCurrentCamera());
 
-	float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
-	if (mDebugMode) {
-		auto program = mPrograms.get("debug_bbs");
-		program->use();
-		program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
-		for (auto object : mCurrentLevel->getObjectList()) {
-			if (object.second->hasCollision())
-				program->sendUniform("uDebugColor", 4, debug_collision);
-			else
-				program->sendUniform("uDebugColor", 4, debug_nocollision);
-			program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
-			object.second->getBounds()->debugDraw();
-		}
+		float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
+		if (mDebugMode) {
+			auto program = mPrograms.get("debug_bbs");
+			program->use();
+			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
+			for (auto object : mCurrentLevel->getObjectList()) {
+				if (object.second->hasCollision())
+					program->sendUniform("uDebugColor", 4, debug_collision);
+				else
+					program->sendUniform("uDebugColor", 4, debug_nocollision);
+				program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
+				object.second->debugDraw();
+			}
 
-		program = mPrograms.get("debug_axes");
-		program->use();
-		program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
-		program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
-		Geometry::drawAxes();
-		for (auto object : mCurrentLevel->getObjectList()) {
-			program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
+			program = mPrograms.get("debug_axes");
+			program->use();
+			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
+			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
 			Geometry::drawAxes();
+			for (auto object : mCurrentLevel->getObjectList()) {
+				program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
+				Geometry::drawAxes();
+			}
 		}
 	}
 	mGameObjectsPost.process();
@@ -421,7 +426,7 @@ void Game::render(float dt) {
 		mMenuPost.enableDrawing();
 	else
 		mWindow->enableDrawing();
-	mFilters.get("none")->use();
+	if (mFilters.get("none")) mFilters.get("none")->use();
 	mGameObjectsPost.draw();
 
 	if (mCurrentMenu) {
@@ -436,8 +441,9 @@ void Game::render(float dt) {
 void Game::resize(unsigned int width, unsigned int height) {
 	// Presumably OpenGL won't let me resize it to something impossible, so there's no need to check the dimensions
 	mWindow->resize(width, height);
-	for (auto a : mCurrentLevel->getCameraList())
-		a.second->resize(width, height);
+	if (mCurrentLevel)
+		for (auto a : mCurrentLevel->getCameraList())
+			a.second->resize(width, height);
 	mGameObjectsPost.resize(width, height);
 	mMenuPost.resize(width, height);
 	if (mCurrentMenu) mCurrentMenu->layout(width, height);
@@ -453,9 +459,13 @@ void Game::handle(Event event) {
 	switch (event.mType) {
 	case EventType::KEY_PRESSED:
 		switch (event.mData.keyboard.key) {
-		case 'r':
-			reloadAll();
+		case 'r': {
+			mPaused = true;
+			auto loadingthread = std::thread(&Game::reloadAll, this);	// Well that doesn't work for shit
+			//reloadAll();
+			mPaused = false;
 			break;
+		}
 		case 'b':
 			mDebugMode = !mDebugMode;
 			if (mDebugMode)

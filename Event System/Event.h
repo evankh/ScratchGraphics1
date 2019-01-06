@@ -11,7 +11,8 @@ enum class EventType {
 	BUTTON_RELEASED,
 	BUTTON_HELD,
 	PLAY_SOUND_REQUEST,
-	COLLISION
+	COLLISION,
+	COMMAND
 };
 
 enum MouseButton;
@@ -38,6 +39,20 @@ struct CollisionData {
 	class PhysicsComponent* first, *second;
 };
 
+enum class Command {
+	NONE,
+	MOVE_FORWARD,
+	MOVE_BACKWARD,
+	MOVE_LEFT,
+	MOVE_RIGHT,
+	JUMP
+};
+
+struct CommandData {
+	Command command;
+	float factor;	// We'll see what data they actually need
+};
+
 struct Event {
 	EventType mType;
 	union Data {
@@ -46,12 +61,14 @@ struct Event {
 		MouseData mouse;
 		SoundData sound;
 		CollisionData collision;
+		CommandData command;
 	} mData;
 	Event() :mType(EventType::NONE) { mData.empty = EmptyData(); };
 	Event(EventType type, KeyboardData data) :mType(type) { mData.keyboard = data; };
 	Event(EventType type, MouseData data) :mType(type) { mData.mouse = data; };
 	Event(SoundData data) :mType(EventType::PLAY_SOUND_REQUEST) { mData.sound = data; };
 	Event(CollisionData data) :mType(EventType::COLLISION) { mData.collision = data; };
+	Event(CommandData data) :mType(EventType::COMMAND) { mData.command = data; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_EVENT__

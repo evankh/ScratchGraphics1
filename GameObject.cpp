@@ -73,6 +73,11 @@ void GameObject::render(Camera* c) {
 	if (mGeometryComponent) mGeometryComponent->render();
 }
 
+void GameObject::debugDraw() {
+	if (mPhysicsComponent->getBounds()) mPhysicsComponent->getBounds()->debugDraw();
+	else if (mGeometryComponent) mGeometryComponent->getBoundingBox()->debugDraw();
+}
+
 void GameObject::handle(const Event e) {
 	mEventQueue.push(e);
 }

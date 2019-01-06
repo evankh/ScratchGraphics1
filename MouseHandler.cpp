@@ -2,7 +2,7 @@
 
 MouseHandler& MouseHandler::getInstance() {
 	static MouseHandler* sInstance = new MouseHandler;
-	if (!sInstance->sRegisteredReceivers) sInstance->sRegisteredReceivers = new ReceiverNode*[EKH_MOUSE_NUM_BUTTONS] {NULL};
+	if (!sInstance->mRegisteredReceivers) sInstance->mRegisteredReceivers = new ReceiverNode*[EKH_MOUSE_NUM_BUTTONS] {NULL};
 	return *sInstance;
 }
 
@@ -12,25 +12,26 @@ void MouseHandler::registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Rece
 	if (receiver)	// Dunno why you would try registering NULL as a receiver, but might as well check it
 		for (int i = 0; i < EKH_MOUSE_NUM_BUTTONS; i++)
 			if (interested[i])
-				sRegisteredReceivers[i] = new ReceiverNode{ receiver, sRegisteredReceivers[i] };
+				mRegisteredReceivers[i] = new ReceiverNode{ receiver, mRegisteredReceivers[i] };
 }
 
 void MouseHandler::registerReceiver(MouseButton button, Receiver* receiver) {
 	if (receiver)
-		sRegisteredReceivers[button] = new ReceiverNode{ receiver, sRegisteredReceivers[button] };
+		mRegisteredReceivers[button] = new ReceiverNode{ receiver, mRegisteredReceivers[button] };
 }
 
 void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int mouse_y) {
-	sButtonStatus[button] = (edge == 0);
+	mButtonStatus[button] = (edge == 0);
 	MouseData data;
 	data.button = button;
 	data.edge = edge;
 	data.mouse_x = mouse_x;
 	data.mouse_y = mouse_y;
-	sEvents.push(Event(sButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, data));
+	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, data));
+	sEvents.push(Event(mButtonBindings[button]));
 }
 
 void MouseHandler::handleMove(int mouse_x, int mouse_y) {
-	sMousePosition[0] = mouse_x;
-	sMousePosition[1] = mouse_y;
+	mMousePosition[0] = mouse_x;
+	mMousePosition[1] = mouse_y;
 }

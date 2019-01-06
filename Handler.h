@@ -8,7 +8,7 @@
 class Handler {
 protected:
 	EventQueue sEvents;
-	ReceiverNode** sRegisteredReceivers;
+	ReceiverNode** mRegisteredReceivers;
 	virtual int getIndexFrom(Event event) = 0;
 	virtual int getNumReceivers() = 0;
 public:

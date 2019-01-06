@@ -1,9 +1,6 @@
 #version 130
 
-in vec4 pPosition;
-in vec3 pColor;
 in vec3 pNormal;
-in vec2 pTexCoord;
 
 out vec4 oFragColor;
 

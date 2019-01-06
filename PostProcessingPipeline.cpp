@@ -47,19 +47,19 @@ void PostProcessingPipeline::process() {
 
 void PostProcessingPipeline::draw() {
 	// Set the active program to an ortho one
-	mOutputFB->draw();
+	if (mOutputFB) mOutputFB->draw();
 }
 
 void PostProcessingPipeline::resize(unsigned int width, unsigned int height) {
 	mWindowWidth = width;
 	mWindowHeight = height;
-	mInputFB->resize(mWindowWidth, mWindowHeight);
+	if (mInputFB) mInputFB->resize(mWindowWidth, mWindowHeight);
 	for (auto buffer : mProcessingStages)
 		buffer.target->resize(mWindowWidth, mWindowHeight);
 }
 
 void PostProcessingPipeline::enableDrawing() {
-	mInputFB->setActive();
+	if (mInputFB) mInputFB->setActive();
 }
 
 void PostProcessingPipeline::clear() {

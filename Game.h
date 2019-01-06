@@ -7,6 +7,7 @@ class Geometry;
 #include "KernelManager.h"
 class Level;
 class Menu;
+class RootElement;
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
 class Program;
@@ -40,6 +41,7 @@ private:
 	KernelManager mKernels;
 	//NamedContainer<InputComponent> mInputs = NamedContainer<InputComponent>(NULL);
 	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
+	NamedContainer<RootElement*> mMenus = NamedContainer<RootElement*>(NULL);
 	// Actual game information;
 	Window* mWindow;
 	Level* mCurrentLevel;
@@ -50,7 +52,7 @@ private:
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
 	const std::string mAssetBasePath = "assets/";
 	const std::string mIndexFilename = "index.txt";
-	bool mDebugMode = false;
+	bool mDebugMode = false, mPaused = false;
 public:
 	static Game& getInstance();
 	void init();
@@ -61,6 +63,7 @@ public:
 	void resize(unsigned int width, unsigned int height);
 	void reloadAll();
 	void setGLVersion(unsigned int GLVersion) { mShaders.setGLVersion(GLVersion); };
+	//bool isPlaying() const { return mPaused == false; };
 	virtual void handle(const Event event);
 };
 

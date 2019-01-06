@@ -1,6 +1,8 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_GEOMETRY__
 #define __EKH_SCRATCH_GRAPHICS_1_GEOMETRY__
 
+class AABB;
+
 #include <vector>
 #include <glm/matrix.hpp>
 
@@ -45,18 +47,21 @@ private:
 	std::vector<ATTRIB_INDEX> mProperties;
 	unsigned int mVertexSize = 0;
 	mutable GeometryHandles mHandles;	// That's not cheating, is it? It makes sense that external code doesn't care whether the Geometry's been transferred or not, right?
+	AABB* mBoundingBox;
 public:
-	Geometry();
-	Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
+	Geometry() [[deprecated("probably")]];
+	Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) [[deprecated("probably")]];
 	Geometry(const char* filename);
 	~Geometry();
 	void transfer() const;
 	void cleanup();
 	void render() const;
+	AABB* getBoundingBox() const { return mBoundingBox; };
 	static const Geometry* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const Geometry* getUnitQuad() { return &sUnitQuad; };
 	static void drawUnitSphere();
 	static void drawUnitCylinder();
+	static void drawBox(glm::vec3 min, glm::vec3 max);
 	static void drawUnitBox();
 	static void drawAxes();
 };

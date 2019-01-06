@@ -9,7 +9,6 @@ PerspCamera::PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned
 	mZMin = 0.01f;
 	mZMax = 100.0f;
 	mProjectionMatrix = glm::perspective(mFOV, getAspectRatio(), mZMin, mZMax);
-	//mProjectionMatrix = glm::translate(mProjectionMatrix, glm::vec3(3.0, 0.0, 0.0));
 	glm::mat4 imm = mPhysicsComponent->getInverseModelMatrix();
 	mViewProjectionMatrix = mProjectionMatrix * imm;
 }
@@ -18,7 +17,7 @@ OrthoCamera::OrthoCamera(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::ortho(0.0f, (float)width, (float)height, 0.0f);
-	mViewProjectionMatrix = mProjectionMatrix*glm::inverse(glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, 1.0f)));	// I think?
+	mViewProjectionMatrix = mProjectionMatrix;
 }
 
 PerspCamera::~PerspCamera() {
@@ -29,7 +28,6 @@ void PerspCamera::resize(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::perspective(mFOV, getAspectRatio(), mZMin, mZMax);
-	mProjectionMatrix = glm::translate(mProjectionMatrix, glm::vec3(0.0, 0.0, 1.0));
 	glm::mat4 imm = mPhysicsComponent->getInverseModelMatrix();
 	mViewProjectionMatrix = mProjectionMatrix * imm;
 }
@@ -41,6 +39,6 @@ void OrthoCamera::resize(unsigned int width, unsigned int height) {
 	mViewProjectionMatrix = mProjectionMatrix;
 }
 
-glm::mat4 & Camera::getViewProjectionMatrix() {
+glm::mat4& Camera::getViewProjectionMatrix() {
 	return mViewProjectionMatrix;
 }
