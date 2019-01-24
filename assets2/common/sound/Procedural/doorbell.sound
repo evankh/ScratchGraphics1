@@ -1,0 +1,6 @@
+Point time:0.0 note:C#4
+Point time:0.5 note:A4
+Point time:1.0 note:A4
+
+Sweep Constant Sine 0 1
+Sweep Constant Sine 1 2

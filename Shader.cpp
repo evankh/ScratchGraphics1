@@ -44,7 +44,7 @@ Shader::Shader(std::string filepath, unsigned int type) {
 		in.read(allText, count);
 		in.close();
 		allText[count - 1] = '\0';*/
-	FileService& file = ServiceLocator::getFileService(mFilepath);
+	FileService file(mFilepath);
 	if (file.good()) {
 		std::string allText = file.getAll();
 		const char* paininmyass = allText.data();
@@ -69,9 +69,8 @@ Shader::Shader(std::string filepath, unsigned int type) {
 		}
 	}
 	else {
-		ServiceLocator::getLoggingService().badFileError(filepath);
+		throw std::exception(filepath.data());
 	}
-	file.close();
 }
 
 Shader::~Shader() {

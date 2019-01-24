@@ -4,6 +4,7 @@
 #include "KeyboardHandler.h"
 #include "Level.h"
 #include "UI/Menu.h"
+#include "UI/UIElement.h"
 #include "Program.h"
 #include "ServiceLocator.h"
 #include "Shader.h"
@@ -29,312 +30,135 @@ void Game::init() {
 }
 
 void Game::load() {
-	// Load assets from the folders & index files
-	FileService& index = ServiceLocator::getFileService(mAssetBasePath + mIndexFilename);
-	if (index.good()) {
-		// Generic game data
-		struct { char* title; int w, h; } window;
-		index.extract("\\S\\L\\I \\I\\L", &window);
-		mWindow->resize(window.w, window.h);	// Not sure why this doesn't work on the first load
-		mWindow->rename(window.title);
-		delete window.title;
-		// Loading asset directories
-		char* workingDirectory;
-		while (index.good()) {
-			if (index.extract("//\\S\\L", NULL));
-			else if (index.extract("geometry:\"\\S\"\\L", &workingDirectory)) {
-				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
-				if (workingIndex.good()) {
-					// Extract the geometry data
-					while (workingIndex.good()) {
-						struct { char* name, *filepath; } geometry;
-						if (workingIndex.extract("//\\S\\L", NULL));
-						else if (workingIndex.extract("\"\\S\":\"\\S\"\\L", &geometry)) {
-							Geometry* geom = new Geometry((mAssetBasePath + workingDirectory + geometry.filepath).data());
-							mGeometries.add(geometry.name, geom);
-							//geom->transfer();	// Apparently geometry gets transferred when it's used by an object, so no need to do it separately!
-							delete geometry.name;
-							delete geometry.filepath;
-						}
-						else if (workingIndex.extract("\\S\\L", &geometry.name)) {
-							ServiceLocator::getLoggingService().error("Unexpected line in geometry index file", geometry.name);
-							delete geometry.name;
-						}
-					}
+	// Load certain very important objects
+	// Load everything else from file
+	FileService baseIndex(mAssetBasePath + mIndexFilename);
+	if (!baseIndex.good()) throw "Asset file could not be opened.";
+	struct { char *name, *path; } levelData;
+	struct { int w, h; } resolution;
+	char* commonFolder;
+	while (baseIndex.good()) {
+		if (baseIndex.extract("//`S`L", NULL));	// Comment
+		else if (baseIndex.extract("Level \"`S\" \"`S\"`L", &levelData)) {
+			mLevelDirectory.add(levelData.name, levelData.path);
+			delete levelData.name;
+			delete levelData.path;
+		}
+		else if (baseIndex.extract("start: ", NULL)) {
+			if (baseIndex.extract("Level \"`S\"`L", &levelData.name)) {
+				std::string levelPath;
+				try {
+					levelPath = mLevelDirectory.get(levelData.name);
 				}
-				else {
-					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
+				catch (std::exception) {
+					throw std::exception((std::string("Starting level has not been defined: ") + levelData.name + mIndexFilename).data());
 				}
-				workingIndex.close();
-				delete workingDirectory;
+				try {
+					mCurrentLevel = loadLevel(mAssetBasePath + levelPath);
+				}
+				catch (std::exception e) {
+					ServiceLocator::getLoggingService().error("Starting level", e.what());
+					throw e;
+				}
 			}
-			else if (index.extract("shaders:\"\\S\"\\L", &workingDirectory)) {
-				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
-				if (workingIndex.good()) {
-					// Extract the shader data
-					while (workingIndex.good()) {
-						char* shaderName;
-						unsigned int type;
-						struct { char* name, *vs, *fs, *gs; } programData;
-						if (workingIndex.extract("//\\S\\L", NULL)) continue;
-						else if (workingIndex.extract("Vertex \"\\S\"", &shaderName))
-							type = GL_VERTEX_SHADER;
-						else if (workingIndex.extract("Fragment \"\\S\"", &shaderName))
-							type = GL_FRAGMENT_SHADER;
-						else if (workingIndex.extract("Geometry \"\\S\"", &shaderName))
-							type = GL_GEOMETRY_SHADER;
-						else if (workingIndex.extract("Program \"\\S\" Vertex:\"\\S\" Fragment:\"\\S\"", &programData)) {
-							Program* program = new Program;
-							program->attach(mShaders.get(programData.vs), GL_VERTEX_SHADER);
-							program->attach(mShaders.get(programData.fs), GL_FRAGMENT_SHADER);
-							if (workingIndex.extract(" Geometry:\"\\S\"", &programData.gs)) {
-								program->attach(mShaders.get(programData.gs), GL_GEOMETRY_SHADER);
-								delete programData.gs;
-							}
-							program->link();
-							program->validate();
-							program->detachAll();
-							mPrograms.add(programData.name, program);
-							delete programData.name;
-							delete programData.vs;
-							delete programData.fs;
-							continue;
-						}
-						else {
-							if (workingIndex.extract("\\?S\\L", &shaderName)) {
-								if (shaderName) {
-									ServiceLocator::getLoggingService().error("Unexpected character in index file", shaderName);
-									delete shaderName;
-								}
-								continue;
-							}
-							else {	// File is empty
-								break;
-							}
-						}
-						// Extract and load all versions
-						struct { int version; char* filepath; } versionedFile;
-						while (workingIndex.extract(" \\I:\"\\S\"", &versionedFile)) {
-							mShaders.add(shaderName, versionedFile.version, new Shader(mAssetBasePath + workingDirectory + versionedFile.filepath, type));
-							delete versionedFile.filepath;
-						}
-						delete shaderName;
-						// Handle the uniforms I guess
-						if (!workingIndex.extract("\\L", NULL)) {
-							workingIndex.extract("\\S\\L", &shaderName);
-							ServiceLocator::getLoggingService().error("Found extra data at the end of the line", shaderName);
-							delete shaderName;
-						}
-					}
+			else if (baseIndex.extract("Menu \"`S\"`L", &levelData.name)) {
+				try {
+					mCurrentMenu = new Menu(NULL, mCommonLibraries.menus.get(levelData.name));
+					delete levelData.name;
 				}
-				else {
-					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
+				catch (std::exception) {
+					throw std::exception((std::string("Starting menu has not been defined: ") + levelData.name).data());
 				}
-				workingIndex.close();
-				delete workingDirectory;
 			}
-			else if (index.extract("post:\"\\S\"\\L", &workingDirectory)) {
-				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
-				mGameObjectsPost.init(mWindow->getWidth(), mWindow->getHeight());
-				mMenuPost.init(mWindow->getWidth(), mWindow->getHeight());
-				if (workingIndex.good()) {
-					while (workingIndex.good()) {
-						// Extract the postprocessing data
-						struct { char* name; int samples; char* path; } shaderData;
-						struct { char* name; Kernel kernel; } kernelData;
-						struct { char* name, *sampler, *processor, *kernel; } filterData;
-						if (workingIndex.extract("//\\S\\L", NULL));
-						else if (workingIndex.extract("Sampler \"\\S\" \\I \"\\S\"\\L", &shaderData)) {
-							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
-							mPostShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_VERTEX_SHADER));
-							delete shaderData.name;
-							delete shaderData.path;
-						}
-						else if (workingIndex.extract("Processor \"\\S\" \\I \"\\S\"\\L", &shaderData)) {
-							// Need a separate PostProcessingManager to hold these and pull out the ones with the right number of samples, but they can go in the regular shader manager for now
-							mPostShaders.add(shaderData.name, shaderData.samples, new Shader(mAssetBasePath + workingDirectory + shaderData.path, GL_FRAGMENT_SHADER));
-							delete shaderData.name;
-							delete shaderData.path;
-						}
-						else if (workingIndex.extract("Kernel \"\\S\" \\I", &kernelData)) {
-							if (workingIndex.extract(" [", NULL)) {
-								kernelData.kernel.weights = new float[kernelData.kernel.samples];
-								// TODO: Checking the number of samples (don't need to store it, can use a while loop & a counter)
-								for (int i = 0; i < kernelData.kernel.samples - 1; i++)
-									workingIndex.extract("\\F,", &kernelData.kernel.weights[i]);
-								workingIndex.extract("\\F]\\L", &kernelData.kernel.weights[kernelData.kernel.samples - 1]);
-								mKernels.add(kernelData.name, kernelData.kernel);
-							}
-							else {
-								char* err;
-								workingIndex.extract("\\S\\L", &err);
-								ServiceLocator::getLoggingService().error("Unexpected characters in kernel definition", err);
-								delete err;
-							}
-							delete kernelData.name;
-						}
-						else if (workingIndex.extract("Filter \"\\S\" Sampler:\"\\S\" Processor:\"\\S\"", &filterData)) {
-							Shader* sampler = mPostShaders.get(filterData.sampler);
-							Shader* processor = mPostShaders.get(filterData.processor);
-							if (sampler && processor) {
-								Program* program = new Program(sampler, processor);
-								if (workingIndex.extract(" Kernel:\"\\S\"", &filterData.kernel)) {
-									Kernel kernel = mKernels.get(filterData.kernel);
-									if (kernel.weights) {
-										mGameObjectsPost.attach(program, kernel);
-										mFilters.add(filterData.name, program);	// Doesn't have a way to store the kernel - is this a problem? When do we pull it out of here?
-									}
-									else {
-										ServiceLocator::getLoggingService().error("Cannot locate kernel", filterData.kernel);
-										delete program;
-									}
-									delete filterData.kernel;
-								}
-								else {
-									mGameObjectsPost.attach(program);
-									mFilters.add(filterData.name, program);
-								}
-							}
-							else {
-								if (!sampler)
-									ServiceLocator::getLoggingService().error("Cannot locate sampler", filterData.sampler);
-								if (!processor)
-									ServiceLocator::getLoggingService().error("Cannot locate processor", filterData.processor);
-							}
-							delete filterData.name;
-							delete filterData.sampler;
-							delete filterData.processor;
-							if (!workingIndex.extract("\\L", NULL)) {
-								char* err;
-								workingIndex.extract("\\?S\\L", &err);
-								ServiceLocator::getLoggingService().error("Unexpected characters in filter definition", err);
-								delete err;
-							}
-						}
-						else if (workingIndex.extract("\\S\\L", &shaderData.name)) {
-							ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index", shaderData.name);
-							delete shaderData.name;
-						}
-					}
-				}
-				else {
-					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
-				}
-				workingIndex.close();
-				delete workingDirectory;
-			}
-			else if (index.extract("levels:\"\\S\"\\L", &workingDirectory)) {
-				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
-				if (workingIndex.good()) {
-					// Extract the level data
-					while (workingIndex.good()) {
-						struct { char* name, *filepath; } level;
-						if (workingIndex.extract("//\\S\\L", NULL));
-						else if (workingIndex.extract("\"\\S\":\"\\S\"\\L", &level)) {
-							mLevels.add(level.name, new Level(mAssetBasePath + workingDirectory + level.filepath));
-							delete level.name;
-							delete level.filepath;
-						}
-						else if (workingIndex.extract("\\S\\L", &level.name)) {
-							ServiceLocator::getLoggingService().error("Unexpected line in level index file", level.name);
-							delete level.name;
-						}
-					}
-					mCurrentLevel = mLevels.get("debug_world");
-					mSoundSystem.registerListener(mCurrentLevel->getCurrentCamera()->getPhysics());
-					mCurrentLevel->setBackgroundMusicVolume(0.25);
-				}
-				else {
-					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
-				}
-				workingIndex.close();
-				delete workingDirectory;
-			}
-			else if (index.extract("textures:\"\\S\"\\L", &workingDirectory)) {
-				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
-				if (workingIndex.good()) {
-					while (workingIndex.good()) {
-						struct { char* name, *path; } textureData;	// Maybe need to store the resolutions too, depends on what gli offers
-						if (workingIndex.extract("//\\S\\L", NULL));
-						else if (workingIndex.extract("Texture \"\\S\" \"\\S\"\\L", &textureData)) {
-							mTextures.add(textureData.name, new Texture(mAssetBasePath + workingDirectory + textureData.path));
-							delete textureData.name;
-							delete textureData.path;
-						}
-						else if (workingIndex.extract("\\S\\L", &textureData.name)) {
-							ServiceLocator::getLoggingService().error("Unexpected line in texture index file", textureData.name);
-							delete textureData.name;
-						}
-					}
-				}
-				else {
-					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
-				}
-				workingIndex.close();
-				delete workingDirectory;
-			}
-			else if (index.extract("sounds:\"\\S\"\\L", &workingDirectory)) {
-				FileService& workingIndex = ServiceLocator::getFileService(mAssetBasePath + workingDirectory + mIndexFilename);
-				if (workingIndex.good()) {
-					while (workingIndex.good()) {
-						struct { char* name, *path; } soundData;
-						if (workingIndex.extract("//\\S\\L", NULL));
-						else if (workingIndex.extract("Procedural \"\\S\" \"\\S\"\\L", &soundData)) {
-							mSounds.add(soundData.name, new ProceduralSound(mAssetBasePath + workingDirectory + soundData.path));
-							delete soundData.name;
-							delete soundData.path;
-						}
-						else if (workingIndex.extract("File \"\\S\" \"\\S\"\\L", &soundData)) {
-							mSounds.add(soundData.name, new FileSound(mAssetBasePath + workingDirectory + soundData.path));
-							delete soundData.name;
-							delete soundData.path;
-						}
-						else if (workingIndex.extract("\\S\\L", &soundData.name)) {
-							ServiceLocator::getLoggingService().error("Unexpected line in sound index file", soundData.name);
-							delete soundData.name;
-						}
-					}
-				}
-				else {
-					ServiceLocator::getLoggingService().badFileError(mAssetBasePath + workingDirectory + mIndexFilename);
-				}
-				workingIndex.close();
-				delete workingDirectory;
-			}
-			else if (index.extract("bindings:\"\\S\"\\L", &workingDirectory)) {
-				// One file, or an index with a bunch of profiles?
-			}
-			else if (index.extract("\\S\\L", &workingDirectory)) {
-				ServiceLocator::getLoggingService().error("Unexpected line in base index file", workingDirectory);
-				delete workingDirectory;
+			else {
+				throw std::exception("Malformed start location.");
 			}
 		}
-		index.close();
-	} else {
-		ServiceLocator::getLoggingService().badFileError(mAssetBasePath + mIndexFilename);
-		// Hard quit I guess
+		else if (baseIndex.extract("resolution: [`I, `I]`L", &resolution)) {
+			resize(resolution.w, resolution.h);
+		}
+		else if (baseIndex.extract("title: \"`S\"`L", &levelData.name)) {
+			mWindow->rename(levelData.name);
+		}
+		else if (baseIndex.extract("common: \"`S\"`L", &commonFolder)) {
+			std::string commonPath = mAssetBasePath + commonFolder;
+			FileService commonIndex(commonPath + mIndexFilename);
+			if (!commonIndex.good()) throw std::exception("Common asset file could not be opened.");
+			char* workingDirectory = NULL;
+			while (commonIndex.good()) {
+				try {
+					if (commonIndex.extract("//`S`L", NULL));
+					else if (commonIndex.extract("menus: \"`S\"`L", &workingDirectory)) {
+						parseMenuIndex(commonPath + workingDirectory, mCommonLibraries.menus);
+						delete workingDirectory;
+					}
+					else if (commonIndex.extract("obj: \"`S\"`L", &workingDirectory)) {
+						// Open the index file in the new path, then use it to load objs into common obj directory
+						parseGeometryIndex(commonPath + workingDirectory, mCommonLibraries.geometries);
+						delete workingDirectory;
+					}
+					else if (commonIndex.extract("sound: \"`S\"`L", &workingDirectory)) {
+						// Open the index file in the new path, then use it to load sounds into common sound directory
+						parseSoundIndex(commonPath + workingDirectory, mCommonLibraries.sounds);
+						delete workingDirectory;
+					}
+					else if (commonIndex.extract("tex: \"`S\"`L", &workingDirectory)) {
+						// Open the index file in the new path, then use it to load textures into common texture directory
+						parseTextureIndex(commonPath + workingDirectory, mCommonLibraries.textures);
+						delete workingDirectory;
+					}
+					else if (commonIndex.extract("glsl: \"`S\"`L", &workingDirectory)) {
+						// Open the index file in the new path, then use it to load shaders into common shader directory
+						parseShaderIndex(commonPath + workingDirectory, mCommonLibraries.shaders, mCommonLibraries.programs);
+						delete workingDirectory;
+					}
+					else if (commonIndex.extract("post: \"`S\"`L", &workingDirectory)) {
+						// Open the index file in the new path, then use it to load postprocessing things into common postprocessing directory
+						parsePostprocessingIndex(commonPath + workingDirectory, mCommonLibraries.post.shaders, mCommonLibraries.post.filters, mCommonLibraries.post.kernels, mCommonLibraries.post.pipelines);
+						delete workingDirectory;
+					}
+					else if (commonIndex.extract("`S`L", &workingDirectory)) {
+						ServiceLocator::getLoggingService().error("Unexpected line in common index file", workingDirectory);
+						delete workingDirectory;
+					}
+				}
+				catch (std::exception e) {
+					ServiceLocator::getLoggingService().badFileError(e.what());
+				}
+			}
+		}
+		else if (baseIndex.extract("`S`L", &levelData.name)) {
+			ServiceLocator::getLoggingService().error("Unexpected line in root index file", levelData.name);
+			delete levelData.name;
+		}
 	}
 }
 
 void Game::cleanup() {
-	mGameObjectsPost.clear();
-	mMenuPost.clear();
-	mFilters.clear();
-	mPostShaders.clear();
-	mKernels.clear();
-	mSounds.clear();
-	mLevels.clear();
-	/*while (mCurrentMenu) {
+	mCurrentLevel = NULL;
+	while (mCurrentMenu) {
 		auto top = mCurrentMenu;
 		mCurrentMenu = top->mParent;
 		delete top;
-	}*/
-	mGeometries.clear();
-	mPrograms.clear();
-	mShaders.clear();
+	}
+	mCurrentMenu = NULL;
+	mCurrentPostProcessing = NULL;
+	mCurrentMenuPost = NULL;
+
+	mCommonLibraries.geometries.clear();
+	mCommonLibraries.menus.clear();
+	mCommonLibraries.sounds.clear();
+	mCommonLibraries.post.filters.clear();
+	mCommonLibraries.post.kernels.clear();
+	mCommonLibraries.post.pipelines.clear();
+	mCommonLibraries.post.shaders.clear();
+	mCommonLibraries.programs.clear();
+	mCommonLibraries.shaders.clear();
+	mCommonLibraries.textures.clear();
 }
 
 Game::~Game() {
+	cleanup();
 	delete mWindow;
 	KeyboardHandler::getInstance().unregisterReceiver(this);
 }
@@ -389,15 +213,18 @@ void Game::render(float dt) {
 	//    - run a second post-processing step
 	//    - render all menu items
 
-	// Set the active framebuffer to an intermediate one
-	mGameObjectsPost.enableDrawing();
+	// Set the active framebuffer to the appropriate target
+	if (mCurrentPostProcessing)
+		mCurrentPostProcessing->enableDrawing();
+	else if (mCurrentMenu) mCurrentMenuPost->enableDrawing();
+	else mWindow->enableDrawing();
 	if (mCurrentLevel) {
 		for (auto object : mCurrentLevel->getObjectList())
 			object.second->render(mCurrentLevel->getCurrentCamera());
 
 		float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
 		if (mDebugMode) {
-			auto program = mPrograms.get("debug_bbs");
+			auto program = mCommonLibraries.programs.get("debug_bbs");
 			program->use();
 			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
 			for (auto object : mCurrentLevel->getObjectList()) {
@@ -409,7 +236,7 @@ void Game::render(float dt) {
 				object.second->debugDraw();
 			}
 
-			program = mPrograms.get("debug_axes");
+			program = mCommonLibraries.programs.get("debug_axes");
 			program->use();
 			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
 			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
@@ -420,21 +247,22 @@ void Game::render(float dt) {
 			}
 		}
 	}
-	mGameObjectsPost.process();
-
-	if (mCurrentMenu)
-		mMenuPost.enableDrawing();
-	else
-		mWindow->enableDrawing();
-	if (mFilters.get("none")) mFilters.get("none")->use();
-	mGameObjectsPost.draw();
-
+	// Need to set a null filter here
+	if (mCurrentMenu) mCurrentMenuPost->enableDrawing();
+	else mWindow->enableDrawing();
+	if (mCurrentPostProcessing) {
+		mCurrentPostProcessing->process();
+		mCurrentPostProcessing->draw();
+	}
+	if (mHUD) mHUD->draw();
+	//try { mCommonLibraries.post.filters.get("none")->use(); }
+	//catch (std::exception e) { ServiceLocator::getLoggingService().error("No such postprocessor", e.what()); }
 	if (mCurrentMenu) {
-		mCurrentMenu->draw();
-		mMenuPost.process();
 		mWindow->enableDrawing();
-		mFilters.get("none")->use();
-		mMenuPost.draw();
+		mCurrentMenuPost->process();
+		mCurrentMenuPost->draw();
+		// Needs a default program to use
+		mCurrentMenu->draw();
 	}
 }
 
@@ -444,8 +272,8 @@ void Game::resize(unsigned int width, unsigned int height) {
 	if (mCurrentLevel)
 		for (auto a : mCurrentLevel->getCameraList())
 			a.second->resize(width, height);
-	mGameObjectsPost.resize(width, height);
-	mMenuPost.resize(width, height);
+	for (auto processor : mCommonLibraries.post.pipelines)
+		processor.second->resize(width, height);
 	if (mCurrentMenu) mCurrentMenu->layout(width, height);
 }
 
@@ -461,8 +289,8 @@ void Game::handle(Event event) {
 		switch (event.mData.keyboard.key) {
 		case 'r': {
 			mPaused = true;
-			auto loadingthread = std::thread(&Game::reloadAll, this);	// Well that doesn't work for shit
-			//reloadAll();
+			//auto loadingthread = std::thread(&Game::reloadAll, this);	// Well that doesn't work for shit
+			reloadAll();
 			mPaused = false;
 			break;
 		}
@@ -479,5 +307,364 @@ void Game::handle(Event event) {
 			break;
 		}
 		break;
+	}
+}
+
+Level* Game::loadLevel(std::string path) {
+	NamedContainer<Geometry*> geomLibrary = mCommonLibraries.geometries;
+	ShaderManager shaderLibrary = mCommonLibraries.shaders;
+	NamedContainer<Program*> progLibrary = mCommonLibraries.programs;
+	NamedContainer<Texture*> texLibrary = mCommonLibraries.textures;
+	NamedContainer<PhysicsComponent*> physLibrary = mCommonLibraries.physics;
+	SoundLibrary soundLibrary = mCommonLibraries.sounds;
+	FileService index(path + mIndexFilename);
+	// Load any additional data into the new libraries
+	// Level index files can add new geometry, shaders, programs, textures, PhysicsComponents (?), and sounds.
+	char* levelFile;
+	index.extract("Level: \"`S\"`L", &levelFile);
+	char* err, *workingDirectory;
+	while (index.good()) {
+		try {
+			if (index.extract("//`S`L", NULL));
+			/*else if (index.extract("menus: \"`S\"`L", &workingDirectory)) {
+				parseMenuIndex(path + workingDirectory, mCommonLibraries.menus);
+				delete workingDirectory;
+			}*/
+			else if (index.extract("obj: \"`S\"`L", &workingDirectory)) {
+				parseGeometryIndex(path + workingDirectory, geomLibrary);
+				delete workingDirectory;
+			}
+			else if (index.extract("sound: \"`S\"`L", &workingDirectory)) {
+				parseSoundIndex(path + workingDirectory, soundLibrary);
+				delete workingDirectory;
+			}
+			else if (index.extract("tex: \"`S\"`L", &workingDirectory)) {
+				parseTextureIndex(path + workingDirectory, mCommonLibraries.textures);
+				delete workingDirectory;
+			}
+			else if (index.extract("glsl: \"`S\"`L", &workingDirectory)) {
+				parseShaderIndex(path + workingDirectory, shaderLibrary, progLibrary);
+				delete workingDirectory;
+			}
+			/*else if (index.extract("post: \"`S\"`L", &workingDirectory)) {
+				parsePostprocessingIndex(path + workingDirectory, postShaderLibrary, postFilterLibrary, postKernelLibrary, postPipelineLibrary);
+				delete workingDirectory;
+			}*/
+			else if (index.extract("`S`L", &err)) {
+				ServiceLocator::getLoggingService().error("Unexpected line in level index file", err);
+				delete err;
+			}
+		}
+		catch (std::exception e) {
+			ServiceLocator::getLoggingService().badFileError(e.what());
+		}
+	}
+	return new Level(path + levelFile, geomLibrary, progLibrary, texLibrary, physLibrary, soundLibrary);
+}
+
+void Game::parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary) {
+	FileService menuIndex(path + mIndexFilename);
+	if (!menuIndex.good()) throw std::exception(menuIndex.getPath().data());
+	struct { char*name, *path; } menuData;
+	while (menuIndex.good()) {
+		if (menuIndex.extract("//`S`L", NULL));
+		else if (menuIndex.extract("\"`S\":\"`S\"`L", &menuData)) {
+			try {
+				menuLibrary.add(menuData.name, new RootElement(path + menuData.path));
+			}
+			catch (...) {
+				ServiceLocator::getLoggingService().badFileError(path + menuData.path);
+			}
+		}
+		else if (menuIndex.extract("`S`L", &menuData.name)) {
+			ServiceLocator::getLoggingService().error("Unexpected line in menu index file", menuData.name);
+			delete menuData.name;
+		}
+	}
+}
+
+void Game::parseGeometryIndex(std::string path, NamedContainer<Geometry*> &geomLibrary) {
+	FileService objIndex(path + mIndexFilename);
+	if (!objIndex.good()) throw std::exception(objIndex.getPath().data());
+	struct { char*name, *path; } objData;
+	while (objIndex.good()) {
+		if (objIndex.extract("//`S`L", NULL));
+		else if (objIndex.extract("\"`S\":\"`S\"`L", &objData)) {
+			try {
+				geomLibrary.add(objData.name, new Geometry(path + objData.path));
+			}
+			catch (...) {
+				ServiceLocator::getLoggingService().badFileError(path + objData.path);
+			}
+		}
+		else if (objIndex.extract("`S`L", &objData.name)) {
+			ServiceLocator::getLoggingService().error("Unexpected line in obj index file", objData.name);
+			delete objData.name;
+		}
+	}
+}
+
+void Game::parseSoundIndex(std::string path, SoundLibrary &soundLibrary) {
+	FileService soundIndex(path + mIndexFilename);
+	if (!soundIndex.good()) throw std::exception(soundIndex.getPath().data());
+	struct { char*name, *path; } soundData;
+	while (soundIndex.good()) {
+		if (soundIndex.extract("//`S`L", NULL));
+		else if (soundIndex.extract("Procedural \"`S\" \"`S\"`L", &soundData)) {
+			try {
+				soundLibrary.add(soundData.name, new ProceduralSound(path + soundData.path));
+			}
+			catch (...) {
+				ServiceLocator::getLoggingService().badFileError(path + soundData.path);
+			}
+		}
+		else if (soundIndex.extract("File \"`S\" \"`S\"`L", &soundData)) {
+			try {
+				soundLibrary.add(soundData.name, new FileSound(path + soundData.path));
+			}
+			catch (...) {
+				ServiceLocator::getLoggingService().badFileError(path + soundData.path);
+			}
+		}
+		else if (soundIndex.extract("`S`L", &soundData.name)) {
+			ServiceLocator::getLoggingService().error("Unexpected line in sound index file", soundData.name);
+			delete soundData.name;
+		}
+	}
+}
+
+void Game::parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibrary) {
+	FileService texIndex(path + mIndexFilename);
+	if (!texIndex.good()) throw std::exception(texIndex.getPath().data());
+	struct { char*name, *path; } texData;
+	while (texIndex.good()) {
+		if (texIndex.extract("//`S`L", NULL));
+		else if (texIndex.extract("\"`S\":\"`S\"`L", &texData)) {
+			try {
+				texLibrary.add(texData.name, new Texture(path + texData.path));
+			}
+			catch (...) {
+				ServiceLocator::getLoggingService().badFileError(path + texData.path);
+			}
+		}
+		else if (texIndex.extract("`S`L", &texData.name)) {
+			ServiceLocator::getLoggingService().error("Unexpected line in texture index file", texData.name);
+			delete texData.name;
+		}
+	}
+}
+
+void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary) {
+	FileService glslIndex(path + mIndexFilename);
+	if (!glslIndex.good()) throw std::exception(glslIndex.getPath().data());
+	struct { char* name; int version; char* path, *extra = NULL; } glslData;
+	struct { char *name = NULL, *vert = NULL, *frag = NULL, *geom = NULL, *extra = NULL; } progData;
+	int type;
+	while (glslIndex.good()) {
+		if (glslIndex.extract("//`S`L", NULL)) type = NULL;
+		else if (glslIndex.extract("Vertex ", NULL)) type = GL_VERTEX_SHADER;
+		else if (glslIndex.extract("Fragment ", NULL)) type = GL_FRAGMENT_SHADER;
+		else if (glslIndex.extract("Geometry ", NULL)) type = GL_GEOMETRY_SHADER;
+		else if (glslIndex.extract("Program \"`S\"", &progData.name)) {
+			type = NULL;
+			while (!glslIndex.extract("`L", NULL)) {
+				if (glslIndex.extract(" Vertex:\"`S\"", &progData.vert));
+				else if (glslIndex.extract(" Fragment:\"`S\"", &progData.frag));
+				else if (glslIndex.extract(" Geometry:\"`S\"", &progData.geom));
+				else if (glslIndex.extract("`S`L", progData.extra)) {
+					ServiceLocator::getLoggingService().error("Unexpected data in program definition", progData.extra);
+					delete progData.extra;
+					progData.extra = NULL;
+					break;
+				}
+			}
+			Shader *vert = NULL, *frag = NULL, *geom = NULL;
+			bool badvert = false, badfrag = false, badgeom = false;
+			try { vert = shaderLibrary.get(progData.vert); }
+			catch (std::exception) { badvert = true; }
+			try { frag = shaderLibrary.get(progData.frag); }
+			catch (std::exception) { badfrag = true; }
+			if (progData.geom) try { geom = shaderLibrary.get(progData.geom); }
+			catch (std::exception) { badgeom = true; }
+			if (progData.vert && !badvert && progData.frag && !badfrag) {
+				if (progData.geom && !badgeom) progLibrary.add(progData.name, new Program(vert, geom, frag));
+				else progLibrary.add(progData.name, new Program(vert, frag));
+			}
+			else {
+				// Report whatever errors
+				if (progData.vert && badvert) ServiceLocator::getLoggingService().error("Vertex shader named but not present", progData.vert);
+				if (progData.frag && badfrag) ServiceLocator::getLoggingService().error("Fragment shader named but not present", progData.frag);
+				if (progData.geom && badgeom) ServiceLocator::getLoggingService().error("Geometry shader named but not present", progData.geom);
+				if (!progData.vert) ServiceLocator::getLoggingService().error("Vertex shader not named", progData.name);
+				if (!progData.frag) ServiceLocator::getLoggingService().error("Fragment shader not named", progData.frag);
+			}
+			// Cleanup
+			if (progData.vert) { delete progData.vert; progData.vert = NULL; }
+			if (progData.frag) { delete progData.frag; progData.frag = NULL; }
+			if (progData.geom) { delete progData.geom; progData.geom = NULL; }
+			delete progData.name;
+		}
+		else if (glslIndex.extract("`S`L", &glslData.name)) {
+			type = NULL;
+			ServiceLocator::getLoggingService().error("Unexpected line in glsl index file", glslData.name);
+			delete glslData.name;
+		}
+		if (type && glslIndex.extract("\"`S\" `I:\"`S\"`?S`L", &glslData)) {
+			try {
+				shaderLibrary.add(glslData.name, glslData.version, new Shader(path + glslData.path, type));
+				if (glslData.extra) ServiceLocator::getLoggingService().error("Extra data at end of shader definition", glslData.extra);
+			}
+			catch (...) {
+				ServiceLocator::getLoggingService().badFileError(path + glslData.path);
+			}
+			delete glslData.name;
+			delete glslData.path;
+			if (glslData.extra) {
+				delete glslData.extra;
+				glslData.extra = NULL;
+			}
+		}
+	}
+}
+
+void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostProcessingPipeline*> &pipelineLibrary) {
+	FileService postIndex(path + mIndexFilename);
+	if (!postIndex.good()) throw std::exception(postIndex.getPath().data());
+	struct { char* name; int samples; char *path, *extra; } shaderData;
+	struct { char* name; Kernel kernel; } kernelData;
+	struct { char* name, *processor, *sampler, *kernel; } filterData;
+	struct { char* name; } pipelineData;
+	struct { char* name; float scale = 1.0f; char* kernel = NULL; } stageData;
+	int type;
+	while (postIndex.good()) {
+		if (postIndex.extract("//`S`L", NULL)) type = NULL;
+		else if (postIndex.extract("Sampler ", NULL)) type = GL_VERTEX_SHADER;
+		else if (postIndex.extract("Processor ", NULL)) type = GL_FRAGMENT_SHADER;
+		else if (postIndex.extract("Kernel \"`S\" `I [", &kernelData)) {
+			type = NULL;
+			kernelData.kernel.weights = new float[kernelData.kernel.samples];
+			bool valid = true;
+			for (int i = 0; i < kernelData.kernel.samples; i++) {
+				if (!postIndex.extract("`F", kernelData.kernel.weights + i)) {
+					valid = false;
+					break;
+				}
+				else if (postIndex.extract(", ", NULL) || postIndex.extract("]", NULL));
+				else {
+					valid = false;
+					break;
+				}
+			}
+			if (valid && postIndex.extract("`L", NULL)) {
+				kernelLibrary.add(kernelData.name, kernelData.kernel);
+				delete kernelData.name;
+				// Can't delete valuee array because kernel owns it now
+				continue;
+			}
+			else {
+				char* err;
+				postIndex.extract("`S`L", &err);
+				ServiceLocator::getLoggingService().error("Unexpected line in kernel definition", err);
+				delete err;
+				delete kernelData.name;
+				delete[] kernelData.kernel.weights;
+			}
+		}
+		else if (postIndex.extract("Filter \"`S\" Sampler:\"`S\" Processor:\"`S\"`L", &filterData)) {
+			type = NULL;
+			// Do error checking, then construct the filter program
+			Shader* sampler = NULL, *processor = NULL;
+			bool valid = true;
+			try { sampler = shaderLibrary.get(filterData.sampler); }
+			catch (std::exception e) { ServiceLocator::getLoggingService().error("Sampler not found", e.what()); valid = false; }
+			try { processor = shaderLibrary.get(filterData.processor); }
+			catch (std::exception e) { ServiceLocator::getLoggingService().error("Processor not found", e.what()); valid = false; }
+			if (valid) filterLibrary.add(filterData.name, new Program(sampler, processor));
+		}
+		else if (postIndex.extract("Pipeline \"`S\" [", &pipelineData)) {
+			type = NULL;
+			// Read filter names or filter/kernel pairs from the list, check their existence, then add them to the pipeline
+			// Needs to handle:
+			//  - Just a name ("name")
+			//  - A name and a scale ("name":1.0)
+			//  - A name and a kernel ("name":"kernel")
+			//  - A name, a scale and a kernel ("name":1.0:"kernel")
+			PostProcessingPipeline* temp = new PostProcessingPipeline();
+			temp->init(mWindow->getWidth(), mWindow->getHeight());
+			bool valid = true;
+			while (!postIndex.extract("]", NULL)) {
+				if (postIndex.extract("\"`S\"", &stageData.name)) {
+					if (postIndex.extract(":`F", &stageData.scale));
+					if (postIndex.extract(":\"`S\"", &stageData.kernel));
+				}
+				else {
+					char* err;
+					postIndex.extract("`S`L", &err);
+					ServiceLocator::getLoggingService().error("Malformed filter name", err);
+					delete err;
+					valid = false;
+					break;
+				}
+				// Add stage to pipeline
+				Program* filter = NULL;
+				Kernel kernel{ 0, NULL };
+				try {
+					filter = filterLibrary.get(stageData.name);
+				}
+				catch (std::exception e) {
+					ServiceLocator::getLoggingService().error("Filter not found", e.what());
+					valid = false;
+				}
+				if (stageData.kernel) try {
+					kernel = kernelLibrary.get(stageData.kernel);
+				}
+				catch (std::exception e) {
+					ServiceLocator::getLoggingService().error("Kernel not found", e.what());
+					valid = false;
+				}
+				if (valid) temp->attach(filter, kernel, stageData.scale);
+				else break;
+				if (postIndex.extract(", ", NULL)) continue;
+				else if (postIndex.extract("]", NULL)) break;
+				else {
+					// Wrong separator
+					valid = false;
+					break;
+				}
+			}
+			if (valid) {
+				pipelineLibrary.add(pipelineData.name, temp);
+				// No need to delete temp, the library owns it now
+				char* err;
+				postIndex.extract("`?S`L", &err);
+				if (err) {
+					ServiceLocator::getLoggingService().error("Extra data found at end of pipeline", err);
+					delete err;
+				}
+			}
+			else {
+				delete temp;
+			}
+		}
+		else if (postIndex.extract("`S`L", &pipelineData.name)) {
+			type = NULL;
+			ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index file", pipelineData.name);
+			delete pipelineData.name;
+		}
+		if (type && postIndex.extract("\"`S\" `I \"`S\"`?S`L", &shaderData)) {
+			try {
+				shaderLibrary.add(shaderData.name, shaderData.samples, new Shader(path + shaderData.path, type));
+				if (shaderData.extra) ServiceLocator::getLoggingService().error("Extra data at end of shader definition", shaderData.extra);
+			}
+			catch (...) {
+				ServiceLocator::getLoggingService().badFileError(path + shaderData.path);
+			}
+			delete shaderData.name;
+			delete shaderData.path;
+			if (shaderData.extra) {
+				delete shaderData.extra;
+				shaderData.extra = NULL;
+			}
+		}
 	}
 }

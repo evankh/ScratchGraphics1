@@ -19,19 +19,11 @@ void KeyboardHandler::registerReceiver(char interested, Receiver* receiver) {
 
 void KeyboardHandler::handlePress(char key, int mouse_x, int mouse_y) {
 	mKeyStatus[key] = true;
-	KeyboardData data;
-	data.key = key;
-	data.mouse_x = mouse_y;
-	data.mouse_y = mouse_y;
-	sEvents.push(Event(EventType::KEY_PRESSED, data));
-	sEvents.push(Event(CommandData(mKeyBindings[key], 1.0f)));	// No reason not to do both, right?
+	sEvents.push(Event(EventType::KEY_PRESSED, KeyboardData{ key, mouse_x,mouse_y }));
+	sEvents.push(Event(CommandData{ mKeyBindings[key], 1.0f }));	// No reason not to do both, right?
 }
 
 void KeyboardHandler::handleRelease(char key, int mouse_x, int mouse_y) {
 	mKeyStatus[key] = false;
-	KeyboardData data;
-	data.key = key;
-	data.mouse_x = mouse_y;
-	data.mouse_y = mouse_y;
-	sEvents.push(Event(EventType::KEY_RELEASED, data));
+	sEvents.push(Event(EventType::KEY_RELEASED, KeyboardData{ key,mouse_x,mouse_y }));
 }

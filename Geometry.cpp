@@ -53,9 +53,9 @@ Geometry::Geometry(unsigned int numverts, float* vertexData, unsigned int numtri
 	mBoundingBox = NULL;
 }
 
-Geometry::Geometry(const char* filename) :Geometry() {
+Geometry::Geometry(std::string filename) :Geometry() {
 	// Load a .OBJ file into the internal Geometry format
-	FileService& file = ServiceLocator::getFileService(filename);
+	FileService file(filename);
 	if (file.good()) {
 		struct V3 { float x, y, z; };
 		struct V2 { float x, y; };
@@ -64,11 +64,11 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		// First counting pass
 		int numpos = 0, numnorm = 0, numtex = 0, numface = 0;
 		while (file.good()) {
-			if (file.extract("v \\S\\L", NULL)) numpos++;
-			else if (file.extract("vn \\S\\L", NULL)) numnorm++;
-			else if (file.extract("vt \\S\\L", NULL)) numtex++;
-			else if (file.extract("f \\S\\L", NULL)) numface++;
-			else if (file.extract("\\?S\\L", NULL));
+			if (file.extract("v `S`L", NULL)) numpos++;
+			else if (file.extract("vn `S`L", NULL)) numnorm++;
+			else if (file.extract("vt `S`L", NULL)) numtex++;
+			else if (file.extract("f `S`L", NULL)) numface++;
+			else if (file.extract("`?S`L", NULL));
 		}
 		// Second reading pass
 		file.restart();
@@ -80,32 +80,32 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		V2* texcoords = new V2[numtex];
 		Face* faces = new Face[numface];
 		while (file.good()) {
-			if (file.extract("v \\F \\F \\F\\L", &positions[positer])) {
+			if (file.extract("v `F `F `F`L", &positions[positer])) {
 				mBoundingBox->update((float*)&positions[positer]);
 				positer++;
 			}
-			else if (file.extract("vn \\F \\F \\F\\L", &normals[normiter])) normiter++;
-			else if (file.extract("vt \\F \\F\\L", &texcoords[texiter])) texiter++;
-			else if (file.extract("#\\S\\L", NULL));
-			else if (file.extract("o \\S\\L", NULL));	// It's nice of you to offer me a name for the object, but I've got it covered
-			else if (file.extract("s \\S\\L", NULL));	// No idea what that does, but it's part of the standard so I shouldn't throw an error
-			else if (file.extract("mtllib \\S\\L", NULL));
-			else if (file.extract("usemtl \\S\\L", NULL));
+			else if (file.extract("vn `F `F `F`L", &normals[normiter])) normiter++;
+			else if (file.extract("vt `F `F`L", &texcoords[texiter])) texiter++;
+			else if (file.extract("#`S`L", NULL));
+			else if (file.extract("o `S`L", NULL));	// It's nice of you to offer me a name for the object, but I've got it covered
+			else if (file.extract("s `S`L", NULL));	// No idea what that does, but it's part of the standard so I shouldn't throw an error
+			else if (file.extract("mtllib `S`L", NULL));
+			else if (file.extract("usemtl `S`L", NULL));
 			else if (file.extract("f", NULL)) {
 				// Assumes (possibly dangerously?) that all vertices have already been loaded
 				int i = 0;
-				while (file.extract(" \\?I/\\?I/\\?I", &faces[faceiter].vertices[i])) i++;
+				while (file.extract(" `?I/`?I/`?I", &faces[faceiter].vertices[i])) i++;
 				faces[faceiter++].numVerts = i;
 				mNumVerts += 3*i-2;
 				mNumTris += i - 2;
-				if (file.extract("\\?S\\L", &err)) {
+				if (file.extract("`?S`L", &err)) {
 					if (err) {
 						ServiceLocator::getLoggingService().error("Something's fucky at the end of a face line", err);
 						delete err;
 					}
 				}
 			}
-			else if (file.extract("\\?S\\L", &err)) {
+			else if (file.extract("`?S`L", &err)) {
 				if (err) {
 					ServiceLocator::getLoggingService().error("Unknown line in object file", err);
 					delete err;
@@ -147,10 +147,8 @@ Geometry::Geometry(const char* filename) :Geometry() {
 		delete normals;
 		delete texcoords;
 		delete faces;
-		file.close();
 	} else {
-		ServiceLocator::getLoggingService().badFileError(filename);
-		mBoundingBox = NULL;
+		throw std::exception(filename.data());
 	}
 }
 

@@ -22,13 +22,8 @@ void MouseHandler::registerReceiver(MouseButton button, Receiver* receiver) {
 
 void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int mouse_y) {
 	mButtonStatus[button] = (edge == 0);
-	MouseData data;
-	data.button = button;
-	data.edge = edge;
-	data.mouse_x = mouse_x;
-	data.mouse_y = mouse_y;
-	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, data));
-	sEvents.push(Event(mButtonBindings[button]));
+	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, MouseData{ button,edge,mouse_x,mouse_y }));
+	sEvents.push(Event(CommandData{ mButtonBindings[button], 0.0f }));
 }
 
 void MouseHandler::handleMove(int mouse_x, int mouse_y) {

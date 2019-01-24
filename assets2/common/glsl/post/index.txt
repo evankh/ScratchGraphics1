@@ -1,0 +1,16 @@
+Sampler "one" 1 "Samplers/one.vert"
+Sampler "three_v" 3 "Samplers/1x3.vert"
+Sampler "three_h" 3 "Samplers/3x1.vert"
+
+Processor "kernel3" 3 "Processors/kernel3.frag"
+Processor "none" 1 "Processors/none.frag"
+
+Kernel "edge" 3 [-1.0, 0.0, 1.0]
+
+Filter "none" Sampler:"one" Processor:"none"
+Filter "horizontal_kernel" Sampler:"three_v" Processor:"kernel3"
+Filter "vertical_kernel" Sampler:"three_h" Processor:"kernel3"
+
+// Pipelines need to handle a bunch of different options
+Pipeline "Sobel" ["none":0.5, "vertical_kernel":"edges", "horizontal_kernel":"edges"]
+Pipeline "none" []

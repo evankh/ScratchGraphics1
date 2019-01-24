@@ -1,0 +1,4 @@
+Level: "debug_world.lvl"
+// Other assets
+sound: "sound/"
+obj: "obj/"

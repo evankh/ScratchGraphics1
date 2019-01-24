@@ -6,6 +6,8 @@ class AABB;
 #include <vector>
 #include <glm/matrix.hpp>
 
+#include <string>
+
 enum ATTRIB_INDEX
 {
 	A_POSITION,		// vertex location, point in space
@@ -51,7 +53,7 @@ private:
 public:
 	Geometry() [[deprecated("probably")]];
 	Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) [[deprecated("probably")]];
-	Geometry(const char* filename);
+	Geometry(std::string filename);
 	~Geometry();
 	void transfer() const;
 	void cleanup();

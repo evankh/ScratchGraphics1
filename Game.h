@@ -27,32 +27,45 @@ enum GameState {
 };
 
 class Game :public Receiver {
-	friend class Level;
 private:
 	Game();
 	~Game();
 	// Managers & Libraries
-	ShaderManager mShaders;
-	NamedContainer<Program*> mPrograms = NamedContainer<Program*>(NULL);
-	NamedContainer<Geometry*> mGeometries = NamedContainer<Geometry*>(NULL);
-	NamedContainer<Level*> mLevels = NamedContainer<Level*>(NULL);
-	ShaderManager mPostShaders;	// Do I need a new container type to handle matching sample sizes? Probably.
-	NamedContainer<Program*> mFilters = NamedContainer<Program*>(NULL);
-	KernelManager mKernels;
-	//NamedContainer<InputComponent> mInputs = NamedContainer<InputComponent>(NULL);
-	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
-	NamedContainer<RootElement*> mMenus = NamedContainer<RootElement*>(NULL);
-	// Actual game information;
+	NamedContainer<std::string> mLevelDirectory;
+	struct {
+		NamedContainer<RootElement*> menus;
+		NamedContainer<Geometry*> geometries;
+		ShaderManager shaders;
+		NamedContainer<Program*> programs;
+		NamedContainer<Texture*> textures;
+		SoundLibrary sounds;
+		struct {
+			ShaderManager shaders;	// Do I need a new container type to handle matching sample sizes? Probably.
+			NamedContainer<Program*> filters;
+			KernelManager kernels;
+			NamedContainer<PostProcessingPipeline*> pipelines;
+		} post;
+		//NamedContainer<InputComponent> mInputs;
+		NamedContainer<PhysicsComponent*> physics;
+	} mCommonLibraries;
+	// Actual game information
 	Window* mWindow;
 	Level* mCurrentLevel;
-	PostProcessingPipeline mGameObjectsPost;
+	PostProcessingPipeline* mCurrentPostProcessing;
 	Menu* mCurrentMenu = NULL;
-	PostProcessingPipeline mMenuPost;
-	SoundLibrary mSounds;
+	Menu* mHUD = NULL;
+	PostProcessingPipeline* mCurrentMenuPost;
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
-	const std::string mAssetBasePath = "assets/";
+	const std::string mAssetBasePath = "assets2/";
 	const std::string mIndexFilename = "index.txt";
 	bool mDebugMode = false, mPaused = false;
+	Level* loadLevel(std::string path);
+	void parseGeometryIndex(std::string path, NamedContainer<Geometry*> &geomLibrary);
+	void parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary);
+	void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostProcessingPipeline*> &pipelineLibrary);
+	void parseSoundIndex(std::string path, SoundLibrary &soundLibrary);
+	void parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary);
+	void parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibrary);
 public:
 	static Game& getInstance();
 	void init();
@@ -62,7 +75,7 @@ public:
 	void render(float dt);
 	void resize(unsigned int width, unsigned int height);
 	void reloadAll();
-	void setGLVersion(unsigned int GLVersion) { mShaders.setGLVersion(GLVersion); };
+	void setGLVersion(unsigned int GLVersion) { mCommonLibraries.shaders.setGLVersion(GLVersion); };
 	//bool isPlaying() const { return mPaused == false; };
 	virtual void handle(const Event event);
 };

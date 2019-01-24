@@ -2,11 +2,16 @@
 
 FileService::FileService(const char* filename) {
 	in.open(filename, std::ios::binary);
+	mPath = filename;
 }
 
-void FileService::close() {
+FileService::FileService(std::string filename) {
+	in.open(filename.data(), std::ios::binary);
+	mPath = filename;
+}
+
+FileService::~FileService() {
 	in.close();
-	delete this;
 }
 
 std::string FileService::getAll() {
@@ -49,7 +54,7 @@ bool FileService::extract(const char* pattern, void* target) {
 	std::streamoff pos = in.tellg();
 	unsigned int offset = 0;
 	for (unsigned int tok = 0; pattern[tok] != '\0'; tok++) {
-		if (pattern[tok] == '\\') {
+		if (pattern[tok] == '`') {
 			tok++;
 			bool strictlyNecessary = true, raw = false;
 			if (pattern[tok] == '?') {
@@ -129,7 +134,7 @@ bool FileService::extract(const char* pattern, void* target) {
 				std::streampos stringStart = in.tellg();
 				char delim = pattern[tok + 1];
 				DelimType type = DELIM_CHAR;
-				if (delim == '\\') {
+				if (delim == '`') {
 					if (pattern[tok + 2] == 'W')	// Assumes a well-formatted pattern string, like everything else here
 						type = DELIM_WHITESPACE;
 					else if (pattern[tok + 2] == 'E')
