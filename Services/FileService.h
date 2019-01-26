@@ -4,6 +4,16 @@
 #include <fstream>
 #include <string>
 
+class FileException :public std::runtime_error {
+public:
+	FileException(std::string what_arg) :std::runtime_error(what_arg) {};
+};
+
+class FileNotFoundException :public FileException {
+public:
+	FileNotFoundException(std::string filename) :FileException(std::string("File not found: ") + filename) {};
+};
+
 class FileService {
 private:
 	std::ifstream in;

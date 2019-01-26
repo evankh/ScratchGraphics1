@@ -9,6 +9,7 @@
 #include "ServiceLocator.h"
 #include "Shader.h"
 #include "Sound.h"
+#include "State.h"
 #include "SoundHandler.h"
 #include "Texture.h"
 #include "Window.h"
@@ -16,6 +17,7 @@
 #include <thread>	// An experiment
 
 #include "GL\glew.h"	// I literally just need this for GL_VERTEX_SHADER, which is a bit annoying
+NamedContainer<State*> State::sBaseStateLibrary;	// This goes here for some reason
 
 Game::Game() {
 	// ?
@@ -315,7 +317,6 @@ Level* Game::loadLevel(std::string path) {
 	ShaderManager shaderLibrary = mCommonLibraries.shaders;
 	NamedContainer<Program*> progLibrary = mCommonLibraries.programs;
 	NamedContainer<Texture*> texLibrary = mCommonLibraries.textures;
-	NamedContainer<PhysicsComponent*> physLibrary = mCommonLibraries.physics;
 	SoundLibrary soundLibrary = mCommonLibraries.sounds;
 	FileService index(path + mIndexFilename);
 	// Load any additional data into the new libraries
@@ -359,7 +360,7 @@ Level* Game::loadLevel(std::string path) {
 			ServiceLocator::getLoggingService().badFileError(e.what());
 		}
 	}
-	return new Level(path + levelFile, geomLibrary, progLibrary, texLibrary, physLibrary, soundLibrary);
+	return new Level(path + levelFile, geomLibrary, progLibrary, texLibrary, soundLibrary);
 }
 
 void Game::parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary) {

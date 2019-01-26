@@ -19,7 +19,7 @@ public:
 		if (mItems.count(key))
 			return this->mItems.at(key);
 		else
-			throw std::exception(key.data());
+			throw std::out_of_range(key);
 	};
 	inline bool contains(std::string key) const {
 		return this->mItems.count(key) != 0;

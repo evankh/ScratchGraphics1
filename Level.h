@@ -25,11 +25,10 @@ private:
 	NamedContainer<Program*> mProgramLibrary;
 	NamedContainer<Texture*> mTextureLibrary;
 	//NamedContainer<InputComponent>& mInputLibrary;
-	NamedContainer<PhysicsComponent*> mPhysicsLibrary;
 	SoundLibrary mSoundLibrary;
 public:
 	//Level(std::string filepath);
-	Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, NamedContainer<Program*>& progLibrary, NamedContainer<Texture*>& texLibrary, NamedContainer<PhysicsComponent*>physLibrary, SoundLibrary& soundLibrary);
+	Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, NamedContainer<Program*>& progLibrary, NamedContainer<Texture*>& texLibrary, SoundLibrary& soundLibrary);
 	~Level();
 	std::map<std::string, GameObject*>& getObjectList() { return mSceneObjects; };
 	std::map<std::string, Camera*>& getCameraList() { return mSceneCameras; };

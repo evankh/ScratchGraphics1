@@ -3,12 +3,13 @@
 FileService::FileService(const char* filename) {
 	in.open(filename, std::ios::binary);
 	mPath = filename;
+	if (!in.good()) {
+		in.close();
+		throw FileNotFoundException(filename);
+	}
 }
 
-FileService::FileService(std::string filename) {
-	in.open(filename.data(), std::ios::binary);
-	mPath = filename;
-}
+FileService::FileService(std::string filename) :FileService(filename.data()) {}
 
 FileService::~FileService() {
 	in.close();

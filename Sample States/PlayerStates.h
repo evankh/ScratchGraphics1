@@ -8,16 +8,10 @@ class GameObject;
 #define NULL 0
 #endif//NULL
 
-class PassThruState :public State {
-public:
-	PassThruState* handleEvent(Event event) { return NULL; };
-	void update(PhysicsComponent* physics, float dt);
-	static PassThruState* getEntry(GameObject* owner) { return new PassThruState(); };
-};
-
 class PlayerState :public State {
+	static bool sRegistered;
 public:
-	static PlayerState* getEntry(GameObject* owner);
+	virtual PlayerState* getEntry(GameObject* owner);
 };
 
 class PlayerOnFloor :public PlayerState {

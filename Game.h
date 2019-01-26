@@ -46,7 +46,6 @@ private:
 			NamedContainer<PostProcessingPipeline*> pipelines;
 		} post;
 		//NamedContainer<InputComponent> mInputs;
-		NamedContainer<PhysicsComponent*> physics;
 	} mCommonLibraries;
 	// Actual game information
 	Window* mWindow;

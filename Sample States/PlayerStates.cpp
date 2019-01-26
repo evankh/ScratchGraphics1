@@ -3,6 +3,8 @@
 #include "../GameObject.h"
 #include "../KeyboardHandler.h"
 
+bool PlayerState::sRegistered = State::setBaseState("player", new PlayerOnFloor(0.0, 0.0));
+
 PlayerState* PlayerState::getEntry(GameObject* owner) {
 	KeyboardHandler::getInstance().registerReceiver("wasd", owner);
 	return new PlayerOnFloor(0.0f, 0.0f);
@@ -121,9 +123,5 @@ void PlayerOnFloor::update(PhysicsComponent* physics, float dt) {
 }
 
 void PlayerJumping::update(PhysicsComponent* physics, float dt) {
-	physics->update(dt);
-}
-
-void PassThruState::update(PhysicsComponent* physics, float dt) {
 	physics->update(dt);
 }
