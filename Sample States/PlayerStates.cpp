@@ -6,7 +6,7 @@
 bool PlayerState::sRegistered = State::setBaseState("player", new PlayerOnFloor(0.0, 0.0));
 
 PlayerState* PlayerState::getEntry(GameObject* owner) {
-	KeyboardHandler::getInstance().registerReceiver("wasd", owner);
+	KeyboardHandler::getInstance().registerReceiver("wasd ", owner);
 	return new PlayerOnFloor(0.0f, 0.0f);
 }
 
@@ -39,11 +39,13 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 			dx -= 1.0f;
 			break;
 		case 's':
-			dx += 1.0f;
-			break;
-		case 'd':
 			dy -= 1.0f;
 			break;
+		case 'd':
+			dx += 1.0f;
+			break;
+		case ' ':
+			return new PlayerJumping(dx, dy);
 		}
 	}
 	if (event.mType == EventType::KEY_RELEASED) {
@@ -55,10 +57,10 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 			dx += 1.0f;
 			break;
 		case 's':
-			dx -= 1.0f;
+			dy += 1.0f;
 			break;
 		case 'd':
-			dy += 1.0f;
+			dx -= 1.0f;
 			break;
 		}
 	}
@@ -85,8 +87,6 @@ PlayerState* PlayerJumping::handleEvent(Event event) {
 		case 'd':
 			dx += 1.0f;
 			break;
-		case ' ':
-			return new PlayerJumping(dx, dy);
 		}
 	}
 	if (event.mType == EventType::KEY_RELEASED) {

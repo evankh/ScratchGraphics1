@@ -60,8 +60,6 @@ void gameLoop(int value) {
 	prev = current;
 	lag += elapsed / 1000000.0f;
 	while (lag > msPerFrame) {
-		KeyboardHandler::getInstance().dispatchAll();	// Why are these here, instead of in Game::update? I must have had a reason, right?
-		MouseHandler::getInstance().dispatchAll();
 		Game::getInstance().update(msPerFrame / 1000.0f);
 		lag -= msPerFrame;
 	}

@@ -216,6 +216,18 @@ void Geometry::render() const {
 #define PI 3.141592f
 #endif//PI
 
+Geometry* Geometry::getNewQuad() {
+	// There must be some smarter way to make it know that texcoords are going to be the same as positions
+	float* positions = new float[32] {
+		0.0,0.0,0.0, 0.0,0.0, 0.0,0.0,1.0,
+		1.0,0.0,0.0, 1.0,0.0, 0.0,0.0,1.0,
+		0.0,1.0,0.0, 0.0,1.0, 0.0,0.0,1.0,
+		1.0,1.0,0.0, 1.0,1.0, 0.0,0.0,1.0
+	};
+	unsigned int* tris = new unsigned int[6] { 0,1,2, 2,1,3 };
+	return new Geometry(4, positions, 2, tris, { A_POSITION, A_TEXCOORD0, A_NORMAL });
+}
+
 void Geometry::drawUnitSphere() {
 	static GeometryHandles handles;
 	int numSegments = 16, numStacks = 8;

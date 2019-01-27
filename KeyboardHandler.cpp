@@ -18,9 +18,11 @@ void KeyboardHandler::registerReceiver(char interested, Receiver* receiver) {
 }
 
 void KeyboardHandler::handlePress(char key, int mouse_x, int mouse_y) {
-	mKeyStatus[key] = true;
-	sEvents.push(Event(EventType::KEY_PRESSED, KeyboardData{ key, mouse_x,mouse_y }));
-	sEvents.push(Event(CommandData{ mKeyBindings[key], 1.0f }));	// No reason not to do both, right?
+	if (!mKeyStatus[key]) {	// To prevent against StickyKeys or whatever it's called
+		mKeyStatus[key] = true;
+		sEvents.push(Event(EventType::KEY_PRESSED, KeyboardData{ key, mouse_x,mouse_y }));
+		sEvents.push(Event(CommandData{ mKeyBindings[key], 1.0f }));	// No reason not to do both, right?
+	}
 }
 
 void KeyboardHandler::handleRelease(char key, int mouse_x, int mouse_y) {

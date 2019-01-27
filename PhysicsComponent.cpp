@@ -42,6 +42,7 @@ void PhysicsComponent::update(float dt) {
 	mVelocity += mAcceleration * dt;
 	mPosition += mVelocity * dt;
 	rotate(mAxis, mAngularVelocity * dt);
+	mBounds->transform(getModelMatrix());	// I suspect that's not right but w/e
 }
 
 void PhysicsComponent::translate(glm::vec3 dxyz) {

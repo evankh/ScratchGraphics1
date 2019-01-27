@@ -61,6 +61,7 @@ public:
 	AABB* getBoundingBox() const { return mBoundingBox; };
 	static const Geometry* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const Geometry* getUnitQuad() { return &sUnitQuad; };
+	static Geometry* getNewQuad();
 	static void drawUnitSphere();
 	static void drawUnitCylinder();
 	static void drawBox(glm::vec3 min, glm::vec3 max);

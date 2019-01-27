@@ -3,8 +3,8 @@
 #include "Camera.h"
 #include "ServiceLocator.h"
 #include "Source.h"
-// Need to find a better way to include these - probably a library like the others, containing maybe factory methods for the entry point to each state machine?
-#include "Sample States/PlayerStates.h"
+#include "State.h"
+#include "glm/gtx/transform.hpp"
 
 Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, NamedContainer<Program*>& progLibrary, NamedContainer<Texture*>& texLibrary, SoundLibrary& soundLibrary)
 	:mGeometryLibrary(geomLibrary), mProgramLibrary(progLibrary), mTextureLibrary(texLibrary), mSoundLibrary(soundLibrary) {
@@ -21,7 +21,7 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 				continue;
 			}
 			// Set up variables and structs to read into
-			char* geomName, *progName, *texName, *inputName = NULL, *soundName, *boundsName, *err;	// Not sure why it only cares about inputName
+			char* geomName, *progName, *texName, *inputName = NULL, *soundName, *boundsName = NULL, *err;	// Not sure why it only cares about inputName
 			struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f }, col{ 0.0f,0.0f,0.0f };
 			float ang = 0.0f, mom = 0.0f;
 			Geometry* geom = NULL;
@@ -31,16 +31,7 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 			std::vector<std::string> sounds;
 			bool valid = true, hasCol = false;
 			while (!file.extract("`L", NULL)) {
-				if (file.extract(" bounds:`S ", &boundsName)) {
-					if (strcmp(boundsName, "Sphere") == 0)
-						bounds = new BoundingSphere({ 0.0f,0.0f,0.0f }, 1.0f);
-					else if (strcmp(boundsName, "AABB") == 0)
-						bounds = geom->getBoundingBox();	// Except geom hasn't been set yet, better to just save the name and assign the Bounds later when actually making the object?
-					else
-						ServiceLocator::getLoggingService().error("Unknown bounding box type", boundsName);
-					delete[] boundsName;
-					file.putBack(' ');
-				}
+				if (file.extract(" bounds:\"`S\"", &boundsName));
 				else if (file.extract(" geom:\"`S\"", &geomName)) {
 					// Check if the geometry exists in the geometry library
 					// If so, save a reference to it to pass to the GameObject constructor
@@ -127,6 +118,19 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 			if (valid) {
 				// Construction of the actual object
 				// It actually looks safe for any of the components to be NULL so the validity checking may not be necessary
+				if (boundsName) {
+					if (strcmp(boundsName, "Sphere") == 0)
+						bounds = new BoundingSphere({ 0.0f,0.0f,0.0f }, 1.0f);
+					else if (strcmp(boundsName, "AABB") == 0)
+						bounds = geom->getBoundingBox();
+					else if (strcmp(boundsName, "Plane") == 0) {
+						glm::mat4 rotation = glm::rotate(ang, glm::vec3(rot.x, rot.y, rot.z));
+						auto n = rotation * glm::vec4(0.0, 0.0, 1.0, 0.0);
+						bounds = new CollisionPlane(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(n.x, n.y, n.z));
+					}
+					else
+						ServiceLocator::getLoggingService().error("Unknown bounding box type", boundsName);
+				}
 				PhysicsComponent* physics = new PhysicsComponent(bounds, { vel.x,vel.y,vel.z }, { acc.x,acc.y,acc.z }, { axis.x, axis.y, axis.z }, mom);
 				physics->scale({ scl.x,scl.y,scl.z });
 				physics->rotate({ rot.x,rot.y,rot.z }, ang);

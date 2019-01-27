@@ -21,6 +21,28 @@ void ArbitraryBoundingBox::debugDraw() {
 	Geometry::drawUnitBox();//mBox.mMin, mBox.mMax, mTransform);
 }
 
+void CollisionPlane::debugDraw() {
+	// Geometry's static draw calls are actually super unhelpful
+	return;
+}
+
+void BoundingSphere::transform(glm::mat4 transform) {
+	mCenter.x += transform[0][3];
+	mCenter.y += transform[1][3];
+	mCenter.z += transform[2][3];
+	mRadius *= 1.0f;	// Needs to find a way to pull the scale out of the matrix but w/e
+}
+
+void AABB::transform(glm::mat4 transform) {
+	glm::vec3 translation = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
+	mMin += translation;
+	mMax += translation;
+}
+
+void CollisionPlane::transform(glm::mat4 transform) {
+	// Dunno exactly what this one needs to do
+}
+
 void AABB::update(float vert[3]) {
 	if (vert[0] < mMin.x)
 		mMin.x = vert[0];
@@ -36,90 +58,145 @@ void AABB::update(float vert[3]) {
 		mMax.z = vert[2];
 }
 
+// There must be some more efficient way to write this... maybe with macros?
 bool collides(Bounds* a, Bounds* b) {
-	switch (b->mType) {
+	switch (a->mType) {
 	case BoundsType::COLLISIONLESS:
 		return false;
 	case BoundsType::SPHERE: {
-		BoundingSphere* b_ = static_cast<BoundingSphere*>(b);
-		return a->collides(b_);
-	}
-	case BoundsType::AA_CYLINDER: {
-		AABoundingCylinder* b_ = static_cast<AABoundingCylinder*>(b);
-		return a->collides(b_);
+		BoundingSphere* a_ = static_cast<BoundingSphere*>(a);
+		switch (b->mType) {
+		case BoundsType::COLLISIONLESS:
+			return false;
+		case BoundsType::SPHERE: {
+			BoundingSphere* b_ = static_cast<BoundingSphere*>(b);
+			return collides(a_, b_);
+		}
+		case BoundsType::AA_BOX: {
+			AABB* b_ = static_cast<AABB*>(b);
+			return collides(a_, b_);
+		}
+		case BoundsType::PLANE: {
+			CollisionPlane* b_ = static_cast<CollisionPlane*>(b);
+			return collides(a_, b_);
+		}
+		}
 	}
 	case BoundsType::AA_BOX: {
-		AABB* b_ = static_cast<AABB*>(b);
-		return a->collides(b_);
+		AABB* a_ = static_cast<AABB*>(a);
+		switch (b->mType) {
+		case BoundsType::COLLISIONLESS:
+			return false;
+		case BoundsType::SPHERE: {
+			BoundingSphere* b_ = static_cast<BoundingSphere*>(b);
+			return collides(a_, b_);
+		}
+		case BoundsType::AA_BOX: {
+			AABB* b_ = static_cast<AABB*>(b);
+			return collides(a_, b_);
+		}
+		case BoundsType::PLANE: {
+			CollisionPlane* b_ = static_cast<CollisionPlane*>(b);
+			return collides(a_, b_);
+		}
+		}
 	}
-	case BoundsType::CYLINDER: {
-		ArbitraryBoundingCylinder* b_ = static_cast<ArbitraryBoundingCylinder*>(b);
-		return a->collides(b_);
-	}
-	case BoundsType::BOX: {
-		ArbitraryBoundingBox* b_ = static_cast<ArbitraryBoundingBox*>(b);
-		return a->collides(b_);
+	case BoundsType::PLANE: {
+		CollisionPlane* a_ = static_cast<CollisionPlane*>(a);
+		switch (b->mType) {
+		case BoundsType::COLLISIONLESS:
+			return false;
+		case BoundsType::SPHERE: {
+			BoundingSphere* b_ = static_cast<BoundingSphere*>(b);
+			return collides(a_, b_);
+		}
+		case BoundsType::AA_BOX: {
+			AABB* b_ = static_cast<AABB*>(b);
+			return collides(a_, b_);
+		}
+		case BoundsType::PLANE: {
+			CollisionPlane* b_ = static_cast<CollisionPlane*>(b);
+			return collides(a_, b_);
+		}
+		}
 	}
 	}
 	return false;
 }
 
-bool BoundingSphere::collides(BoundingSphere* b) {
-	return (mCenter - b->mCenter).length() <= mRadius + b->mRadius;
+bool collides(BoundingSphere* a, BoundingSphere* b) {
+	return (a->mCenter - b->mCenter).length() <= a->mRadius + b->mRadius;
 }
-
-bool BoundingSphere::collides(AABoundingCylinder* b) {
+/*
+bool collides(BoundingSphere* a, AABoundingCylinder* b) {
 	return true;
 }
-
-bool BoundingSphere::collides(AABB* b) {
-	return mCenter.x < b->mMax.x &&mCenter.x > b->mMin.x;
+*/
+bool collides(BoundingSphere* a, AABB* b) {
+	return a->mCenter.x < b->mMax.x && a->mCenter.x > b->mMin.x;
 }
-
-bool BoundingSphere::collides(ArbitraryBoundingCylinder* b) {
+/*
+bool collides(BoundingSphere* a, ArbitraryBoundingCylinder* b) {
 	return false;
 }
 
-bool BoundingSphere::collides(ArbitraryBoundingBox* b) {
+bool collides(BoundingSphere* a, ArbitraryBoundingBox* b) {
+	return false;
+}
+*/
+bool collides(BoundingSphere* a, CollisionPlane* b) {
+	return glm::dot(a->mCenter - b->mPosition, b->mNormal) <= a->mRadius + b->mThreshold;
+}
+/*
+bool collides(AABoundingCylinder* a, AABoundingCylinder* b) {
 	return false;
 }
 
-bool AABoundingCylinder::collides(AABoundingCylinder* b) {
+bool collides(AABoundingCylinder* a, AABB* b) {
 	return false;
 }
 
-bool AABoundingCylinder::collides(AABB* b) {
+bool collides(AABoundingCylinder* a, ArbitraryBoundingCylinder* b) {
 	return false;
 }
 
-bool AABoundingCylinder::collides(ArbitraryBoundingCylinder* b) {
+bool collides(AABoundingCylinder* a, ArbitraryBoundingBox* b) {
+	return false;
+}
+*/
+
+bool collides(AABB* a, BoundingSphere* b) {
+	return collides(b, a);
+}
+
+bool collides(AABB* a, AABB* b) {
+	return a->mMin.x < b->mMax.x && a->mMax.x > b->mMin.x;	// And so on...
+}
+/*
+bool collides(AABB* a, ArbitraryBoundingCylinder* b) {
 	return false;
 }
 
-bool AABoundingCylinder::collides(ArbitraryBoundingBox* b) {
+bool collides(AABB* a, ArbitraryBoundingBox* b) {
 	return false;
 }
-
-bool AABB::collides(AABB* b) {
-	return mMin.x < b->mMax.x && mMax.x > b->mMin.x;	// And so on...
+*/
+bool collides(AABB* a, CollisionPlane* b) {
+	bool collides = false;
+	collides = collides && glm::dot(a->mMin - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides && glm::dot(a->mMax - b->mPosition, b->mNormal) <= b->mThreshold;
+	// And now to do the same thing for the other 6 vertices...
+	return collides;
 }
 
-bool AABB::collides(ArbitraryBoundingCylinder* b) {
-	return false;
+bool collides(CollisionPlane* a, BoundingSphere* b) {
+	return collides(b, a);
 }
 
-bool AABB::collides(ArbitraryBoundingBox* b) {
-	return false;
+bool collides(CollisionPlane* a, AABB* b) {
+	return collides(b, a);
 }
 
-bool ArbitraryBoundingCylinder::collides(ArbitraryBoundingCylinder* b) {
-	return mCylinder.collides(b);
-}
-
-bool ArbitraryBoundingCylinder::collides(ArbitraryBoundingBox* b) {
-	return mCylinder.collides(b);
-}
-
-bool ArbitraryBoundingBox::collides(ArbitraryBoundingBox* b) {
-	return mBox.collides(b);
+bool collides(CollisionPlane* a, CollisionPlane* b) {// Planes are infinite and will nearly always collide, only way they won't is if they're exactly parallel or antiparallel (and not in the same position)
+	return a->mPosition == b->mPosition || (a->mNormal != b->mNormal && a->mNormal != -b->mNormal);	// Though even this fails if mPosition is translated in the plane
 }

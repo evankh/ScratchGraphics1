@@ -1,5 +1,5 @@
 title: "Spoo Fleem"
-resolution: [100, 400]
+resolution: [800, 600]
 common: "common/"
 Level "debug_level" "debug_level/"
 Level "level1" "level1/"

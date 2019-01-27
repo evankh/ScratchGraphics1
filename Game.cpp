@@ -5,6 +5,7 @@
 #include "Level.h"
 #include "UI/Menu.h"
 #include "UI/UIElement.h"
+#include "MouseHandler.h"
 #include "Program.h"
 #include "ServiceLocator.h"
 #include "Shader.h"
@@ -33,6 +34,7 @@ void Game::init() {
 
 void Game::load() {
 	// Load certain very important objects
+	mCommonLibraries.geometries.add("plane", Geometry::getNewQuad());
 	// Load everything else from file
 	FileService baseIndex(mAssetBasePath + mIndexFilename);
 	if (!baseIndex.good()) throw "Asset file could not be opened.";
@@ -192,6 +194,8 @@ void Game::update(float dt) {
 				}
 			}
 		}
+		KeyboardHandler::getInstance().dispatchAll();
+		MouseHandler::getInstance().dispatchAll();
 		if (!mPaused) {
 			// Object updates
 			for (auto object : mCurrentLevel->getObjectList()) {
