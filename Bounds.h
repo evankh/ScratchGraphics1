@@ -28,7 +28,9 @@ protected:
 	Bounds(BoundsType type) :mType(type) {};
 public:
 	virtual void debugDraw() = 0;
-	virtual void transform(glm::mat4 transform) = 0;	// Each primitive needs to decide for itself how it needs to handle the transform
+	virtual void rotate(glm::vec3 axis, float degrees) = 0;	// Each primitive needs to decide for itself how it needs to handle transforms
+	virtual void translate(glm::vec3 dxyz) = 0;
+	virtual void scale(float scale) = 0;
 };
 
 class BoundingSphere;
@@ -40,7 +42,9 @@ class CollisionPlane;
 
 class Collisionless :public Bounds {
 	virtual void debugDraw() {};
-	virtual void transform(glm::mat4) {};
+	virtual void rotate(glm::vec3, float) {};
+	virtual void translate(glm::vec3) {};
+	virtual void scale(float) {};
 public:
 	Collisionless() :Bounds(BoundsType::COLLISIONLESS) {};
 };
@@ -65,7 +69,9 @@ private:
 public:
 	BoundingSphere(glm::vec3 center, float radius) :Bounds(BoundsType::SPHERE) { mCenter = center; mRadius = radius; };
 	virtual void debugDraw();
-	virtual void transform(glm::mat4 transform);
+	virtual void rotate(glm::vec3 axis, float degrees) {};
+	virtual void translate(glm::vec3 dxyz) { mCenter += dxyz; };
+	virtual void scale(float scale) { mRadius *= scale; };
 };
 
 class AABoundingCylinder :public Bounds {
@@ -87,7 +93,9 @@ private:
 public:
 	AABoundingCylinder() :Bounds(BoundsType::AA_CYLINDER) {};
 	virtual void debugDraw();
-	virtual void transform(glm::mat4 transform);
+	virtual void rotate(glm::vec3 axis, float degrees) {}
+	virtual void translate(glm::vec3 dxyz);
+	virtual void scale(float scale);
 };
 
 class AABB :public Bounds {
@@ -108,7 +116,9 @@ private:
 public:
 	AABB() :Bounds(BoundsType::AA_BOX) {};
 	virtual void debugDraw();
-	virtual void transform(glm::mat4 transform);
+	virtual void rotate(glm::vec3 axis, float degrees) {};
+	virtual void translate(glm::vec3 dxyz);
+	virtual void scale(float scale);
 	void update(float vert[3]);
 	void setMinX(float x) { mMin.x = x; };
 	void setMinY(float y) { mMin.y = y; };
@@ -137,7 +147,9 @@ private:
 public:
 	ArbitraryBoundingCylinder() :Bounds(BoundsType::CYLINDER) {};
 	virtual void debugDraw();
-	virtual void transform(glm::mat4 transform);
+	virtual void rotate(glm::vec3 axis, float degrees);
+	virtual void translate(glm::vec3 dxyz);
+	virtual void scale(float scale);
 };
 
 class ArbitraryBoundingBox :public Bounds {
@@ -159,7 +171,9 @@ private:
 public:
 	ArbitraryBoundingBox() :Bounds(BoundsType::BOX) {};
 	virtual void debugDraw();
-	virtual void transform(glm::mat4 transform);
+	virtual void rotate(glm::vec3 axis, float degrees);
+	virtual void translate(glm::vec3 dxyz);
+	virtual void scale(float scale);
 };
 
 class CollisionPlane :public Bounds {
@@ -183,7 +197,9 @@ private:
 public:
 	CollisionPlane(glm::vec3 position, glm::vec3 normal) :Bounds(BoundsType::PLANE) { mPosition = position; mNormal = normal; };
 	virtual void debugDraw();
-	virtual void transform(glm::mat4 transform);
+	virtual void rotate(glm::vec3 axis, float degrees);
+	virtual void translate(glm::vec3 dxyz) { mPosition += dxyz; };
+	virtual void scale(float scale) {};
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_BOUNDS__

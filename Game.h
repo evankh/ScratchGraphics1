@@ -5,7 +5,7 @@
 class GameObject;
 class Geometry;
 #include "KernelManager.h"
-class Level;
+#include "Level.h"
 class Menu;
 class RootElement;
 #include "NamedContainer.h"
@@ -34,18 +34,13 @@ private:
 	NamedContainer<std::string> mLevelDirectory;
 	struct {
 		NamedContainer<RootElement*> menus;
-		NamedContainer<Geometry*> geometries;
-		ShaderManager shaders;
-		NamedContainer<Program*> programs;
-		NamedContainer<Texture*> textures;
-		SoundLibrary sounds;
+		StandardLibraries standard;
 		struct {
 			ShaderManager shaders;	// Do I need a new container type to handle matching sample sizes? Probably.
 			NamedContainer<Program*> filters;
 			KernelManager kernels;
 			NamedContainer<PostProcessingPipeline*> pipelines;
 		} post;
-		//NamedContainer<InputComponent> mInputs;
 	} mCommonLibraries;
 	// Actual game information
 	Window* mWindow;
@@ -74,7 +69,7 @@ public:
 	void render(float dt);
 	void resize(unsigned int width, unsigned int height);
 	void reloadAll();
-	void setGLVersion(unsigned int GLVersion) { mCommonLibraries.shaders.setGLVersion(GLVersion); };
+	void setGLVersion(unsigned int GLVersion) { mCommonLibraries.standard.shaders.setGLVersion(GLVersion); };
 	//bool isPlaying() const { return mPaused == false; };
 	virtual void handle(const Event event);
 };

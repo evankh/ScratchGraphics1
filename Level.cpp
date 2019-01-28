@@ -6,9 +6,7 @@
 #include "State.h"
 #include "glm/gtx/transform.hpp"
 
-Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, NamedContainer<Program*>& progLibrary, NamedContainer<Texture*>& texLibrary, SoundLibrary& soundLibrary)
-	:mGeometryLibrary(geomLibrary), mProgramLibrary(progLibrary), mTextureLibrary(texLibrary), mSoundLibrary(soundLibrary) {
-	// This all needs to get WAY more robust with the new exceptions
+Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries ownLibraries) :mSharedLibraries(sharedLibraries), mOwnLibraries(ownLibraries) {
 	FileService file(filepath);
 	char* objectName;
 	while (file.good()) {
@@ -38,7 +36,12 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 					// If not, raise an error and break, set a bool so we can skip the construction of the object, and eat the rest of the line
 					// (Same general procedure applies to all parameters)
 					try {
-						geom = mGeometryLibrary.get(geomName);
+						try {
+							geom = mOwnLibraries.geometries.get(geomName);
+						}
+						catch (std::out_of_range) {
+							geom = mSharedLibraries.geometries.get(geomName);
+						}
 						delete geomName;
 					}
 					catch (std::out_of_range e) {
@@ -51,7 +54,12 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 				}
 				else if (file.extract(" prog:\"`S\"", &progName)) {
 					try {
-						program = mProgramLibrary.get(progName);
+						try {
+							program = mOwnLibraries.programs.get(progName);
+						}
+						catch (std::out_of_range) {
+							program = mSharedLibraries.programs.get(progName);
+						}
 						delete progName;
 					}
 					catch (std::out_of_range e) {
@@ -64,7 +72,12 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 				}
 				else if (file.extract(" tex:\"`S\"", &texName)) {
 					try {
-						texture = mTextureLibrary.get(texName);
+						try {
+							texture = mOwnLibraries.textures.get(texName);
+						}
+						catch (std::out_of_range) {
+							texture = mSharedLibraries.textures.get(texName);
+						}
 						delete texName;
 					}
 					catch (std::out_of_range e) {
@@ -154,8 +167,10 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 					object->setState(state);
 				}
 				for (auto sound : sounds) {
-					if (mSoundLibrary.get(sound))
-						object->registerSound(sound, mSoundLibrary.get(sound));
+					if (mOwnLibraries.sounds.get(sound))
+						object->registerSound(sound, mOwnLibraries.sounds.get(sound));
+					else if (mSharedLibraries.sounds.get(sound))
+						object->registerSound(sound, mSharedLibraries.sounds.get(sound));
 					else
 						ServiceLocator::getLoggingService().error("Sound not found", sound);
 				}
@@ -205,7 +220,12 @@ Level::Level(std::string filepath, NamedContainer<Geometry*>& geomLibrary, Named
 				ServiceLocator::getLoggingService().error("Attempted redefinition of background music", objectName);
 			}
 			else try {
-				mBackgroundMusic = mSoundLibrary.get(objectName);
+				try {
+					mBackgroundMusic = mOwnLibraries.sounds.get(objectName);
+				}
+				catch (std::out_of_range) {
+					mBackgroundMusic = mSharedLibraries.sounds.get(objectName);
+				}
 			}
 			catch (std::out_of_range &e) {
 				ServiceLocator::getLoggingService().error("Background music not found", e.what());
@@ -237,6 +257,11 @@ Level::~Level() {
 	for (auto camera : mSceneCameras)
 		delete camera.second;
 	mSceneCameras.clear();
+	mOwnLibraries.geometries.clear();
+	mOwnLibraries.shaders.clear();
+	mOwnLibraries.programs.clear();
+	mOwnLibraries.textures.clear();
+	mOwnLibraries.sounds.clear();
 	if (mSceneAudio) delete mSceneAudio;
 }
 

@@ -26,20 +26,15 @@ void CollisionPlane::debugDraw() {
 	return;
 }
 
-void BoundingSphere::transform(glm::mat4 transform) {
-	mCenter.x += transform[0][3];
-	mCenter.y += transform[1][3];
-	mCenter.z += transform[2][3];
-	mRadius *= 1.0f;	// Needs to find a way to pull the scale out of the matrix but w/e
+void AABB::translate(glm::vec3 dxyz) {
+	mMin += dxyz;
+	mMax += dxyz;
+}
+void AABB::scale(float scale) {
+	// Not sure, maybe scale both mMin & mMax towards the center?
 }
 
-void AABB::transform(glm::mat4 transform) {
-	glm::vec3 translation = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
-	mMin += translation;
-	mMax += translation;
-}
-
-void CollisionPlane::transform(glm::mat4 transform) {
+void CollisionPlane::rotate(glm::vec3 axis, float degrees) {
 	// Dunno exactly what this one needs to do
 }
 
@@ -197,6 +192,6 @@ bool collides(CollisionPlane* a, AABB* b) {
 	return collides(b, a);
 }
 
-bool collides(CollisionPlane* a, CollisionPlane* b) {// Planes are infinite and will nearly always collide, only way they won't is if they're exactly parallel or antiparallel (and not in the same position)
+bool collides(CollisionPlane* a, CollisionPlane* b) {	// Planes are infinite and will nearly always collide, only way they won't is if they're exactly parallel or antiparallel (and not in the same position)
 	return a->mPosition == b->mPosition || (a->mNormal != b->mNormal && a->mNormal != -b->mNormal);	// Though even this fails if mPosition is translated in the plane
 }

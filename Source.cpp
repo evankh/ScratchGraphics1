@@ -11,6 +11,7 @@ Source::Source(PhysicsComponent* physics, bool looping) {
 }
 
 Source::~Source() {
+	alSourceStop(mHandle);
 	alDeleteSources(1, &mHandle);
 }
 

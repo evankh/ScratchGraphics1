@@ -34,7 +34,7 @@ void Game::init() {
 
 void Game::load() {
 	// Load certain very important objects
-	mCommonLibraries.geometries.add("plane", Geometry::getNewQuad());
+	mCommonLibraries.standard.geometries.add("plane", Geometry::getNewQuad());
 	// Load everything else from file
 	FileService baseIndex(mAssetBasePath + mIndexFilename);
 	if (!baseIndex.good()) throw "Asset file could not be opened.";
@@ -98,22 +98,22 @@ void Game::load() {
 					}
 					else if (commonIndex.extract("obj: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load objs into common obj directory
-						parseGeometryIndex(commonPath + workingDirectory, mCommonLibraries.geometries);
+						parseGeometryIndex(commonPath + workingDirectory, mCommonLibraries.standard.geometries);
 						delete workingDirectory;
 					}
 					else if (commonIndex.extract("sound: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load sounds into common sound directory
-						parseSoundIndex(commonPath + workingDirectory, mCommonLibraries.sounds);
+						parseSoundIndex(commonPath + workingDirectory, mCommonLibraries.standard.sounds);
 						delete workingDirectory;
 					}
 					else if (commonIndex.extract("tex: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load textures into common texture directory
-						parseTextureIndex(commonPath + workingDirectory, mCommonLibraries.textures);
+						parseTextureIndex(commonPath + workingDirectory, mCommonLibraries.standard.textures);
 						delete workingDirectory;
 					}
 					else if (commonIndex.extract("glsl: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load shaders into common shader directory
-						parseShaderIndex(commonPath + workingDirectory, mCommonLibraries.shaders, mCommonLibraries.programs);
+						parseShaderIndex(commonPath + workingDirectory, mCommonLibraries.standard.shaders, mCommonLibraries.standard.programs);
 						delete workingDirectory;
 					}
 					else if (commonIndex.extract("post: \"`S\"`L", &workingDirectory)) {
@@ -139,7 +139,10 @@ void Game::load() {
 }
 
 void Game::cleanup() {
+	delete mCurrentLevel;
 	mCurrentLevel = NULL;
+	mLevelDirectory.clear();
+
 	while (mCurrentMenu) {
 		auto top = mCurrentMenu;
 		mCurrentMenu = top->mParent;
@@ -149,16 +152,16 @@ void Game::cleanup() {
 	mCurrentPostProcessing = NULL;
 	mCurrentMenuPost = NULL;
 
-	mCommonLibraries.geometries.clear();
 	mCommonLibraries.menus.clear();
-	mCommonLibraries.sounds.clear();
+	mCommonLibraries.standard.geometries.clear();
+	mCommonLibraries.standard.sounds.clear();
+	mCommonLibraries.standard.programs.clear();
+	mCommonLibraries.standard.shaders.clear();
+	mCommonLibraries.standard.textures.clear();
 	mCommonLibraries.post.filters.clear();
 	mCommonLibraries.post.kernels.clear();
 	mCommonLibraries.post.pipelines.clear();
 	mCommonLibraries.post.shaders.clear();
-	mCommonLibraries.programs.clear();
-	mCommonLibraries.shaders.clear();
-	mCommonLibraries.textures.clear();
 }
 
 Game::~Game() {
@@ -230,7 +233,7 @@ void Game::render(float dt) {
 
 		float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
 		if (mDebugMode) {
-			auto program = mCommonLibraries.programs.get("debug_bbs");
+			auto program = mCommonLibraries.standard.programs.get("debug_bbs");
 			program->use();
 			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
 			for (auto object : mCurrentLevel->getObjectList()) {
@@ -242,7 +245,7 @@ void Game::render(float dt) {
 				object.second->debugDraw();
 			}
 
-			program = mCommonLibraries.programs.get("debug_axes");
+			program = mCommonLibraries.standard.programs.get("debug_axes");
 			program->use();
 			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
 			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
@@ -317,14 +320,10 @@ void Game::handle(Event event) {
 }
 
 Level* Game::loadLevel(std::string path) {
-	NamedContainer<Geometry*> geomLibrary = mCommonLibraries.geometries;
-	ShaderManager shaderLibrary = mCommonLibraries.shaders;
-	NamedContainer<Program*> progLibrary = mCommonLibraries.programs;
-	NamedContainer<Texture*> texLibrary = mCommonLibraries.textures;
-	SoundLibrary soundLibrary = mCommonLibraries.sounds;
+	StandardLibraries levelLibraries;
 	FileService index(path + mIndexFilename);
 	// Load any additional data into the new libraries
-	// Level index files can add new geometry, shaders, programs, textures, PhysicsComponents (?), and sounds.
+	// Level index files can add new geometry, shaders, programs, textures, and sounds.
 	char* levelFile;
 	index.extract("Level: \"`S\"`L", &levelFile);
 	char* err, *workingDirectory;
@@ -336,19 +335,19 @@ Level* Game::loadLevel(std::string path) {
 				delete workingDirectory;
 			}*/
 			else if (index.extract("obj: \"`S\"`L", &workingDirectory)) {
-				parseGeometryIndex(path + workingDirectory, geomLibrary);
+				parseGeometryIndex(path + workingDirectory, levelLibraries.geometries);
 				delete workingDirectory;
 			}
 			else if (index.extract("sound: \"`S\"`L", &workingDirectory)) {
-				parseSoundIndex(path + workingDirectory, soundLibrary);
+				parseSoundIndex(path + workingDirectory, levelLibraries.sounds);
 				delete workingDirectory;
 			}
 			else if (index.extract("tex: \"`S\"`L", &workingDirectory)) {
-				parseTextureIndex(path + workingDirectory, mCommonLibraries.textures);
+				parseTextureIndex(path + workingDirectory, levelLibraries.textures);
 				delete workingDirectory;
 			}
 			else if (index.extract("glsl: \"`S\"`L", &workingDirectory)) {
-				parseShaderIndex(path + workingDirectory, shaderLibrary, progLibrary);
+				parseShaderIndex(path + workingDirectory, levelLibraries.shaders, levelLibraries.programs);
 				delete workingDirectory;
 			}
 			/*else if (index.extract("post: \"`S\"`L", &workingDirectory)) {
@@ -364,7 +363,7 @@ Level* Game::loadLevel(std::string path) {
 			ServiceLocator::getLoggingService().badFileError(e.what());
 		}
 	}
-	return new Level(path + levelFile, geomLibrary, progLibrary, texLibrary, soundLibrary);
+	return new Level(path + levelFile, mCommonLibraries.standard, levelLibraries);
 }
 
 void Game::parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary) {
