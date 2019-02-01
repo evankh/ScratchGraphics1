@@ -9,7 +9,9 @@
 struct ProcessingStage {
 	FrameBuffer* source;
 	Program* filter;
-	Kernel kernel;
+	int samplersIn, samplersOut;
+	int numKernels;
+	Kernel* kernels;	// If just 1, can put its address here
 	FrameBuffer* target;
 };
 
@@ -24,7 +26,8 @@ public:
 	PostProcessingPipeline();
 	~PostProcessingPipeline();
 	void init(unsigned int width, unsigned int height);
-	void attach(Program* program, Kernel kernel = Kernel{ 0,NULL }, float relativeSize = 1.0f);	// Or I suppose other types of data, but now it's just kernels
+	void attach(Program* program, int numSamplersIn, int numSamplersOut, Kernel kernel = Kernel{ 0,NULL }, float relativeSize = 1.0f);	// Or I suppose other types of data, but now it's just kernels
+	void attach(Program* program, int numSamplersIn, int numSamplersOut, int numKernels, Kernel* kernels, float relativeSize = 1.0f);	// numKernels should equal numSamplersIn
 	void process();
 	void draw();
 	void resize(unsigned int width, unsigned int height);

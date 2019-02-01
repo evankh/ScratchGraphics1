@@ -44,6 +44,11 @@ Program::Program(Shader* vs, Shader* fs) {
 	if (mFS) glDetachShader(mHandle, mFS->mHandle);
 }
 
+Program::Program(Shader* vs, Shader* fs, int in, int out) :Program(vs, fs) {
+	mSamplesIn = in;
+	mSamplesOut = out;
+}
+
 Program::Program(Shader* vs, Shader* gs, Shader* fs) {
 	mHandle = glCreateProgram();
 	mVS = vs;
@@ -148,13 +153,14 @@ void Program::sendUniform(const char* name, const float* matrix) const {
 	if (handle != -1) glUniformMatrix4fv(handle, 1, GL_FALSE, matrix);
 }
 
-void Program::sendUniform(const char* name, const int size, const float* value) const {
+void Program::sendUniform(const char* name, const int size, const int count, const float* value) const {
+	// This is inconsistent with how the function is being used in PostProcessingPipeline::process; it will cause kernels to fail if size > 4
 	int handle = glGetUniformLocation(mHandle, name);
 	if (handle != -1) {
-		if (size == 1) glUniform1fv(handle, 1, value);
-		else if (size == 2) glUniform2fv(handle, 1, value);
-		else if (size == 3) glUniform3fv(handle, 1, value);
-		else if (size == 4) glUniform4fv(handle, 1, value);
+		if (size == 1) glUniform1fv(handle, count, value);
+		else if (size == 2) glUniform2fv(handle, count, value);
+		else if (size == 3) glUniform3fv(handle, count, value);
+		else if (size == 4) glUniform4fv(handle, count, value);
 	}
 }
 

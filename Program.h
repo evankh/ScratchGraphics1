@@ -12,9 +12,11 @@ private:
 	Shader* mVS;
 	Shader* mGS;
 	Shader* mFS;
+	int mSamplesIn, mSamplesOut;
 public:
 	Program();
 	Program(Shader* vs, Shader* fs);
+	Program(Shader* vs, Shader* fs, int in, int out);
 	Program(Shader* vs, Shader* gs, Shader* fs);
 	Program(char* vsFilepath, char* fsFilepath);
 	~Program();
@@ -27,9 +29,11 @@ public:
 	void use() const;	// I'm not sure if it's correct to call this const, because while it's not changing the Program object, it is affecting the OpenGL state.
 	void sendUniform(const char* name, const float value) const;	// Same goes for the uniforms
 	void sendUniform(const char* name, const float* matrix) const;
-	void sendUniform(const char* name, const int size, const float* value) const;
+	void sendUniform(const char* name, const int size, const int count, const float* value) const;
 	void sendUniform(const char* name, const unsigned int value) const;
 	static const Program* getScreenDraw() { return sScreenDraw; };
+	int getSamplesIn() const { return mSamplesIn; };
+	int getSamplesOut() const { return mSamplesOut; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PROGRAM__

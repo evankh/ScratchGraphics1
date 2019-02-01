@@ -66,9 +66,9 @@ void GameObject::render(Camera* c) {
 		mDisplayComponent->use();
 		mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 		mDisplayComponent->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
-		mDisplayComponent->sendUniform("uCamera", 3,  glm::value_ptr(c->getPosition()));
+		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(c->getPosition()));
 		if (mTexture) mTexture->activate();
-		if (mColor) mDisplayComponent->sendUniform("uColor", 3, &mColor->r);	// Temporary, will figure out a more intelligent way of assigning uniforms later
+		if (mColor) mDisplayComponent->sendUniform("uColor", 3, 1, &mColor->r);	// Temporary, will figure out a more intelligent way of assigning uniforms later
 	}
 	if (mGeometryComponent) mGeometryComponent->render();
 }

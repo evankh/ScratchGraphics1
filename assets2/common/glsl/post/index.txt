@@ -1,16 +1,26 @@
 Sampler "one" 1 "Samplers/one.vert"
 Sampler "three_v" 3 "Samplers/1x3.vert"
 Sampler "three_h" 3 "Samplers/3x1.vert"
+Sampler "3x3" 9 "Samplers/3x3.vert"
 
-Processor "kernel3" 3 "Processors/kernel3.frag"
 Processor "none" 1 "Processors/none.frag"
+Processor "kernel3" 3 "Processors/kernel3.frag"
+Processor "Sobel" 9 "Processors/Sobel.frag"
+Processor "abs" 1 "Processors/abs.frag"
+Processor "invert" 1 "Processors/invert.frag"
 
 Kernel "edge" 3 [-1.0, 0.0, 1.0]
+Kernel "vedge" 9 [-0.125, 0.0, 0.125, -0.25, 0.0, 0.25, -0.125, 0.0, 0.125]
+Kernel "hedge" 9 [0.125, 0.25, 0.125, 0.0, 0.0, 0.0, -0.125, -0.25, -0.125]
 
-Filter "none" Sampler:"one" Processor:"none"
-Filter "horizontal_kernel" Sampler:"three_v" Processor:"kernel3"
-Filter "vertical_kernel" Sampler:"three_h" Processor:"kernel3"
+Filter "none" Sampler:"one" Processor:"none" in:1 out:1
+Filter "horizontal_kernel" Sampler:"three_v" Processor:"kernel3" in:1 out:1
+Filter "vertical_kernel" Sampler:"three_h" Processor:"kernel3" in:1 out:1
+Filter "Sobel" Sampler:"3x3" Processor:"Sobel" in:1 out:2
+Filter "abs" Sampler:"one" Processor:"abs" in:2 out:1
+Filter "invert" Sampler:"one" Processor:"invert" in:1 out:1
 
 // Pipelines need to handle a bunch of different options
-Pipeline "Sobel" ["none":0.5, "vertical_kernel":"edges", "horizontal_kernel":"edges"]
-Pipeline "none" []
+Pipeline "Sobel" ["Sobel":["hedge","vedge"], "abs"]
+Pipeline "none" ["none"]
+Pipeline "invert" ["invert"]

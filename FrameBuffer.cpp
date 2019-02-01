@@ -3,23 +3,40 @@
 #include "ServiceLocator.h"
 #include "GL\glew.h"
 
-#define NULL 0
+const GLenum FRAMEBUFFER_ATTACHMENTS[] = {
+	GL_COLOR_ATTACHMENT0,
+	GL_COLOR_ATTACHMENT1,
+	GL_COLOR_ATTACHMENT2,
+	GL_COLOR_ATTACHMENT3,
+	GL_COLOR_ATTACHMENT4,
+	GL_COLOR_ATTACHMENT5,
+	GL_COLOR_ATTACHMENT6,
+	GL_COLOR_ATTACHMENT7,
+	GL_COLOR_ATTACHMENT8,
+	GL_COLOR_ATTACHMENT9,
+};
 
-FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale = 1.0f) {
+FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale, int samplersOut) {
 	mRelativeScale = scale;
 	mWidth = (int)(mRelativeScale * windowWidth);
 	mHeight = (int)(mRelativeScale * windowHeight);
+	mSamplersOut = samplersOut;
+	mColorTextureHandles = new unsigned int[mSamplersOut];
 	glGenFramebuffers(1, &mHandle);
 
 	// Attach the typical images to it: Color, Depth
 	glBindFramebuffer(GL_FRAMEBUFFER, mHandle);
-	glGenTextures(1, &mColorTextureHandle);
-	glBindTexture(GL_TEXTURE_2D, mColorTextureHandle);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glGenTextures(mSamplersOut, mColorTextureHandles);
+	for (int i = 0; i < mSamplersOut; i++) {
+		glBindTexture(GL_TEXTURE_2D, mColorTextureHandles[i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, FRAMEBUFFER_ATTACHMENTS[i], GL_TEXTURE_2D, mColorTextureHandles[i], 0);
+	}
+	glDrawBuffers(mSamplersOut, FRAMEBUFFER_ATTACHMENTS);
 
 	glGenTextures(1, &mDepthTextureHandle);
 	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
@@ -27,8 +44,6 @@ FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, fl
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, mWidth, mHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorTextureHandle, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTextureHandle, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -52,7 +67,7 @@ FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, fl
 
 FrameBuffer::~FrameBuffer() {
 	glDeleteFramebuffers(1, &mHandle);
-	glDeleteTextures(1, &mColorTextureHandle);
+	glDeleteTextures(mSamplersOut, mColorTextureHandles);
 	glDeleteTextures(1, &mDepthTextureHandle);
 }
 
@@ -64,9 +79,15 @@ void FrameBuffer::setActive() {
 
 void FrameBuffer::draw() {
 	// Draw the Magic Quad to the active FrameBuffer (which should already be set) using the active Program (which should already be set)
-	glActiveTexture(GL_TEXTURE0);
+	/*glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, mColorTextureHandle);
 	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);*/
+	for (int i = 0; i < mSamplersOut; i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, mColorTextureHandles[i]);
+	}
+	glActiveTexture(GL_TEXTURE0 + mSamplersOut);
 	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
 	Geometry::getScreenQuad()->render();
 	glActiveTexture(GL_TEXTURE0);
@@ -75,8 +96,10 @@ void FrameBuffer::draw() {
 void FrameBuffer::resize(unsigned int width, unsigned int height) {
 	mWidth = (int)(mRelativeScale * width);
 	mHeight = (int)(mRelativeScale * height);
-	glBindTexture(GL_TEXTURE_2D, mColorTextureHandle);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	for (int i = 0; i < mSamplersOut; i++) {
+		glBindTexture(GL_TEXTURE_2D, mColorTextureHandles[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	}
 	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, mWidth, mHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
