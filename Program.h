@@ -30,7 +30,7 @@ public:
 	void sendUniform(const char* name, const float value) const;	// Same goes for the uniforms
 	void sendUniform(const char* name, const float* matrix) const;
 	void sendUniform(const char* name, const int size, const int count, const float* value) const;
-	void sendUniform(const char* name, const unsigned int value) const;
+	void sendUniform(const char* name, const int value) const;
 	static const Program* getScreenDraw() { return sScreenDraw; };
 	int getSamplesIn() const { return mSamplesIn; };
 	int getSamplesOut() const { return mSamplesOut; };

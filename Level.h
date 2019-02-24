@@ -3,14 +3,14 @@
 
 class Camera;
 class GameObject;
-class Geometry;
+#include "Geometry.h"
 #include "NamedContainer.h"
 class PhysicsComponent;
-class Program;
+#include "Program.h"
 #include "ShaderManager.h"
 #include "SoundLibrary.h"
 class Source;
-class Texture;
+#include "Texture.h"
 
 #include <string>
 #include <vector>

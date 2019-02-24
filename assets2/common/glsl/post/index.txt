@@ -1,10 +1,14 @@
 Sampler "one" 1 "Samplers/one.vert"
 Sampler "three_v" 3 "Samplers/1x3.vert"
 Sampler "three_h" 3 "Samplers/3x1.vert"
+Sampler "five_h" 5 "Samplers/5x1.vert"
+Sampler "five_v" 5 "Samplers/1x5.vert"
 Sampler "3x3" 9 "Samplers/3x3.vert"
 
 Processor "none" 1 "Processors/none.frag"
 Processor "kernel3" 3 "Processors/kernel3.frag"
+Processor "kernel5" 5 "Processors/kernel5.frag"
+Processor "high_pass" 1 "Processors/high_pass.frag"
 Processor "Sobel" 9 "Processors/Sobel.frag"
 Processor "abs" 1 "Processors/abs.frag"
 Processor "invert" 1 "Processors/invert.frag"
@@ -12,15 +16,21 @@ Processor "invert" 1 "Processors/invert.frag"
 Kernel "edge" 3 [-1.0, 0.0, 1.0]
 Kernel "vedge" 9 [-0.125, 0.0, 0.125, -0.25, 0.0, 0.25, -0.125, 0.0, 0.125]
 Kernel "hedge" 9 [0.125, 0.25, 0.125, 0.0, 0.0, 0.0, -0.125, -0.25, -0.125]
+Kernel "blur5" 5 [0.0625, 0.25, 0.375, 0.25, 0.0625]
 
 Filter "none" Sampler:"one" Processor:"none" in:1 out:1
-Filter "horizontal_kernel" Sampler:"three_v" Processor:"kernel3" in:1 out:1
-Filter "vertical_kernel" Sampler:"three_h" Processor:"kernel3" in:1 out:1
+Filter "horizontal_3" Sampler:"three_h" Processor:"kernel3" in:1 out:1
+Filter "vertical_3" Sampler:"three_v" Processor:"kernel3" in:1 out:1
+Filter "horizontal_5" Sampler:"five_h" Processor:"kernel5" in:1 out:1
+Filter "vertical_5" Sampler:"five_v" Processor:"kernel5" in:1 out:1
+Filter "high_pass" Sampler:"one" Processor:"high_pass" in:1 out:1
 Filter "Sobel" Sampler:"3x3" Processor:"Sobel" in:1 out:2
 Filter "abs" Sampler:"one" Processor:"abs" in:2 out:1
 Filter "invert" Sampler:"one" Processor:"invert" in:1 out:1
 
 // Pipelines need to handle a bunch of different options
-Pipeline "Sobel" ["Sobel":["hedge","vedge"], "abs"]
+Pipeline "Sobel" ["Sobel":["hedge","vedge"], "abs", "invert"]
+// Uh oh, now I need to figure out how to do a compositing stage
+Pipeline "bloom" ["high_pass":0.5, "horizontal_5":"blur5", "vertical_5":"blur5", "high_pass":0.5, "horizontal_5":"blur5", "vertical_5":"blur5"]
 Pipeline "none" ["none"]
 Pipeline "invert" ["invert"]

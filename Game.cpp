@@ -604,8 +604,9 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			PostProcessingPipeline* temp = new PostProcessingPipeline();
 			temp->init(mWindow->getWidth(), mWindow->getHeight());
 			std::vector<char*> kernels;
-			bool valid = true;
-			while (!postIndex.extract("]", NULL)) {
+			bool pipelineValid = true;
+			while (pipelineValid && !postIndex.extract("]", NULL)) {
+				bool stageValid = true;
 				if (postIndex.extract("\"`S\"", &stageData.name)) {
 					if (postIndex.extract(":`F", &stageData.scale));
 					if (postIndex.extract(":\"`S\"", &stageData.kernel));
@@ -624,7 +625,7 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 					postIndex.extract("`S`L", &err);
 					ServiceLocator::getLoggingService().error("Malformed filter name", err);
 					delete err;
-					valid = false;
+					pipelineValid = false;
 					break;
 				}
 				// Add stage to pipeline
@@ -634,7 +635,7 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 				}
 				catch (std::exception e) {
 					ServiceLocator::getLoggingService().error("Filter not found", e.what());
-					valid = false;
+					stageValid = false;
 				}
 				if (stageData.kernel) {
 					Kernel kernel{ 0, NULL };
@@ -643,10 +644,10 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 					}
 					catch (std::exception e) {
 						ServiceLocator::getLoggingService().error("Kernel not found", e.what());
-						valid = false;
+						stageValid = false;
 					}
-					if (valid) temp->attach(filter, filter->getSamplesIn(), filter->getSamplesOut(), kernel, stageData.scale);
-					else break;
+					if (stageValid) temp->attach(filter, filter->getSamplesIn(), filter->getSamplesOut(), kernel, stageData.scale);
+					else pipelineValid = false;
 				}
 				else if (kernels.size() > 0) {
 					Kernel* allKernels = new Kernel[kernels.size()];
@@ -656,26 +657,37 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 							allKernels[i] = kernelLibrary.get(kernels[i]);
 						}
 						catch (std::out_of_range e) {
-							valid = false;
+							stageValid = false;
 							ServiceLocator::getLoggingService().error("Kernel not found", e.what());
 							// Don't break, keep going and print out all the error messages
 						}
 					}
-					if (valid) temp->attach(filter, filter->getSamplesIn(), filter->getSamplesOut(), kernels.size(), allKernels, stageData.scale);
-					else break;
+					if (stageValid) temp->attach(filter, filter->getSamplesIn(), filter->getSamplesOut(), kernels.size(), allKernels, stageData.scale);
+					else pipelineValid = false;
 				}
 				else {
-					if (valid) temp->attach(filter, filter->getSamplesIn(), filter->getSamplesOut(), Kernel{ 0,NULL }, stageData.scale);
+					if (stageValid) temp->attach(filter, filter->getSamplesIn(), filter->getSamplesOut(), Kernel{ 0,NULL }, stageData.scale);
+					else pipelineValid = false;
 				};
+				// Cleanup
+				for (unsigned int i = 0; i < kernels.size(); i++)
+					delete kernels[i];
+				kernels.clear();
+				delete stageData.name;
+				stageData.scale = 1.0f;
+				if (stageData.kernel) {
+					delete stageData.kernel;
+					stageData.kernel = NULL;
+				}
 				if (postIndex.extract(", ", NULL)) continue;
 				else if (postIndex.extract("]", NULL)) break;
 				else {
 					// Wrong separator
-					valid = false;
+					pipelineValid = false;
 					break;
 				}
 			}
-			if (valid) {
+			if (pipelineValid) {
 				pipelineLibrary.add(pipelineData.name, temp);
 				// No need to delete temp, the library owns it now
 				char* err;
@@ -688,6 +700,7 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			else {
 				delete temp;
 			}
+			delete pipelineData.name;
 		}
 		else if (postIndex.extract("`S`L", &pipelineData.name)) {
 			type = NULL;

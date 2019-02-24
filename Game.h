@@ -6,16 +6,16 @@ class GameObject;
 class Geometry;
 #include "KernelManager.h"
 #include "Level.h"
-class Menu;
-class RootElement;
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
-class Program;
+#include "Program.h"
 #include "ShaderManager.h"
 #include "SoundLibrary.h"
 #include "SoundHandler.h"
 class Texture;
-#include "Event System\Receiver.h"
+#include "UI/Menu.h"
+#include "UI/UIElement.h"
+#include "Event System/Receiver.h"
 class Window;
 
 #include <map>

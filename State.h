@@ -10,6 +10,7 @@ class State {
 protected:
 	static NamedContainer<State*> sBaseStateLibrary;
 public:
+	virtual ~State() = 0 {};
 	virtual State* getEntry(GameObject* parent) = 0;
 	virtual State* handleEvent(Event event) = 0;
 	virtual void update(PhysicsComponent* physics, float dt) = 0;
@@ -23,6 +24,7 @@ public:
 class PassThruState :public State {
 	static bool sRegistered;
 public:
+	~PassThruState() {};
 	PassThruState* handleEvent(Event event) { return NULL; };
 	void update(PhysicsComponent* physics, float dt);
 	virtual PassThruState* getEntry(GameObject* owner) { return new PassThruState(); };

@@ -11,7 +11,8 @@ struct ProcessingStage {
 	Program* filter;
 	int samplersIn, samplersOut;
 	int numKernels;
-	Kernel* kernels;	// If just 1, can put its address here
+	Kernel* kernels;	// If just 1, can put its address here	// Except can't, bcause statically allocated
+	Kernel kernel;	// I hate everything about how these are being distinguished but at least it should stop leaking
 	FrameBuffer* target;
 };
 

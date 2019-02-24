@@ -10,7 +10,10 @@ class GameObject;
 
 class PlayerState :public State {
 	static bool sRegistered;
+protected:
+	GameObject* mOwner;
 public:
+	~PlayerState();
 	virtual PlayerState* getEntry(GameObject* owner);
 };
 
@@ -18,7 +21,7 @@ class PlayerOnFloor :public PlayerState {
 private:
 	float dx, dy;
 public:
-	PlayerOnFloor(float dx, float dy) :dx(dx), dy(dy) {};
+	PlayerOnFloor(GameObject* owner, float dx, float dy) :dx(dx), dy(dy) { mOwner = owner; };
 	PlayerState* handleEvent(Event event);
 	void update(PhysicsComponent* physics, float dt);
 	void enter(PhysicsComponent* physics);
@@ -28,7 +31,7 @@ class PlayerJumping :public PlayerState {
 private:
 	float dx, dy;
 public:
-	PlayerJumping(float dx, float dy) :dx(dx), dy(dy) {};
+	PlayerJumping(GameObject* owner, float dx, float dy) :dx(dx), dy(dy) { mOwner = owner; };
 	PlayerState* handleEvent(Event event);
 	void update(PhysicsComponent* physics, float dt);
 	void enter(PhysicsComponent* physics);
