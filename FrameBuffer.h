@@ -19,6 +19,7 @@ public:
 	void resize(unsigned int width, unsigned int height);
 	float getRelativeScale() const { return mRelativeScale; };
 	int getSamplersOut() const { return mSamplersOut; };
+	unsigned int const* getOutputTextures() const { return mColorTextureHandles; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__

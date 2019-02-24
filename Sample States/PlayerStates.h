@@ -13,8 +13,8 @@ class PlayerState :public State {
 protected:
 	GameObject* mOwner;
 public:
-	~PlayerState();
 	virtual PlayerState* getEntry(GameObject* owner);
+	virtual void destroy();
 };
 
 class PlayerOnFloor :public PlayerState {

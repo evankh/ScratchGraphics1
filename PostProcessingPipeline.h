@@ -23,12 +23,14 @@ private:
 	FrameBuffer* mInputFB;
 	FrameBuffer* mOutputFB;
 	std::vector<ProcessingStage> mProcessingStages;
+	std::vector<FrameBuffer*> mCompositingInputs;
 public:
 	PostProcessingPipeline();
 	~PostProcessingPipeline();
 	void init(unsigned int width, unsigned int height);
-	void attach(Program* program, int numSamplersIn, int numSamplersOut, Kernel kernel = Kernel{ 0,NULL }, float relativeSize = 1.0f);	// Or I suppose other types of data, but now it's just kernels
-	void attach(Program* program, int numSamplersIn, int numSamplersOut, int numKernels, Kernel* kernels, float relativeSize = 1.0f);	// numKernels should equal numSamplersIn
+	void attach(Program* program, bool isCompositingInput, int numSamplersIn, int numSamplersOut, Kernel kernel = Kernel{ 0,NULL }, float relativeSize = 1.0f);	// Or I suppose other types of data, but now it's just kernels
+	void attach(Program* program, bool isCompositingInput, int numSamplersIn, int numSamplersOut, int numKernels, Kernel* kernels, float relativeSize = 1.0f);	// numKernels should equal numSamplersIn
+	void attach(Program* program, int numSamplersIn, int numSamplersOut = 1, float relativeScale = 1.0f);	// For compositing stages that don't need any fancy kernels
 	void process();
 	void draw();
 	void resize(unsigned int width, unsigned int height);

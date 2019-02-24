@@ -168,3 +168,8 @@ void Program::sendUniform(const char* name, const int value) const {
 	int handle = glGetUniformLocation(mHandle, name);
 	if (handle != -1) glUniform1i(handle, value);
 }
+
+void Program::sendUniform(const char* name, const int count, const unsigned int* values) const {
+	int handle = glGetUniformLocation(mHandle, name);
+	if (handle != -1) glUniform1uiv(handle, count, values);
+}

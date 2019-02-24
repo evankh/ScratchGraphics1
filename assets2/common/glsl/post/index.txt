@@ -12,6 +12,7 @@ Processor "high_pass" 1 "Processors/high_pass.frag"
 Processor "Sobel" 9 "Processors/Sobel.frag"
 Processor "abs" 1 "Processors/abs.frag"
 Processor "invert" 1 "Processors/invert.frag"
+Processor "screen" 1 "Processors/compositing/screen.frag"
 
 Kernel "edge" 3 [-1.0, 0.0, 1.0]
 Kernel "vedge" 9 [-0.125, 0.0, 0.125, -0.25, 0.0, 0.25, -0.125, 0.0, 0.125]
@@ -27,10 +28,11 @@ Filter "high_pass" Sampler:"one" Processor:"high_pass" in:1 out:1
 Filter "Sobel" Sampler:"3x3" Processor:"Sobel" in:1 out:2
 Filter "abs" Sampler:"one" Processor:"abs" in:2 out:1
 Filter "invert" Sampler:"one" Processor:"invert" in:1 out:1
+Filter "screen" Sampler:"one" Processor:"screen" in:0 out:1
 
 // Pipelines need to handle a bunch of different options
 Pipeline "Sobel" ["Sobel":["hedge","vedge"], "abs", "invert"]
 // Uh oh, now I need to figure out how to do a compositing stage
-Pipeline "bloom" ["high_pass":0.5, "horizontal_5":"blur5", "vertical_5":"blur5", "high_pass":0.5, "horizontal_5":"blur5", "vertical_5":"blur5"]
+Pipeline "bloom" ["high_pass":0.5, "horizontal_5":"blur5", "vertical_5"*:"blur5", "high_pass":0.5, "horizontal_5":"blur5", "vertical_5"*:"blur5", compositor:"screen"]
 Pipeline "none" ["none"]
 Pipeline "invert" ["invert"]

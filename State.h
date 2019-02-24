@@ -10,12 +10,13 @@ class State {
 protected:
 	static NamedContainer<State*> sBaseStateLibrary;
 public:
-	virtual ~State() = 0 {};
+	virtual ~State() {};
 	virtual State* getEntry(GameObject* parent) = 0;
 	virtual State* handleEvent(Event event) = 0;
 	virtual void update(PhysicsComponent* physics, float dt) = 0;
 	virtual void enter(PhysicsComponent* physics) {};
 	virtual void exit() {};
+	virtual void destroy() {};
 	static State* getNewEntryState(std::string name, GameObject* parent) { return sBaseStateLibrary.get(name)->getEntry(parent); };
 	static bool setBaseState(std::string name, State* func) { sBaseStateLibrary.add(name, func); return true; };
 };
@@ -24,7 +25,6 @@ public:
 class PassThruState :public State {
 	static bool sRegistered;
 public:
-	~PassThruState() {};
 	PassThruState* handleEvent(Event event) { return NULL; };
 	void update(PhysicsComponent* physics, float dt);
 	virtual PassThruState* getEntry(GameObject* owner) { return new PassThruState(); };

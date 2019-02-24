@@ -5,7 +5,7 @@
 
 bool PlayerState::sRegistered = State::setBaseState("player", new PlayerOnFloor(NULL, 0.0, 0.0));	// It's fine for this to be unowned, because it's only used to generate copies
 
-PlayerState::~PlayerState() {
+void PlayerState::destroy() {
 	KeyboardHandler::getInstance().unregisterReceiver(mOwner);
 }
 

@@ -24,7 +24,10 @@ void GameObject::setState(State* state) {
 
 GameObject::~GameObject() {
 	if (mPhysicsComponent) delete mPhysicsComponent;
-	if (mState) delete mState;
+	if (mState) {
+		mState->destroy();
+		delete mState;
+	}
 	if (mColor) delete mColor;	// Just because it's temporary doesn't mean it's allowed to leak
 	if (mAudioComponent) delete mAudioComponent;
 }

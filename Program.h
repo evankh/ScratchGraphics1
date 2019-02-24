@@ -31,6 +31,7 @@ public:
 	void sendUniform(const char* name, const float* matrix) const;
 	void sendUniform(const char* name, const int size, const int count, const float* value) const;
 	void sendUniform(const char* name, const int value) const;
+	void sendUniform(const char* name, const int count, const unsigned int* values) const;
 	static const Program* getScreenDraw() { return sScreenDraw; };
 	int getSamplesIn() const { return mSamplesIn; };
 	int getSamplesOut() const { return mSamplesOut; };
