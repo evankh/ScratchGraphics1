@@ -137,7 +137,7 @@ void Game::load() {
 		}
 	}
 	try {
-		mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("Sobel");
+		mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("none");
 	}
 	catch (std::out_of_range) {
 		mCurrentPostProcessing = NULL;
