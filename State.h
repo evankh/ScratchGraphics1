@@ -17,6 +17,7 @@ public:
 	virtual void enter(PhysicsComponent* physics) {};
 	virtual void exit() {};
 	virtual void destroy() {};
+	virtual State* copy(GameObject* parent) const = 0;
 	static State* getNewEntryState(std::string name, GameObject* parent) { return sBaseStateLibrary.get(name)->getEntry(parent); };
 	static bool setBaseState(std::string name, State* func) { sBaseStateLibrary.add(name, func); return true; };
 };
@@ -27,6 +28,7 @@ class PassThruState :public State {
 public:
 	PassThruState* handleEvent(Event event) { return NULL; };
 	void update(PhysicsComponent* physics, float dt);
+	virtual PassThruState* copy(GameObject*) const { return new PassThruState(); };
 	virtual PassThruState* getEntry(GameObject* owner) { return new PassThruState(); };
 };
 

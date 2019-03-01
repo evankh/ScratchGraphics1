@@ -6,14 +6,13 @@
 #include "State.h"
 #include "Texture.h"
 
-GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture, glm::vec3* color) {
+GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture) {
 	mGeometryComponent = geometry;
 	if (mGeometryComponent) mGeometryComponent->transfer();
 	mDisplayComponent = display;
 	mPhysicsComponent = physics;
 	mState = NULL;
 	mTexture = texture;
-	mColor = color;
 	mAudioComponent = NULL;
 }
 
@@ -28,7 +27,6 @@ GameObject::~GameObject() {
 		mState->destroy();
 		delete mState;
 	}
-	if (mColor) delete mColor;	// Just because it's temporary doesn't mean it's allowed to leak
 	if (mAudioComponent) delete mAudioComponent;
 }
 
@@ -71,7 +69,6 @@ void GameObject::render(Camera* c) {
 		mDisplayComponent->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
 		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(c->getPosition()));
 		if (mTexture) mTexture->activate();
-		if (mColor) mDisplayComponent->sendUniform("uColor", 3, 1, &mColor->r);	// Temporary, will figure out a more intelligent way of assigning uniforms later
 	}
 	if (mGeometryComponent) mGeometryComponent->render();
 }
@@ -83,4 +80,14 @@ void GameObject::debugDraw() {
 
 void GameObject::handle(const Event e) {
 	mEventQueue.push(e);
+}
+
+GameObject* GameObject::copy() const {
+	GameObject* result = new GameObject(mGeometryComponent, mDisplayComponent, mPhysicsComponent);
+	if (mPhysicsComponent) result->mPhysicsComponent = mPhysicsComponent->copy();
+	if (mTexture) result->mTexture = mTexture;
+	if (mAudioComponent) result->mAudioComponent = mAudioComponent->copy(result->mPhysicsComponent);
+	result->mSounds = mSounds;
+	if (mState) result->setState(mState->copy(result));
+	return result;
 }

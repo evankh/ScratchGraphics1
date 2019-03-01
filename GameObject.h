@@ -17,11 +17,10 @@ class Source;
 
 class GameObject :public Receiver {
 private:
-	const Geometry* mGeometryComponent;
+	Geometry* mGeometryComponent;
 	Program* mDisplayComponent;
 	PhysicsComponent* mPhysicsComponent;
 	Texture* mTexture;	// Doesn't make a ton of sense here
-	glm::vec3* mColor;	// Temporary
 	Source* mAudioComponent;
 	SoundLibrary mSounds;
 	//InputComponent mInputComponent;
@@ -29,7 +28,7 @@ private:
 	EventQueue mEventQueue;
 	bool mHasCollision = false;
 public:
-	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture = NULL, glm::vec3* color = NULL);
+	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture = NULL);
 	~GameObject();
 	void update(float dt);
 	void render(Camera* c);
@@ -43,6 +42,7 @@ public:
 	void rotate(glm::vec3 axis, float degrees) { mPhysicsComponent->rotate(axis, degrees); };
 	void scale(glm::vec3 scale) { mPhysicsComponent->scale(scale); };
 	bool hasCollision() { return mHasCollision; };
+	GameObject* copy() const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__

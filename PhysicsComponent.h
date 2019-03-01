@@ -35,6 +35,7 @@ public:
 	glm::vec3 getVelocity() const { return mVelocity; };
 	Bounds* getBounds() const { return mBounds; };
 	float* getOrientationVectors() const;
+	PhysicsComponent* copy() const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PHYSICS_COMPONENT__

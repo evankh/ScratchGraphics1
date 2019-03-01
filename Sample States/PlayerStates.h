@@ -21,10 +21,11 @@ class PlayerOnFloor :public PlayerState {
 private:
 	float dx, dy, dz = 0.0f;
 public:
-	PlayerOnFloor(GameObject* owner, float dx, float dy) :dx(dx), dy(dy) { mOwner = owner; };
+	PlayerOnFloor(GameObject* owner, float dx, float dy, float dz) :dx(dx), dy(dy), dz(dz) { mOwner = owner; };
 	PlayerState* handleEvent(Event event);
 	void update(PhysicsComponent* physics, float dt);
 	void enter(PhysicsComponent* physics);
+	PlayerState* copy(GameObject* owner) const { return new PlayerOnFloor(owner,dx,dy,dx ); };
 };
 
 class PlayerJumping :public PlayerState {
@@ -35,6 +36,7 @@ public:
 	PlayerState* handleEvent(Event event);
 	void update(PhysicsComponent* physics, float dt);
 	void enter(PhysicsComponent* physics);
+	PlayerState* copy(GameObject* owner) const { return new PlayerJumping(owner, dx, dy, dz); };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_SAMPLE_PLAYER_STATES__

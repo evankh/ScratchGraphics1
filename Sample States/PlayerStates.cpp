@@ -3,7 +3,7 @@
 #include "../GameObject.h"
 #include "../KeyboardHandler.h"
 
-bool PlayerState::sRegistered = State::setBaseState("player", new PlayerOnFloor(NULL, 0.0, 0.0));	// It's fine for this to be unowned, because it's only used to generate copies
+bool PlayerState::sRegistered = State::setBaseState("player", new PlayerOnFloor(NULL, 0.0, 0.0, 0.0));	// It's fine for this to be unowned, because it's only used to generate copies
 
 void PlayerState::destroy() {
 	KeyboardHandler::getInstance().unregisterReceiver(mOwner);
@@ -11,7 +11,7 @@ void PlayerState::destroy() {
 
 PlayerState* PlayerState::getEntry(GameObject* owner) {
 	KeyboardHandler::getInstance().registerReceiver("wasde j", owner);
-	return new PlayerOnFloor(owner, 0.0f, 0.0f);
+	return new PlayerOnFloor(owner, 0.0f, 0.0f, 0.0f);
 }
 
 PlayerState* PlayerOnFloor::handleEvent(Event event) {
@@ -86,7 +86,7 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 PlayerState* PlayerJumping::handleEvent(Event event) {
 	if (event.mType == EventType::COLLISION) {
 		// More advanced stuff will store the PhysicsComponents in the CollisionData so it can do proper response
-		return new PlayerOnFloor(mOwner, dx, dy);
+		return new PlayerOnFloor(mOwner, dx, dy, dz);
 	}
 	// Even though velocity is maintained through the jump, it should be reset properly on hitting the ground
 	if (event.mType == EventType::KEY_PRESSED) {
@@ -103,6 +103,12 @@ PlayerState* PlayerJumping::handleEvent(Event event) {
 		case 'd':
 			dx += 1.0f;
 			break;
+		case 'e':
+			dz -= 1.0f;
+			break;
+		case ' ':
+			dz += 1.0f;
+			break;
 		}
 	}
 	if (event.mType == EventType::KEY_RELEASED) {
@@ -118,6 +124,12 @@ PlayerState* PlayerJumping::handleEvent(Event event) {
 			break;
 		case 'd':
 			dy += 1.0f;
+			break;
+		case 'e':
+			dz += 1.0f;
+			break;
+		case ' ':
+			dz -= 1.0f;
 			break;
 		}
 	}

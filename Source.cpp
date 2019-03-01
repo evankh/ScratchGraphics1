@@ -33,3 +33,7 @@ void Source::playSound(Sound* sound) {
 void Source::setVolume(float volume) {
 	alSourcef(mHandle, AL_GAIN, volume);
 }
+
+Source* Source::copy(PhysicsComponent* phys) const {
+	return new Source(phys, mLooping);
+}

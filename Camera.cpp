@@ -15,11 +15,19 @@ PerspCamera::PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned
 	mViewProjectionMatrix = mProjectionMatrix * imm;
 }
 
+Camera* PerspCamera::copy() const {
+	return new PerspCamera(mPhysicsComponent->copy(), mWidth, mHeight, glm::degrees(mFOV));
+}
+
 OrthoCamera::OrthoCamera(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::ortho(0.0f, (float)width, (float)height, 0.0f);
 	mViewProjectionMatrix = mProjectionMatrix;
+}
+
+Camera* OrthoCamera::copy() const {
+	return new OrthoCamera(mWidth, mHeight);
 }
 
 PerspCamera::~PerspCamera() {

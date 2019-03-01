@@ -151,7 +151,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				glm::vec3* color = NULL;
 				if (hasCol) color = new glm::vec3(col.x, col.y, col.z);
 				// Also store velocity
-				GameObject* object = new GameObject(geom, program, physics, /*input, */texture, color);
+				GameObject* object = new GameObject(geom, program, physics, texture);
 				if (inputName) try {
 					State* state = State::getNewEntryState(inputName, object);
 					object->setState(state);

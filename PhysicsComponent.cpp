@@ -83,3 +83,17 @@ float* PhysicsComponent::getOrientationVectors() const {
 		r[i + 3] = up[i];
 	return r;
 }
+
+PhysicsComponent* PhysicsComponent::copy() const {
+	PhysicsComponent* result = new PhysicsComponent();
+	result->mScale = mScale;
+	result->mPosition = mPosition;
+	result->mVelocity = mVelocity;
+	result->mAcceleration = mAcceleration;
+	result->mRotation = mRotation;
+	result->mAxis = mAxis;
+	result->mAngularVelocity = mAngularVelocity;
+	delete result->mBounds;
+	result->mBounds = mBounds->copy();
+	return result;
+}

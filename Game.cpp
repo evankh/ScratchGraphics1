@@ -24,7 +24,7 @@ Game::Game() {
 	// ?
 	// I guess this would be the spot for the initialization of everything: Loading assets, starting services, initializing rendering, etc.
 //	mWindow = new Window(800, 600, "Game owns this window");
-	KeyboardHandler::getInstance().registerReceiver("rbp", this);
+	KeyboardHandler::getInstance().registerReceiver("rRbp", this);
 	KeyboardHandler::getInstance().registerReceiver(27, this);
 }
 
@@ -142,6 +142,21 @@ void Game::load() {
 	catch (std::out_of_range) {
 		mCurrentPostProcessing = NULL;
 	}
+	softReload();
+}
+
+void Game::softReload() {
+	ServiceLocator::getLoggingService().log("===== LEVEL RESET =====");
+	// Empty everything out
+	if (mWorkingActiveCamera) delete mWorkingActiveCamera;
+	mWorkingActiveCamera = NULL;
+	for (unsigned int i = 0; i < mWorkingObjectList.size(); i++) delete mWorkingObjectList[i];
+	mWorkingObjectList.clear();
+	// Fill the working list of objects
+	auto objectMap = mCurrentLevel->getObjectList();
+	for (auto i : objectMap)
+		mWorkingObjectList.push_back(i.second->copy());	// Possibly a good opportunity to create an array of actual GameObjects instead of their pointers
+	mWorkingActiveCamera = mCurrentLevel->getCurrentCamera()->copy();
 }
 
 void Game::cleanup() {
@@ -186,18 +201,19 @@ void Game::update(float dt) {
 	// Collision detection
 	// Yo, I just really want to do this in the least efficient way possible
 	if (mCurrentLevel) {
-		auto objects = mCurrentLevel->getObjectList();
 		// A compelling reason to separate out PhysicsComponents, and possibly Bounds
-		for (auto i = objects.begin(); i != objects.end(); i++) {
-			if (i->second->getBounds()) {
-				for (auto j = i; j != objects.end(); j++) {
-					if (i != j && j->second->getBounds()) {
-						if (collides(i->second->getBounds(), j->second->getBounds())) {
+		for (unsigned int i = 0; i < mWorkingObjectList.size(); i++) {
+			auto I = mWorkingObjectList[i];
+			if (I->getBounds()) {
+				for (unsigned int j = i + 1; j < mWorkingObjectList.size(); j++) {
+					auto J = mWorkingObjectList[j];
+					if (J->getBounds()) {
+						if (collides(I->getBounds(), J->getBounds())) {
 							CollisionData collision;
-							collision.first = i->second->getPhysicsComponent();
-							collision.second = j->second->getPhysicsComponent();
-							i->second->handle(Event(collision));
-							j->second->handle(Event(collision));
+							collision.first = I->getPhysicsComponent();
+							collision.second = J->getPhysicsComponent();
+							I->handle(Event(collision));
+							J->handle(Event(collision));
 						}
 					}
 				}
@@ -207,8 +223,8 @@ void Game::update(float dt) {
 		MouseHandler::getInstance().dispatchAll();
 		if (!mPaused) {
 			// Object updates
-			for (auto object : mCurrentLevel->getObjectList()) {
-				object.second->update(dt);	// A compelling reason to separate further into Components which can be updated individually
+			for (auto object : mWorkingObjectList) {
+				object->update(dt);	// A compelling reason to separate further into Components which can be updated individually
 			}
 		}
 	}
@@ -233,31 +249,31 @@ void Game::render(float dt) {
 		mCurrentPostProcessing->enableDrawing();	// Draw on the PPFBO, if there is one
 	else if (mCurrentMenu) mCurrentMenuPost->enableDrawing();	// If not, and there's a menu, draw on the menu PPFBO
 	else mWindow->enableDrawing();	// If not, draw directly on the window backbuffer
-	if (mCurrentLevel) {
-		for (auto object : mCurrentLevel->getObjectList())
-			object.second->render(mCurrentLevel->getCurrentCamera());	// Draw each object in the scene
+	if (mWorkingActiveCamera) {
+		for (auto object : mWorkingObjectList)
+			object->render(mWorkingActiveCamera);	// Draw each object in the scene
 
 		float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
 		if (mDebugMode) {
 			auto program = mCommonLibraries.standard.programs.get("debug_bbs");
 			program->use();
-			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
-			for (auto object : mCurrentLevel->getObjectList()) {
-				if (object.second->hasCollision())
+			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getViewProjectionMatrix()));
+			for (auto object : mWorkingObjectList) {
+				if (object->hasCollision())
 					program->sendUniform("uDebugColor", 4, 1, debug_collision);
 				else
 					program->sendUniform("uDebugColor", 4, 1, debug_nocollision);
 				program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));	// AABB's and spheres, at least, will be tracking their world coordinates
-				object.second->debugDraw();
+				object->debugDraw();
 			}
 
 			program = mCommonLibraries.standard.programs.get("debug_axes");
 			program->use();
-			program->sendUniform("uVP", glm::value_ptr(mCurrentLevel->getCurrentCamera()->getViewProjectionMatrix()));
+			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getViewProjectionMatrix()));
 			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
 			Geometry::drawAxes();
-			for (auto object : mCurrentLevel->getObjectList()) {
-				program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
+			for (auto object : mWorkingObjectList) {
+				program->sendUniform("uM", glm::value_ptr(object->getPhysicsComponent()->getModelMatrix()));
 				Geometry::drawAxes();
 			}
 		}
@@ -299,13 +315,16 @@ void Game::handle(Event event) {
 	switch (event.mType) {
 	case EventType::KEY_PRESSED:
 		switch (event.mData.keyboard.key) {
-		case 'r': {
+		case 'R': {
 			mPaused = true;
 			//auto loadingthread = std::thread(&Game::reloadAll, this);	// Well that doesn't work for shit
 			reloadAll();
 			mPaused = false;
 			break;
 		}
+		case 'r':
+			softReload();
+			break;
 		case 'b':
 			mDebugMode = !mDebugMode;
 			if (mDebugMode)

@@ -42,6 +42,9 @@ private:
 			NamedContainer<PostProcessingPipeline*> pipelines;
 		} post;
 	} mCommonLibraries;
+	// Working set of Level data
+	std::vector<GameObject*> mWorkingObjectList;
+	Camera* mWorkingActiveCamera;
 	// Actual game information
 	Window* mWindow;
 	Level* mCurrentLevel;
@@ -64,6 +67,7 @@ public:
 	static Game& getInstance();
 	void init();
 	void load();
+	void softReload();
 	void cleanup();
 	void update(float dt);
 	void render(float dt);
