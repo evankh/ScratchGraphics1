@@ -1,7 +1,9 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
 #define __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
 
+#ifndef NULL
 #define NULL 0
+#endif//NULL
 
 class FrameBuffer {
 private:
@@ -15,7 +17,7 @@ public:
 	FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale = 1.0f, int samplersOut = 1);
 	~FrameBuffer();
 	void setActive();
-	void draw();
+	void draw(int start);
 	void resize(unsigned int width, unsigned int height);
 	float getRelativeScale() const { return mRelativeScale; };
 	int getSamplersOut() const { return mSamplersOut; };

@@ -93,7 +93,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glutMouseFunc(game_mouse_wrapper);
 		glutMotionFunc(game_movement_wrapper);
 #pragma endregion
-		//glEnable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);

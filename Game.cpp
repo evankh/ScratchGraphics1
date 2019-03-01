@@ -93,7 +93,7 @@ void Game::load() {
 				try {
 					if (commonIndex.extract("//`S`L", NULL));
 					else if (commonIndex.extract("menus: \"`S\"`L", &workingDirectory)) {
-						parseMenuIndex(commonPath + workingDirectory, mCommonLibraries.menus);
+						//parseMenuIndex(commonPath + workingDirectory, mCommonLibraries.menus);
 						delete workingDirectory;
 					}
 					else if (commonIndex.extract("obj: \"`S\"`L", &workingDirectory)) {
@@ -103,7 +103,7 @@ void Game::load() {
 					}
 					else if (commonIndex.extract("sound: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load sounds into common sound directory
-						parseSoundIndex(commonPath + workingDirectory, mCommonLibraries.standard.sounds);
+						//parseSoundIndex(commonPath + workingDirectory, mCommonLibraries.standard.sounds);
 						delete workingDirectory;
 					}
 					else if (commonIndex.extract("tex: \"`S\"`L", &workingDirectory)) {
@@ -137,7 +137,7 @@ void Game::load() {
 		}
 	}
 	try {
-		mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("none");
+		mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("bloom");
 	}
 	catch (std::out_of_range) {
 		mCurrentPostProcessing = NULL;

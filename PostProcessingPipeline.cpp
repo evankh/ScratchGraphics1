@@ -17,12 +17,12 @@ PostProcessingPipeline::~PostProcessingPipeline() {
 
 void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, int numSamplersIn, int numSamplersOut, Kernel kernel, float relativeScale) {
 	if (numSamplersIn != mOutputFB->getSamplersOut()) throw std::invalid_argument("That stage won't fit here");
-	FrameBuffer* target;
+	FrameBuffer** target = new FrameBuffer*;
 	if (mProcessingStages.size())
-		target = mProcessingStages.back().target;
+		*target = mProcessingStages.back().target;
 	else
-		target = mInputFB;
-	mProcessingStages.push_back({ target, program, numSamplersIn, numSamplersOut, 0, NULL, kernel, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale, numSamplersOut) });
+		*target = mInputFB;
+	mProcessingStages.push_back({ target, 1, program, numSamplersIn, numSamplersOut, 0, NULL, kernel, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale, numSamplersOut) });
 	program->use();
 	for (int i = 0; i < numSamplersIn; i++)
 		program->sendUniform((std::string("uTexture") + std::to_string(i)).data(), i);	// Don't like this, Program should have a list of its own uniforms (but how to initialize them?)
@@ -32,13 +32,13 @@ void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, i
 
 void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, int numSamplersIn, int numSamplersOut, int numKernels, Kernel* kernels, float relativeScale) {
 	if (numSamplersIn != mOutputFB->getSamplersOut()) throw std::invalid_argument("That stage won't fit here");
-	FrameBuffer* target;
+	FrameBuffer** target =  new FrameBuffer*;
 	if (mProcessingStages.size())
-		target = mProcessingStages.back().target;
+		*target = mProcessingStages.back().target;
 	else
 		// Hypothetically, with multiple input samplers, it won't ever be the first stage, but no way in heck am I just going to assume that
-		target = mInputFB;
-	mProcessingStages.push_back({ target, program, numSamplersIn, numSamplersOut, numKernels, kernels, Kernel{0,NULL}, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale, numSamplersOut) });
+		*target = mInputFB;
+	mProcessingStages.push_back({ target, 1, program, numSamplersIn, numSamplersOut, numKernels, kernels, Kernel{0,NULL}, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale, numSamplersOut) });
 	program->use();
 	for (int i = 0; i < numSamplersIn; i++)
 		program->sendUniform((std::string("uTexture") + std::to_string(i)).data(), i);
@@ -48,12 +48,12 @@ void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, i
 
 void PostProcessingPipeline::attach(Program* program, int numSamplersIn, int numSamplersOut, float relativeScale) {
 	if (numSamplersIn != mCompositingInputs.size()) throw std::invalid_argument("Given number of input samplers != number of stages listed as compositing inputs");
-	FrameBuffer* target;
+	FrameBuffer** targets;
 	if (mProcessingStages.size())
-		target = mProcessingStages.back().target;
+		targets = mCompositingInputs.data();
 	else
 		throw std::runtime_error("Cannot put a compositing stage first");
-	mProcessingStages.push_back({ target, program, numSamplersIn, numSamplersOut, 0, NULL, Kernel{0,NULL}, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale,numSamplersOut) });
+	mProcessingStages.push_back({ targets, numSamplersIn, program, numSamplersIn, numSamplersOut, 0, NULL, Kernel{0,NULL}, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale,numSamplersOut) });
 	program->use();
 	unsigned int* inputs = new unsigned int[numSamplersIn];
 	int j = 0;
@@ -68,6 +68,8 @@ void PostProcessingPipeline::attach(Program* program, int numSamplersIn, int num
 	mOutputFB = mProcessingStages.back().target;
 }
 
+#include "Geometry.h"
+
 void PostProcessingPipeline::process() {
 	if (mProcessingStages.size() == 0)
 		return;
@@ -80,13 +82,16 @@ void PostProcessingPipeline::process() {
 			mProcessingStages[i].filter->sendUniform("uKernel", 1, mProcessingStages[i].kernel.samples, mProcessingStages[i].kernel.weights);
 		for (int j = 0; j < mProcessingStages[i].numKernels; j++)
 			mProcessingStages[i].filter->sendUniform((std::string("uKernel") + std::to_string(j)).data(), 1, mProcessingStages[i].kernels[j].samples, mProcessingStages[i].kernels[j].weights);
-		mProcessingStages[i].source->draw();
+		for (int j = 0; j < mProcessingStages[i].numSources; j++)
+			mProcessingStages[i].sources[j]->draw(i);	// Will only allow one output from each source for compositors
+		Geometry::getScreenQuad()->render();
 	}
 }
 
 void PostProcessingPipeline::draw() {
 	// Set the active program to an ortho one
-	if (mOutputFB) mOutputFB->draw();
+	if (mOutputFB) mOutputFB->draw(0);
+	Geometry::getScreenQuad()->render();
 }
 
 void PostProcessingPipeline::resize(unsigned int width, unsigned int height) {

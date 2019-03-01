@@ -1,11 +1,13 @@
 #version 130
 
+in vec4 pPosition;
 in vec3 pNormal;
 in vec2 pTexCoord;
 
 out vec4 oFragColor;
 
 uniform sampler2D uTexture;
+uniform vec3 uCamera;
 
 const vec3 lightvec = vec3(0.3520,0.2304,0.9072);
 

@@ -17,9 +17,8 @@ void main() {
 		col1 += sample * uKernel0[i];
 		col2 += sample * uKernel1[i];
 	}
-	// Sign won't carry over to the next stage in the pipeline ATM, so need to do the abs here
-	oEdgeH.rgb = vec3(length(col1.rgb));
+	oEdgeH.rgb = col1.rgb;
 	oEdgeH.a = 1.0f;
-	oEdgeV.rgb = vec3(length(col2.rgb));
+	oEdgeV.rgb = col2.rgb;
 	oEdgeV.a = 1.0f;
 }

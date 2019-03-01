@@ -18,6 +18,7 @@ Kernel "edge" 3 [-1.0, 0.0, 1.0]
 Kernel "vedge" 9 [-0.125, 0.0, 0.125, -0.25, 0.0, 0.25, -0.125, 0.0, 0.125]
 Kernel "hedge" 9 [0.125, 0.25, 0.125, 0.0, 0.0, 0.0, -0.125, -0.25, -0.125]
 Kernel "blur5" 5 [0.0625, 0.25, 0.375, 0.25, 0.0625]
+//Kernel "blur5" 5 [0.0, 0.0, 1.0, 0.0, 0.0]
 
 Filter "none" Sampler:"one" Processor:"none" in:1 out:1
 Filter "horizontal_3" Sampler:"three_h" Processor:"kernel3" in:1 out:1
@@ -33,6 +34,7 @@ Filter "screen" Sampler:"one" Processor:"screen" in:0 out:1
 // Pipelines need to handle a bunch of different options
 Pipeline "Sobel" ["Sobel":["hedge","vedge"], "abs", "invert"]
 // Uh oh, now I need to figure out how to do a compositing stage
-Pipeline "bloom" ["high_pass":0.5, "horizontal_5":"blur5", "vertical_5"*:"blur5", "high_pass":0.5, "horizontal_5":"blur5", "vertical_5"*:"blur5", compositor:"screen"]
+Pipeline "bloom" ["none"*, "high_pass":0.5, "horizontal_5":"blur5", "vertical_5"*:"blur5", "high_pass":0.5, "horizontal_5":"blur5", "vertical_5"*:"blur5", compositor:"screen"]
+//Pipeline "bloom" ["none", "invert", compositor:"screen"]
 Pipeline "none" ["none"]
 Pipeline "invert" ["invert"]

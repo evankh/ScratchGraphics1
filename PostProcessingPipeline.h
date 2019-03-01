@@ -7,7 +7,8 @@
 #include <vector>
 
 struct ProcessingStage {
-	FrameBuffer* source;
+	FrameBuffer** sources;
+	int numSources;
 	Program* filter;
 	int samplersIn, samplersOut;
 	int numKernels;
