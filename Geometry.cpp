@@ -81,6 +81,7 @@ Geometry::Geometry(std::string filename) :Geometry() {
 		Face* faces = new Face[numface];
 		while (file.good()) {
 			if (file.extract("v `F `F `F`L", &positions[positer])) {
+				// The BB update could/should offer some sort of symmetry around X/Y (box) or all (sphere) axes
 				mBoundingBox->update((float*)&positions[positer]);
 				positer++;
 			}
@@ -228,8 +229,22 @@ Geometry* Geometry::getNewQuad() {
 	return new Geometry(4, positions, 2, tris, { A_POSITION, A_TEXCOORD0, A_NORMAL });
 }
 
+void Geometry::drawUnitQuad() {
+	sUnitQuad.transfer();
+	sUnitQuad.render();
+}
+
+void Geometry::drawCenteredQuad() {
+	sScreenSpaceQuad.transfer();
+	sScreenSpaceQuad.render();
+}
+
 void Geometry::drawUnitSphere() {
-	static GeometryHandles handles;
+	drawSphere({ 0.0f, 0.0f, 0.0f }, 1.0f);
+}
+
+void Geometry::drawSphere(glm::vec3 center, float radius) {
+	GeometryHandles handles;
 	int numSegments = 16, numStacks = 8;
 	int fansize = numSegments + 2;
 	int stripsize = 2 * numSegments + 2;
@@ -258,6 +273,11 @@ void Geometry::drawUnitSphere() {
 		vertexData[vertiter++] = 0.0f;
 		vertexData[vertiter++] = 0.0f;
 		vertexData[vertiter++] = -1.0f;
+		for (int i = 0; i < vertiter;) {
+			vertexData[i++] = vertexData[i] * radius + center.x;
+			vertexData[i++] = vertexData[i] * radius + center.y;
+			vertexData[i++] = vertexData[i] * radius + center.z;
+		}
 		for (int i = 0; i <= numSegments; i++)
 			indexData[indexiter++] = i;
 		indexData[indexiter++] = 1;
@@ -305,6 +325,18 @@ void Geometry::drawUnitSphere() {
 	glDrawElements(GL_TRIANGLE_FAN, fansize, GL_UNSIGNED_INT, (void*)(off3*sizeof(unsigned int)));
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	glDeleteBuffers(2, (unsigned int*)&handles);
+	glDeleteVertexArrays(1, &handles.vaoHandle);
+}
+
+void Geometry::drawUnitBox() {
+	static float* vertexData = new float[24]{ 0.0f,0.0f,0.0f, 1.0f,0.0f,0.0f, 0.0f,1.0f,0.0f, 1.0f,1.0f,0.0f,
+		0.0f,0.0f,1.0f, 1.0f,0.0f,1.0f, 0.0f,1.0f,1.0f, 1.0f,1.0f,1.0f };
+	static unsigned int* triData = new unsigned int[36]{ 0,2,1, 1,2,3, 0,1,4, 4,1,5, 0,4,2, 2,4,6, 4,5,6, 6,5,7, 1,3,5, 5,3,7, 3,2,7, 7,2,6 };
+	static Geometry box(8, vertexData, 12, triData, { A_POSITION });
+	box.transfer();
+	box.render();
 }
 
 void Geometry::drawBox(glm::vec3 min, glm::vec3 max) {
@@ -315,14 +347,6 @@ void Geometry::drawBox(glm::vec3 min, glm::vec3 max) {
 	box.transfer();
 	box.render();
 	box.cleanup();
-}
-
-void Geometry::drawUnitBox() {
-	static float* vertexData = new float[24]{0,0,0, 1,0,0, 0,1,0, 1,1,0, 0,0,1, 1,0,1, 0,1,1, 1,1,1};
-	static unsigned int* triData = new unsigned int[36]{0,2,1, 1,2,3, 0,1,4, 4,1,5, 0,4,2, 2,4,6, 4,5,6, 6,5,7, 1,3,5, 5,3,7, 3,2,7, 7,2,6};
-	static Geometry box(8, vertexData, 12, triData, { A_POSITION });
-	box.transfer();
-	box.render();
 }
 
 void Geometry::drawUnitCylinder() {

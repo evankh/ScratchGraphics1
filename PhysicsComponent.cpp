@@ -25,10 +25,10 @@ PhysicsComponent::PhysicsComponent(glm::vec3 axis, float aVel) :PhysicsComponent
 }
 
 PhysicsComponent::PhysicsComponent(Bounds* bounds, glm::vec3 vel, glm::vec3 acc, glm::vec3 axis, float aVel) :PhysicsComponent() {
-	if (bounds) {
-		delete mBounds;
-		mBounds = bounds;
-	}
+	/*if (bounds) {
+		mBounds = bounds->copy();
+	}*/
+	mBounds = bounds;
 	mVelocity = vel;
 	mAcceleration = acc;
 	mAxis = axis;
@@ -36,29 +36,30 @@ PhysicsComponent::PhysicsComponent(Bounds* bounds, glm::vec3 vel, glm::vec3 acc,
 }
 
 PhysicsComponent::~PhysicsComponent() {
-	// Bounds can't come from anywhere other than Geometry (currently), which owns them, and therefore they should not be deleted by PhysicsComponent
-	//if (mBounds) delete mBounds;
-	// Although I'm thinking PhysicsComponent is going to need to have its own separate bounds that it can transform, so feel free to come back to this
+	if (mBounds) delete mBounds;
 }
 
 void PhysicsComponent::update(float dt) {
 	mVelocity += mAcceleration * dt;
 	mPosition += mVelocity * dt;
 	rotate(mAxis, mAngularVelocity * dt);
-	mBounds->translate(mVelocity * dt);
-	mBounds->rotate(mAxis, mAngularVelocity*dt);
+	if (mBounds) mBounds->translate(mVelocity * dt);
+	if (mBounds) mBounds->rotate(mAxis, mAngularVelocity*dt);
 }
 
 void PhysicsComponent::translate(glm::vec3 dxyz) {
 	mPosition += dxyz;
+	if (mBounds) mBounds->translate(dxyz);
 }
 
 void PhysicsComponent::rotate(glm::vec3 axis, float degrees) {
 	mRotation = glm::rotate(mRotation, glm::radians(degrees), axis);
+	if (mBounds) mBounds->rotate(axis, degrees);
 }
 
 void PhysicsComponent::scale(glm::vec3 scale) {
 	mScale *= scale;
+	if (mBounds) mBounds->scale(scale);
 }
 
 glm::mat4 PhysicsComponent::getModelMatrix() {

@@ -30,7 +30,9 @@ public:
 	virtual void debugDraw() = 0;
 	virtual void rotate(glm::vec3 axis, float degrees) = 0;	// Each primitive needs to decide for itself how it needs to handle transforms
 	virtual void translate(glm::vec3 dxyz) = 0;
-	virtual void scale(float scale) = 0;
+	virtual void scale(glm::vec3 scale) = 0;
+	void scale(float scale) { this->scale(glm::vec3(scale)); };
+	virtual Bounds* copy() const = 0;
 };
 
 class BoundingSphere;
@@ -44,7 +46,8 @@ class Collisionless :public Bounds {
 	virtual void debugDraw() {};
 	virtual void rotate(glm::vec3, float) {};
 	virtual void translate(glm::vec3) {};
-	virtual void scale(float) {};
+	virtual void scale(glm::vec3) {};
+	virtual Collisionless* copy() const { return new Collisionless(); };
 public:
 	Collisionless() :Bounds(BoundsType::COLLISIONLESS) {};
 };
@@ -71,9 +74,10 @@ public:
 	virtual void debugDraw();
 	virtual void rotate(glm::vec3 axis, float degrees) {};
 	virtual void translate(glm::vec3 dxyz) { mCenter += dxyz; };
-	virtual void scale(float scale) { mRadius *= scale; };
+	virtual void scale(glm::vec3 scale) { mRadius *= scale.x; };	// It's a sphere, not an ellipsoid, so can't scale anisometrically
+	virtual BoundingSphere* copy() const { return new BoundingSphere(mCenter, mRadius); };
 };
-
+/*
 class AABoundingCylinder :public Bounds {
 	friend bool collides(AABoundingCylinder*, BoundingSphere*);
 	friend bool collides(AABoundingCylinder*, AABoundingCylinder*);
@@ -97,7 +101,7 @@ public:
 	virtual void translate(glm::vec3 dxyz);
 	virtual void scale(float scale);
 };
-
+*/
 class AABB :public Bounds {
 	friend bool collides(AABB*, BoundingSphere*);
 	friend bool collides(AABB*, AABoundingCylinder*);
@@ -112,14 +116,17 @@ class AABB :public Bounds {
 	friend bool collides(ArbitraryBoundingBox*, AABB*);
 	friend bool collides(CollisionPlane*, AABB*);
 private:
-	glm::vec3 mMin, mMax;
+	glm::vec3 mOrigin = { 0.0,0.0,0.0 }, mMin, mMax;
 public:
 	AABB() :Bounds(BoundsType::AA_BOX) {};
+	AABB(glm::vec3 min, glm::vec3 max) :Bounds(BoundsType::AA_BOX), mMin(min), mMax(max) {}
 	virtual void debugDraw();
 	virtual void rotate(glm::vec3 axis, float degrees) {};
 	virtual void translate(glm::vec3 dxyz);
-	virtual void scale(float scale);
+	virtual void scale(glm::vec3 scale);
+	virtual AABB* copy() const { return new AABB(mMin, mMax); };
 	void update(float vert[3]);
+	//virtual glm::vec3 getDimensions() const { return mMax - mMin; };
 	void setMinX(float x) { mMin.x = x; };
 	void setMinY(float y) { mMin.y = y; };
 	void setMinZ(float z) { mMin.z = z; };
@@ -127,7 +134,7 @@ public:
 	void setMaxY(float y) { mMin.y = y; };
 	void setMaxZ(float z) { mMin.z = z; };
 };
-
+/*
 class ArbitraryBoundingCylinder :public Bounds {
 	friend bool collides(ArbitraryBoundingCylinder*, BoundingSphere*);
 	friend bool collides(ArbitraryBoundingCylinder*, AABoundingCylinder*);
@@ -175,7 +182,7 @@ public:
 	virtual void translate(glm::vec3 dxyz);
 	virtual void scale(float scale);
 };
-
+*/
 class CollisionPlane :public Bounds {
 	friend bool collides(CollisionPlane*, BoundingSphere*);
 	friend bool collides(CollisionPlane*, AABoundingCylinder*);
@@ -193,13 +200,14 @@ class CollisionPlane :public Bounds {
 private:
 	glm::vec3 mPosition;
 	glm::vec3 mNormal;
-	float mThreshold = -0.05f;
+	float mThreshold = -0.0f;
 public:
 	CollisionPlane(glm::vec3 position, glm::vec3 normal) :Bounds(BoundsType::PLANE) { mPosition = position; mNormal = normal; };
 	virtual void debugDraw();
 	virtual void rotate(glm::vec3 axis, float degrees);
 	virtual void translate(glm::vec3 dxyz) { mPosition += dxyz; };
-	virtual void scale(float scale) {};
+	virtual void scale(glm::vec3 scale) {};
+	virtual CollisionPlane* copy() const { return new CollisionPlane(mPosition, mNormal); };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_BOUNDS__

@@ -191,7 +191,7 @@ void Game::update(float dt) {
 		for (auto i = objects.begin(); i != objects.end(); i++) {
 			if (i->second->getBounds()) {
 				for (auto j = i; j != objects.end(); j++) {
-					if (j->second->getBounds()) {
+					if (i != j && j->second->getBounds()) {
 						if (collides(i->second->getBounds(), j->second->getBounds())) {
 							CollisionData collision;
 							collision.first = i->second->getPhysicsComponent();
@@ -247,7 +247,7 @@ void Game::render(float dt) {
 					program->sendUniform("uDebugColor", 4, 1, debug_collision);
 				else
 					program->sendUniform("uDebugColor", 4, 1, debug_nocollision);
-				program->sendUniform("uM", glm::value_ptr(object.second->getPhysicsComponent()->getModelMatrix()));
+				program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));	// AABB's and spheres, at least, will be tracking their world coordinates
 				object.second->debugDraw();
 			}
 

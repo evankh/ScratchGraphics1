@@ -19,7 +19,7 @@ public:
 
 class PlayerOnFloor :public PlayerState {
 private:
-	float dx, dy;
+	float dx, dy, dz = 0.0f;
 public:
 	PlayerOnFloor(GameObject* owner, float dx, float dy) :dx(dx), dy(dy) { mOwner = owner; };
 	PlayerState* handleEvent(Event event);
@@ -29,9 +29,9 @@ public:
 
 class PlayerJumping :public PlayerState {
 private:
-	float dx, dy;
+	float dx, dy, dz;
 public:
-	PlayerJumping(GameObject* owner, float dx, float dy) :dx(dx), dy(dy) { mOwner = owner; };
+	PlayerJumping(GameObject* owner, float dx, float dy, float dz) :dx(dx), dy(dy), dz(dz) { mOwner = owner; };
 	PlayerState* handleEvent(Event event);
 	void update(PhysicsComponent* physics, float dt);
 	void enter(PhysicsComponent* physics);

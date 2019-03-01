@@ -34,7 +34,7 @@ class Vertex;
 
 struct GeometryHandles {
 	unsigned int vboHandle, indexHandle, vaoHandle;
-	bool good;
+	bool good = false;
 };
 
 class Geometry {
@@ -62,10 +62,13 @@ public:
 	static const Geometry* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const Geometry* getUnitQuad() { return &sUnitQuad; };
 	static Geometry* getNewQuad();
+	static void drawUnitQuad();
+	static void drawCenteredQuad();
 	static void drawUnitSphere();
+	static void drawSphere(glm::vec3 center, float radius);
 	static void drawUnitCylinder();
-	static void drawBox(glm::vec3 min, glm::vec3 max);
 	static void drawUnitBox();
+	static void drawBox(glm::vec3 min, glm::vec3 max);
 	static void drawAxes();
 };
 

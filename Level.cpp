@@ -135,7 +135,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 					if (strcmp(boundsName, "Sphere") == 0)
 						bounds = new BoundingSphere({ 0.0f,0.0f,0.0f }, 1.0f);
 					else if (strcmp(boundsName, "AABB") == 0)
-						bounds = geom->getBoundingBox();
+						bounds = geom->getBoundingBox()->copy();
 					else if (strcmp(boundsName, "Plane") == 0) {
 						glm::mat4 rotation = glm::rotate(ang, glm::vec3(rot.x, rot.y, rot.z));
 						auto n = rotation * glm::vec4(0.0, 0.0, 1.0, 0.0);

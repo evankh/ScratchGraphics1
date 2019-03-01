@@ -1,9 +1,9 @@
-Camera "main" pos:(4.0,4.0,4.0) at:(0.0,2.0,0.25) fov:75.0
+Camera "main" pos:(4.0,4.0,2.0) at:(0.0,2.0,0.25) fov:75.0
 Music "debug_background"
 // Woops, that doesn't give any sort of error message if it doesn't find it
-Object "big_cube" bounds:"AABB" geom:"debug_cube_2" prog:"debug_normal" tex:"debug" pos:(0.0,0.0,0.0) rot:(0.0,0.0,1.0) ang:180.0 axis:(0.0,0.0,1.0) mom:45.0
+Object "center_cube" bounds:"AABB" geom:"debug_cube_2" prog:"debug_normal" tex:"debug" pos:(0.0,0.0,0.0) rot:(0.0,0.0,1.0) ang:180.0 axis:(0.0,0.0,1.0) mom:45.0
 Object "gravity_cube" bounds:"AABB" geom:"debug_cube" prog:"debug_texcoord" pos:(0.5,0.0,1.0) vel:(0.0,-1.0,5.0) acc:(0.0,0.0,-5.0) scl:0.5 rot:(0.0,1.0,0.0) ang:45.0
-Object "spaceship" bounds:"Sphere" geom:"spaceship" prog:"debug_position" pos:(0.0,0.0,2.0) axis:(0.0,0.0,1.0) mom:45.0
+Object "spaceship" bounds:"Sphere" geom:"spaceship" prog:"debug_position" pos:(0.0,0.0,2.05) axis:(0.0,0.0,1.0) mom:45.0
 Object "player1" bounds:"Sphere" geom:"spaceship" prog:"debug_normal" col:(1.0,0.0,0.0) pos:(2.0,0.0,0.0) scl:0.3 rot:(0.0,0.0,1.0) ang:-90.0
 Object "player2" bounds:"Sphere" geom:"spaceship" prog:"debug_normal" col:(0.0,1.0,0.0) pos:(0.0,2.0,0.0) scl:0.3
 Object "moving_spaceship" bounds:"Sphere" geom:"spaceship" prog:"metal" pos:(0.0,-20.0,0.0) vel:(0.0,5.0,0.0)

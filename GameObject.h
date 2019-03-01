@@ -38,7 +38,6 @@ public:
 	void setState(State* state);	// Probably should be private or something, could completely change the type of the object if given the wrong type of State
 	PhysicsComponent* getPhysicsComponent() const { return mPhysicsComponent; };
 	Bounds* getBounds() const { return mPhysicsComponent->getBounds(); };
-	Bounds* getBoundingBox() const { return mGeometryComponent->getBoundingBox(); };
 	void registerSound(std::string name, Sound* sound);
 	void translate(glm::vec3 dxyz) { mPhysicsComponent->translate(dxyz); };
 	void rotate(glm::vec3 axis, float degrees) { mPhysicsComponent->rotate(axis, degrees); };

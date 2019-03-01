@@ -10,7 +10,7 @@ void PlayerState::destroy() {
 }
 
 PlayerState* PlayerState::getEntry(GameObject* owner) {
-	KeyboardHandler::getInstance().registerReceiver("wasd ", owner);
+	KeyboardHandler::getInstance().registerReceiver("wasde j", owner);
 	return new PlayerOnFloor(owner, 0.0f, 0.0f);
 }
 
@@ -31,7 +31,7 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 			dx = event.mData.command.factor;
 			break;
 		case Command::JUMP:
-			return new PlayerJumping(mOwner, dx, dy);
+			return new PlayerJumping(mOwner, dx, dy, dz);
 		}
 	}
 	if (event.mType == EventType::KEY_PRESSED) {
@@ -48,8 +48,14 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 		case 'd':
 			dx += 1.0f;
 			break;
+		case 'e':
+			dz -= 1.0f;
+			break;
 		case ' ':
-			return new PlayerJumping(mOwner, dx, dy);
+			dz += 1.0f;
+			break;
+		case 'j':
+			return new PlayerJumping(mOwner, dx, dy, dz);
 		}
 	}
 	if (event.mType == EventType::KEY_RELEASED) {
@@ -65,6 +71,12 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 			break;
 		case 'd':
 			dx -= 1.0f;
+			break;
+		case 'e':
+			dz += 1.0f;
+			break;
+		case ' ':
+			dz -= 1.0f;
 			break;
 		}
 	}
@@ -122,7 +134,7 @@ void PlayerJumping::enter(PhysicsComponent* physics) {
 }
 
 void PlayerOnFloor::update(PhysicsComponent* physics, float dt) {
-	physics->setVelocity({ dx,dy,0.0f });
+	physics->setVelocity({ dx,dy,dz });
 	physics->update(dt);
 }
 

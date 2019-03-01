@@ -2,17 +2,18 @@
 #include "Geometry.h"
 
 void BoundingSphere::debugDraw() {
-	Geometry::drawUnitSphere();//mCenter, mRadius);
+	Geometry::drawSphere(mCenter, mRadius);
 }
-
+/*
 void AABoundingCylinder::debugDraw() {
 	Geometry::drawUnitCylinder();//mCenter, mRadius, mHeight);
 }
-
+*/
 void AABB::debugDraw() {
+	//Geometry::drawUnitBox();
 	Geometry::drawBox(mMin, mMax);
 }
-
+/*
 void ArbitraryBoundingCylinder::debugDraw() {
 	Geometry::drawUnitCylinder();//mCylinder.mCenter, mCylinder.mRadius, mCylinder.mHeight, mTransform);
 }
@@ -20,18 +21,21 @@ void ArbitraryBoundingCylinder::debugDraw() {
 void ArbitraryBoundingBox::debugDraw() {
 	Geometry::drawUnitBox();//mBox.mMin, mBox.mMax, mTransform);
 }
-
+*/
 void CollisionPlane::debugDraw() {
-	// Geometry's static draw calls are actually super unhelpful
+	//Geometry::drawUnitQuad();
 	return;
 }
 
 void AABB::translate(glm::vec3 dxyz) {
+	mOrigin += dxyz;
 	mMin += dxyz;
 	mMax += dxyz;
 }
-void AABB::scale(float scale) {
+void AABB::scale(glm::vec3 scale) {
 	// Not sure, maybe scale both mMin & mMax towards the center?
+	mMax = mOrigin + scale * (mMax - mOrigin);
+	mMin = mOrigin + scale * (mMin - mOrigin);
 }
 
 void CollisionPlane::rotate(glm::vec3 axis, float degrees) {
@@ -120,7 +124,7 @@ bool collides(Bounds* a, Bounds* b) {
 }
 
 bool collides(BoundingSphere* a, BoundingSphere* b) {
-	return (a->mCenter - b->mCenter).length() <= a->mRadius + b->mRadius;
+	return glm::length(a->mCenter - b->mCenter) <= a->mRadius + b->mRadius;
 }
 /*
 bool collides(BoundingSphere* a, AABoundingCylinder* b) {
@@ -128,7 +132,12 @@ bool collides(BoundingSphere* a, AABoundingCylinder* b) {
 }
 */
 bool collides(BoundingSphere* a, AABB* b) {
-	return a->mCenter.x < b->mMax.x && a->mCenter.x > b->mMin.x;
+	glm::vec3 diff = b->mMax - b->mMin;
+	glm::vec3 center = a->mCenter;
+	center.x = std::fmaxf(std::fminf(center.x, b->mMin.x), center.x - diff.x);
+	center.y = std::fmaxf(std::fminf(center.y, b->mMin.y), center.y - diff.y);
+	center.z = std::fmaxf(std::fminf(center.z, b->mMin.z), center.z - diff.z);
+	return collides(&BoundingSphere(center, a->mRadius), &BoundingSphere(b->mMin, 0.0));
 }
 /*
 bool collides(BoundingSphere* a, ArbitraryBoundingCylinder* b) {
@@ -165,7 +174,9 @@ bool collides(AABB* a, BoundingSphere* b) {
 }
 
 bool collides(AABB* a, AABB* b) {
-	return a->mMin.x < b->mMax.x && a->mMax.x > b->mMin.x;	// And so on...
+	return a->mMin.x < b->mMax.x && a->mMax.x > b->mMin.x
+		&& a->mMin.y < b->mMax.y && a->mMax.y > b->mMin.y
+		&& a->mMin.z < b->mMax.z && a->mMax.z > b->mMin.z;
 }
 /*
 bool collides(AABB* a, ArbitraryBoundingCylinder* b) {
@@ -178,9 +189,14 @@ bool collides(AABB* a, ArbitraryBoundingBox* b) {
 */
 bool collides(AABB* a, CollisionPlane* b) {
 	bool collides = false;
-	collides = collides && glm::dot(a->mMin - b->mPosition, b->mNormal) <= b->mThreshold;
-	collides = collides && glm::dot(a->mMax - b->mPosition, b->mNormal) <= b->mThreshold;
-	// And now to do the same thing for the other 6 vertices...
+	collides = collides || glm::dot(a->mMin - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides || glm::dot(a->mMax - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides || glm::dot(glm::vec3{ a->mMin.x,a->mMin.y,a->mMax.z } - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides || glm::dot(glm::vec3{ a->mMin.x,a->mMax.y,a->mMin.z } - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides || glm::dot(glm::vec3{ a->mMin.x,a->mMax.y,a->mMax.z } - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides || glm::dot(glm::vec3{ a->mMax.x,a->mMin.y,a->mMin.z } - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides || glm::dot(glm::vec3{ a->mMax.x,a->mMin.y,a->mMax.z } - b->mPosition, b->mNormal) <= b->mThreshold;
+	collides = collides || glm::dot(glm::vec3{ a->mMax.x,a->mMax.y,a->mMin.z } - b->mPosition, b->mNormal) <= b->mThreshold;
 	return collides;
 }
 
