@@ -88,6 +88,6 @@ GameObject* GameObject::copy() const {
 	if (mTexture) result->mTexture = mTexture;
 	if (mAudioComponent) result->mAudioComponent = mAudioComponent->copy(result->mPhysicsComponent);
 	result->mSounds = mSounds;
-	if (mState) result->setState(mState->copy(result));
+	if (mState) result->setState(mState->getEntry(result));
 	return result;
 }
