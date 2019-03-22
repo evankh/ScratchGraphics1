@@ -10,6 +10,7 @@ Fragment "solid" 130:"130/solid.frag" (vec3:"uColor")
 Fragment "debug_bbs" 130:"130/debug_bbs.frag"
 Fragment "debug_axes" 130:"130/debug_axes.frag"
 Fragment "rimjob" 130:"130/rim.frag"
+Fragment "mouse_selection" 150:"130/mouse_selection.frag"
 
 Fragment "ray_sphere" 130:"Analytic/sphere.frag"
 Fragment "ray_sierpinski" 130:"Analytic/sierpinski.frag"
@@ -22,5 +23,6 @@ Program "debug_axes" Vertex:"mvp" Fragment:"debug_axes"
 Program "metal" Vertex:"mvp" Fragment:"metal"
 Program "texture" Vertex:"mvp" Fragment:"texture"
 Program "solid_color" Vertex:"mvp" Fragment:"solid"
+Program "mouse_selection" Vertex:"mvp" Fragment:"mouse_selection"
 
 Program "ray_sphere" Vertex:"raymarch+mvp" Fragment:"ray_sphere"

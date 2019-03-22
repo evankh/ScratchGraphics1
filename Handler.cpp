@@ -21,7 +21,7 @@ void Handler::unregisterReceiver(Receiver* receiver) {
 			}
 			else {
 				ReceiverNode* current = mRegisteredReceivers[i];
-				while (current->next) {
+				while (current && current->next) {
 					if (current->next->receiver == receiver) {
 						auto temp = current->next;
 						current->next = temp->next;

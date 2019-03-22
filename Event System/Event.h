@@ -28,6 +28,7 @@ struct MouseData {
 	MouseButton button;
 	int edge;
 	int mouse_x, mouse_y;
+	float world_pos[3];
 };
 
 struct SoundData {

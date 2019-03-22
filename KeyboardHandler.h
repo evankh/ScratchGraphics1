@@ -19,6 +19,7 @@ public:
 	bool getKeyStatus(char key) { return mKeyStatus[key]; };
 	void registerReceiver(const char* interested, Receiver* receiver);
 	void registerReceiver(char interested, Receiver* receiver);
+	virtual void step();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_KEYBOARD_HANDLER__

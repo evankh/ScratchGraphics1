@@ -52,3 +52,8 @@ void OrthoCamera::resize(unsigned int width, unsigned int height) {
 glm::mat4& Camera::getViewProjectionMatrix() {
 	return mViewProjectionMatrix;
 }
+
+void PerspCamera::update(float dt) {
+	mPhysicsComponent->update(dt);
+	mViewProjectionMatrix = mProjectionMatrix * mPhysicsComponent->getInverseModelMatrix();
+}

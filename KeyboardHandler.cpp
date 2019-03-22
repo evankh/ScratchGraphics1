@@ -29,3 +29,7 @@ void KeyboardHandler::handleRelease(char key, int mouse_x, int mouse_y) {
 	mKeyStatus[key] = false;
 	sEvents.push(Event(EventType::KEY_RELEASED, KeyboardData{ key,mouse_x,mouse_y }));
 }
+
+void KeyboardHandler::step() {
+
+}

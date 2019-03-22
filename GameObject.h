@@ -13,17 +13,16 @@ class Texture;
 #include "SoundLibrary.h"
 class Source;
 
-//typedef State*(*InputComponent)(State*, EventQueue&);
-
 class GameObject :public Receiver {
 private:
+	// GraphicsComponent* mGraphicsComponent;
 	Geometry* mGeometryComponent;
 	Program* mDisplayComponent;
+	Texture* mTexture;
+
 	PhysicsComponent* mPhysicsComponent;
-	Texture* mTexture;	// Doesn't make a ton of sense here
 	Source* mAudioComponent;
 	SoundLibrary mSounds;
-	//InputComponent mInputComponent;
 	State* mState;
 	EventQueue mEventQueue;
 	bool mHasCollision = false;

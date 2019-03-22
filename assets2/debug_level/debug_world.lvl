@@ -1,4 +1,4 @@
-Camera "main" pos:(0.5,-3.0,2.0) at:(0.0,2.0,0.25) fov:75.0
+Camera "main" pos:(3.0,-0.5,2.0) at:(0.0,2.0,0.25) fov:75.0
 Music "debug_background"
 // Woops, that doesn't give any sort of error message if it doesn't find it
 Object "center_cube" bounds:"AABB" geom:"debug_cube_2" prog:"debug_normal" tex:"debug" pos:(0.0,0.0,0.0) rot:(0.0,0.0,1.0) ang:180.0 axis:(0.0,0.0,1.0) mom:45.0

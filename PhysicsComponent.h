@@ -27,6 +27,7 @@ public:
 	void setPosition(glm::vec3 pos) { mPosition = pos; };
 	void setVelocity(glm::vec3 vel) { mVelocity = vel; };
 	void setAcceleration(glm::vec3 acc) { mAcceleration = acc; };
+	void setRotation(glm::vec3 axis, float mom) { mAxis = axis; mAngularVelocity = mom; };
 	void rotate(glm::vec3 axis, float degrees);
 	void scale(glm::vec3 scale);
 	glm::mat4 getModelMatrix();

@@ -18,6 +18,7 @@ class MouseHandler :public Handler {
 	friend void game_movement_wrapper(int, int);
 private:
 	bool mButtonStatus[EKH_MOUSE_NUM_BUTTONS];
+	int mDragStartPosition[EKH_MOUSE_NUM_BUTTONS][2];	// It may be a better idea to leave tracking this up to whatever is interested in it
 	Command mButtonBindings[EKH_MOUSE_NUM_BUTTONS];
 	int mMousePosition[2];
 	void handleButton(MouseButton button, int edge, int mouse_x, int mouse_y);
@@ -26,11 +27,13 @@ private:
 	virtual int getNumReceivers() { return EKH_MOUSE_NUM_BUTTONS; };
 public:
 	static MouseHandler& getInstance();
-	bool getButtonStatus(MouseButton button) { return mButtonStatus[button]; };
-	int getMouseX() { return mMousePosition[0]; };
-	int getMouseY() { return mMousePosition[1]; };
+	bool getButtonStatus(MouseButton button) const { return mButtonStatus[button]; };
+	int getMouseX() const { return mMousePosition[0]; };
+	int getMouseY() const { return mMousePosition[1]; };
+	int const* getDragStartPosition(MouseButton button) const;
 	void registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Receiver* receiver);
 	void registerReceiver(MouseButton button, Receiver* receiver);
+	virtual void step();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_MOUSE_HANDLER__

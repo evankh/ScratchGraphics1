@@ -18,6 +18,7 @@ class FileService {
 private:
 	std::ifstream in;
 	std::string mPath;
+	bool mBackwards;
 public:
 	FileService(const char* filename);
 	FileService(std::string filename);
@@ -29,6 +30,9 @@ public:
 	void restart();
 	bool putBack(const char* pattern);
 	bool putBack(const char pattern);
+	void jumpToPosition(int position);
+	void jumpToOffset(int offset);
+	void reverseEndian();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_FILE_SERVICE__

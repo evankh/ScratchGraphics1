@@ -15,9 +15,6 @@
 #include "Texture.h"
 #include "Window.h"
 
-#include <thread>	// An experiment
-
-#include "GL\glew.h"	// I literally just need this for GL_VERTEX_SHADER, which is a bit annoying
 NamedContainer<State*> State::sBaseStateLibrary;	// This goes here for some reason
 
 Game::Game() {
@@ -30,6 +27,7 @@ Game::Game() {
 
 void Game::init() {
 	mWindow = new Window(800, 600, "Game owns this window");
+	// Set up the MouseHandler textures, probably
 }
 
 void Game::load() {
@@ -137,7 +135,7 @@ void Game::load() {
 		}
 	}
 	try {
-		mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("bloom");
+		mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("none");
 	}
 	catch (std::out_of_range) {
 		mCurrentPostProcessing = NULL;
@@ -219,8 +217,12 @@ void Game::update(float dt) {
 				}
 			}
 		}
+		// If there's a lag spike, all inputs from any frames will be processed on the first frame... Not sure yet if that's a problem (it probably is)
+		KeyboardHandler::getInstance().step();
 		KeyboardHandler::getInstance().dispatchAll();
+		MouseHandler::getInstance().step();
 		MouseHandler::getInstance().dispatchAll();
+		mWorkingActiveCamera->update(dt);	// Hmm
 		if (!mPaused) {
 			// Object updates
 			for (auto object : mWorkingObjectList) {
@@ -351,6 +353,15 @@ void Game::handle(Event event) {
 			// In a comment around here somewhere I have the code snippet to push a menu on the stack
 			break;
 		}
+		break;
+	case EventType::BUTTON_PRESSED:
+		//ServiceLocator::getLoggingService().log("Mouse button pressed");
+		break;
+	case EventType::BUTTON_RELEASED:
+		//ServiceLocator::getLoggingService().log("Mouse button released");
+		break;
+	case EventType::BUTTON_HELD:
+		//ServiceLocator::getLoggingService().log("Mouse button held");
 		break;
 	}
 }
@@ -493,6 +504,8 @@ void Game::parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibr
 		}
 	}
 }
+
+#include "GL\glew.h"	// I literally just need this for GL_VERTEX_SHADER, which is a bit annoying
 
 void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary) {
 	FileService glslIndex(path + mIndexFilename);

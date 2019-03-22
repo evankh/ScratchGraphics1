@@ -112,7 +112,7 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 		while (file.good()) {
 			char* err;
 			Point fpoint;
-			struct { float time; int note, sharp; int octave; float gain = 1.0f; } npoint;
+			struct { float time; char note, sharp; int octave; float gain = 1.0f; } npoint;
 			struct { char* interp; char* waveform; int p1, p2; } sweep;
 			if (file.extract("//`S`L", NULL));
 			else if (file.extract("Point time:`F freq:`F", &fpoint)) {

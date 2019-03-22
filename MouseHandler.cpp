@@ -22,6 +22,10 @@ void MouseHandler::registerReceiver(MouseButton button, Receiver* receiver) {
 
 void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int mouse_y) {
 	mButtonStatus[button] = (edge == 0);
+	if (edge == 0) {
+		mDragStartPosition[button][0] = mouse_x;
+		mDragStartPosition[button][1] = mouse_y;
+	}
 	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, MouseData{ button,edge,mouse_x,mouse_y }));
 	sEvents.push(Event(CommandData{ mButtonBindings[button], 0.0f }));
 }
@@ -29,4 +33,15 @@ void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int m
 void MouseHandler::handleMove(int mouse_x, int mouse_y) {
 	mMousePosition[0] = mouse_x;
 	mMousePosition[1] = mouse_y;
+}
+
+const int* MouseHandler::getDragStartPosition(MouseButton button) const {
+	if (mButtonStatus[button])
+		return mDragStartPosition[button];
+	return mMousePosition;
+}
+
+void MouseHandler::step() {
+	for (int i = 0; i < EKH_MOUSE_NUM_BUTTONS; i++)
+		if (mButtonStatus[i]) sEvents.push(Event(EventType::BUTTON_HELD, MouseData{ MouseButton(i),0,mMousePosition[0],mMousePosition[1] }));
 }
