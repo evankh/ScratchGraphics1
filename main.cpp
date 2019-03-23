@@ -92,6 +92,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 		glutKeyboardUpFunc(game_keyup_wrapper);
 		glutMouseFunc(game_mouse_wrapper);
 		glutMotionFunc(game_movement_wrapper);
+		glutPassiveMotionFunc(game_movement_wrapper);
 #pragma endregion
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);

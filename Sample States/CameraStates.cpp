@@ -47,6 +47,7 @@ CameraState* CameraState::handleEvent(Event event) {
 }
 
 void CameraState::update(PhysicsComponent* physics, float dt) {
+	static float outputcooldown = 0.0f;
 	float dx, dy;
 	int current_x = MouseHandler::getInstance().getMouseX();
 	int current_y = MouseHandler::getInstance().getMouseY();
@@ -54,12 +55,20 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 		dx = current_x - mLeftDragStartPos[0];
 		dy = current_y - mLeftDragStartPos[1];
 		// Something magic
-		ServiceLocator::getLoggingService().log("Currently leftdragging with dx = " + std::to_string(dx) + " and dy = " + std::to_string(dy));
+		outputcooldown += dt;
+		if (outputcooldown >= 0.1f) {
+			ServiceLocator::getLoggingService().log("Currently leftdragging with dx = " + std::to_string(dx) + " and dy = " + std::to_string(dy));
+			outputcooldown -= 0.1f;
+		}
 	}
 	if (mRightDrag) {
 		dx = current_x - mRightDragStartPos[0];
 		dy = current_y - mRightDragStartPos[1];
 		// Something magic
-		ServiceLocator::getLoggingService().log("Currently leftdragging with dx = " + std::to_string(dx) + " and dy = " + std::to_string(dy));
+		outputcooldown += dt;
+		if (outputcooldown >= 0.1f) {
+			ServiceLocator::getLoggingService().log("Currently rightdragging with dx = " + std::to_string(dx) + " and dy = " + std::to_string(dy));
+			outputcooldown -= 0.1f;
+		}
 	}
 }
