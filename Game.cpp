@@ -43,8 +43,8 @@ void Game::load() {
 		if (baseIndex.extract("//`S`L", NULL));	// Comment
 		else if (baseIndex.extract("Level \"`S\" \"`S\"`L", &levelData)) {
 			mLevelDirectory.add(levelData.name, levelData.path);
-			delete levelData.name;
-			delete levelData.path;
+			delete[] levelData.name;
+			delete[] levelData.path;
 		}
 		else if (baseIndex.extract("start: ", NULL)) {
 			if (baseIndex.extract("Level \"`S\"`L", &levelData.name)) {
@@ -66,7 +66,7 @@ void Game::load() {
 			else if (baseIndex.extract("Menu \"`S\"`L", &levelData.name)) {
 				try {
 					mCurrentMenu = new Menu(NULL, mCommonLibraries.menus.get(levelData.name));
-					delete levelData.name;
+					delete[] levelData.name;
 				}
 				catch (std::exception) {
 					throw std::exception((std::string("Starting menu has not been defined: ") + levelData.name).data());
@@ -92,36 +92,36 @@ void Game::load() {
 					if (commonIndex.extract("//`S`L", NULL));
 					else if (commonIndex.extract("menus: \"`S\"`L", &workingDirectory)) {
 						//parseMenuIndex(commonPath + workingDirectory, mCommonLibraries.menus);
-						delete workingDirectory;
+						delete[] workingDirectory;
 					}
 					else if (commonIndex.extract("obj: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load objs into common obj directory
 						parseGeometryIndex(commonPath + workingDirectory, mCommonLibraries.standard.geometries);
-						delete workingDirectory;
+						delete[] workingDirectory;
 					}
 					else if (commonIndex.extract("sound: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load sounds into common sound directory
 						//parseSoundIndex(commonPath + workingDirectory, mCommonLibraries.standard.sounds);
-						delete workingDirectory;
+						delete[] workingDirectory;
 					}
 					else if (commonIndex.extract("tex: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load textures into common texture directory
 						parseTextureIndex(commonPath + workingDirectory, mCommonLibraries.standard.textures);
-						delete workingDirectory;
+						delete[] workingDirectory;
 					}
 					else if (commonIndex.extract("glsl: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load shaders into common shader directory
 						parseShaderIndex(commonPath + workingDirectory, mCommonLibraries.standard.shaders, mCommonLibraries.standard.programs);
-						delete workingDirectory;
+						delete[] workingDirectory;
 					}
 					else if (commonIndex.extract("post: \"`S\"`L", &workingDirectory)) {
 						// Open the index file in the new path, then use it to load postprocessing things into common postprocessing directory
 						parsePostprocessingIndex(commonPath + workingDirectory, mCommonLibraries.post.shaders, mCommonLibraries.post.filters, mCommonLibraries.post.kernels, mCommonLibraries.post.pipelines);
-						delete workingDirectory;
+						delete[] workingDirectory;
 					}
 					else if (commonIndex.extract("`S`L", &workingDirectory)) {
 						ServiceLocator::getLoggingService().error("Unexpected line in common index file", workingDirectory);
-						delete workingDirectory;
+						delete[] workingDirectory;
 					}
 				}
 				catch (std::exception e) {
@@ -131,7 +131,7 @@ void Game::load() {
 		}
 		else if (baseIndex.extract("`S`L", &levelData.name)) {
 			ServiceLocator::getLoggingService().error("Unexpected line in root index file", levelData.name);
-			delete levelData.name;
+			delete[] levelData.name;
 		}
 	}
 	try {
@@ -253,13 +253,13 @@ void Game::render(float dt) {
 	else mWindow->enableDrawing();	// If not, draw directly on the window backbuffer
 	if (mWorkingActiveCamera) {
 		for (auto object : mWorkingObjectList)
-			object->render(mWorkingActiveCamera);	// Draw each object in the scene
+			object->render(mWorkingActiveCamera->getCameraComponent());	// Draw each object in the scene
 
 		float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
 		if (mDebugMode) {
 			auto program = mCommonLibraries.standard.programs.get("debug_bbs");
 			program->use();
-			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getViewProjectionMatrix()));
+			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
 			for (auto object : mWorkingObjectList) {
 				if (object->hasCollision())
 					program->sendUniform("uDebugColor", 4, 1, debug_collision);
@@ -271,7 +271,7 @@ void Game::render(float dt) {
 
 			program = mCommonLibraries.standard.programs.get("debug_axes");
 			program->use();
-			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getViewProjectionMatrix()));
+			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
 			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
 			Geometry::drawAxes();
 			for (auto object : mWorkingObjectList) {
@@ -301,7 +301,7 @@ void Game::resize(unsigned int width, unsigned int height) {
 	mWindow->resize(width, height);
 	if (mCurrentLevel)
 		for (auto a : mCurrentLevel->getCameraList())
-			a.second->resize(width, height);
+			a.second->getCameraComponent()->resize(width, height);
 	for (auto processor : mCommonLibraries.post.pipelines)
 		processor.second->resize(width, height);
 	if (mCurrentMenu) mCurrentMenu->layout(width, height);
@@ -354,15 +354,6 @@ void Game::handle(Event event) {
 			break;
 		}
 		break;
-	case EventType::BUTTON_PRESSED:
-		//ServiceLocator::getLoggingService().log("Mouse button pressed");
-		break;
-	case EventType::BUTTON_RELEASED:
-		//ServiceLocator::getLoggingService().log("Mouse button released");
-		break;
-	case EventType::BUTTON_HELD:
-		//ServiceLocator::getLoggingService().log("Mouse button held");
-		break;
 	}
 }
 
@@ -379,31 +370,31 @@ Level* Game::loadLevel(std::string path) {
 			if (index.extract("//`S`L", NULL));
 			/*else if (index.extract("menus: \"`S\"`L", &workingDirectory)) {
 				parseMenuIndex(path + workingDirectory, mCommonLibraries.menus);
-				delete workingDirectory;
+				delete[] workingDirectory;
 			}*/
 			else if (index.extract("obj: \"`S\"`L", &workingDirectory)) {
 				parseGeometryIndex(path + workingDirectory, levelLibraries.geometries);
-				delete workingDirectory;
+				delete[] workingDirectory;
 			}
 			else if (index.extract("sound: \"`S\"`L", &workingDirectory)) {
 				parseSoundIndex(path + workingDirectory, levelLibraries.sounds);
-				delete workingDirectory;
+				delete[] workingDirectory;
 			}
 			else if (index.extract("tex: \"`S\"`L", &workingDirectory)) {
 				parseTextureIndex(path + workingDirectory, levelLibraries.textures);
-				delete workingDirectory;
+				delete[] workingDirectory;
 			}
 			else if (index.extract("glsl: \"`S\"`L", &workingDirectory)) {
 				parseShaderIndex(path + workingDirectory, levelLibraries.shaders, levelLibraries.programs);
-				delete workingDirectory;
+				delete[] workingDirectory;
 			}
 			/*else if (index.extract("post: \"`S\"`L", &workingDirectory)) {
 				parsePostprocessingIndex(path + workingDirectory, postShaderLibrary, postFilterLibrary, postKernelLibrary, postPipelineLibrary);
-				delete workingDirectory;
+				delete[] workingDirectory;
 			}*/
 			else if (index.extract("`S`L", &err)) {
 				ServiceLocator::getLoggingService().error("Unexpected line in level index file", err);
-				delete err;
+				delete[] err;
 			}
 		}
 		catch (std::exception e) {
@@ -426,10 +417,12 @@ void Game::parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLi
 			catch (...) {
 				ServiceLocator::getLoggingService().badFileError(path + menuData.path);
 			}
+			delete[] menuData.name;
+			delete[] menuData.path;
 		}
 		else if (menuIndex.extract("`S`L", &menuData.name)) {
 			ServiceLocator::getLoggingService().error("Unexpected line in menu index file", menuData.name);
-			delete menuData.name;
+			delete[] menuData.name;
 		}
 	}
 }
@@ -447,10 +440,12 @@ void Game::parseGeometryIndex(std::string path, NamedContainer<Geometry*> &geomL
 			catch (...) {
 				ServiceLocator::getLoggingService().badFileError(path + objData.path);
 			}
+			delete[] objData.name;
+			delete[] objData.path;
 		}
 		else if (objIndex.extract("`S`L", &objData.name)) {
 			ServiceLocator::getLoggingService().error("Unexpected line in obj index file", objData.name);
-			delete objData.name;
+			delete[] objData.name;
 		}
 	}
 }
@@ -468,6 +463,8 @@ void Game::parseSoundIndex(std::string path, SoundLibrary &soundLibrary) {
 			catch (...) {
 				ServiceLocator::getLoggingService().badFileError(path + soundData.path);
 			}
+			delete[] soundData.name;
+			delete[] soundData.path;
 		}
 		else if (soundIndex.extract("File \"`S\" \"`S\"`L", &soundData)) {
 			try {
@@ -476,10 +473,12 @@ void Game::parseSoundIndex(std::string path, SoundLibrary &soundLibrary) {
 			catch (...) {
 				ServiceLocator::getLoggingService().badFileError(path + soundData.path);
 			}
+			delete[] soundData.name;
+			delete[] soundData.path;
 		}
 		else if (soundIndex.extract("`S`L", &soundData.name)) {
 			ServiceLocator::getLoggingService().error("Unexpected line in sound index file", soundData.name);
-			delete soundData.name;
+			delete[] soundData.name;
 		}
 	}
 }
@@ -497,10 +496,12 @@ void Game::parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibr
 			catch (...) {
 				ServiceLocator::getLoggingService().badFileError(path + texData.path);
 			}
+			delete[] texData.name;
+			delete[] texData.path;
 		}
 		else if (texIndex.extract("`S`L", &texData.name)) {
 			ServiceLocator::getLoggingService().error("Unexpected line in texture index file", texData.name);
-			delete texData.name;
+			delete[] texData.name;
 		}
 	}
 }
@@ -511,7 +512,7 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 	FileService glslIndex(path + mIndexFilename);
 	if (!glslIndex.good()) throw std::exception(glslIndex.getPath().data());
 	struct { char* name; int version; char* path, *extra = NULL; } glslData;
-	struct { char *name = NULL, *vert = NULL, *frag = NULL, *geom = NULL, *extra = NULL; } progData;
+	struct { char* name = NULL, *vert = NULL, *frag = NULL, *geom = NULL, *extra = NULL; } progData;
 	int type;
 	while (glslIndex.good()) {
 		if (glslIndex.extract("//`S`L", NULL)) type = NULL;
@@ -526,7 +527,7 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 				else if (glslIndex.extract(" Geometry:\"`S\"", &progData.geom));
 				else if (glslIndex.extract("`S`L", progData.extra)) {
 					ServiceLocator::getLoggingService().error("Unexpected data in program definition", progData.extra);
-					delete progData.extra;
+					delete[] progData.extra;
 					progData.extra = NULL;
 					break;
 				}
@@ -552,15 +553,15 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 				if (!progData.frag) ServiceLocator::getLoggingService().error("Fragment shader not named", progData.frag);
 			}
 			// Cleanup
-			if (progData.vert) { delete progData.vert; progData.vert = NULL; }
-			if (progData.frag) { delete progData.frag; progData.frag = NULL; }
-			if (progData.geom) { delete progData.geom; progData.geom = NULL; }
-			delete progData.name;
+			if (progData.vert) { delete[] progData.vert; progData.vert = NULL; }
+			if (progData.frag) { delete[] progData.frag; progData.frag = NULL; }
+			if (progData.geom) { delete[] progData.geom; progData.geom = NULL; }
+			delete[] progData.name;
 		}
 		else if (glslIndex.extract("`S`L", &glslData.name)) {
 			type = NULL;
 			ServiceLocator::getLoggingService().error("Unexpected line in glsl index file", glslData.name);
-			delete glslData.name;
+			delete[] glslData.name;
 		}
 		if (type && glslIndex.extract("\"`S\" `I:\"`S\"`?S`L", &glslData)) {
 			try {
@@ -570,10 +571,10 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 			catch (...) {
 				ServiceLocator::getLoggingService().badFileError(path + glslData.path);
 			}
-			delete glslData.name;
-			delete glslData.path;
+			delete[] glslData.name;
+			delete[] glslData.path;
 			if (glslData.extra) {
-				delete glslData.extra;
+				delete[] glslData.extra;
 				glslData.extra = NULL;
 			}
 		}
@@ -610,16 +611,16 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			}
 			if (valid && postIndex.extract("`L", NULL)) {
 				kernelLibrary.add(kernelData.name, kernelData.kernel);
-				delete kernelData.name;
-				// Can't delete valuee array because kernel owns it now
+				delete[] kernelData.name;
+				// Can't delete value array because kernel owns it now
 				continue;
 			}
 			else {
 				char* err;
 				postIndex.extract("`S`L", &err);
 				ServiceLocator::getLoggingService().error("Unexpected line in kernel definition", err);
-				delete err;
-				delete kernelData.name;
+				delete[] err;
+				delete[] kernelData.name;
 				delete[] kernelData.kernel.weights;
 			}
 		}
@@ -684,7 +685,7 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 					char* err;
 					if (postIndex.extract("`S]", &err)) {
 						ServiceLocator::getLoggingService().error("Extra data after compositing definition", err);
-						delete err;
+						delete[] err;
 						postIndex.putBack(']');
 						stageValid = false;
 					}
@@ -698,7 +699,7 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 					char* err;
 					postIndex.extract("`S`L", &err);
 					ServiceLocator::getLoggingService().error("Malformed filter name", err);
-					delete err;
+					delete[] err;
 					pipelineValid = false;
 					break;
 				}
@@ -748,10 +749,10 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 				for (unsigned int i = 0; i < kernels.size(); i++)
 					delete kernels[i];
 				kernels.clear();
-				delete stageData.name;
+				delete[] stageData.name;
 				stageData.scale = 1.0f;
 				if (stageData.kernel) {
-					delete stageData.kernel;
+					delete[] stageData.kernel;
 					stageData.kernel = NULL;
 				}
 				if (postIndex.extract(", ", NULL)) continue;
@@ -769,19 +770,19 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 				postIndex.extract("`?S`L", &err);
 				if (err) {
 					ServiceLocator::getLoggingService().error("Extra data found at end of pipeline", err);
-					delete err;
+					delete[] err;
 				}
 			}
 			else {
-				delete temp;
+				delete[] temp;
 			}
-			delete pipelineData.name;
+			delete[] pipelineData.name;
 		}
 		else if (postIndex.extract("`?S`L", &pipelineData.name)) {
 			type = NULL;
 			if (pipelineData.name) {
 				ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index file", pipelineData.name);
-				delete pipelineData.name;
+				delete[] pipelineData.name;
 			}
 		}
 		if (type && postIndex.extract("\"`S\" `I \"`S\"`L", &shaderData)) {
@@ -792,10 +793,10 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			catch (...) {
 				ServiceLocator::getLoggingService().badFileError(path + shaderData.path);
 			}
-			delete shaderData.name;
-			delete shaderData.path;
+			delete[] shaderData.name;
+			delete[] shaderData.path;
 			if (shaderData.extra) {
-				delete shaderData.extra;
+				delete[] shaderData.extra;
 				shaderData.extra = NULL;
 			}
 		}

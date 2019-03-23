@@ -28,6 +28,8 @@ GameObject::~GameObject() {
 		delete mState;
 	}
 	if (mAudioComponent) delete mAudioComponent;
+
+	if (mCameraComponent) delete mCameraComponent;
 }
 
 void GameObject::update(float dt) {
@@ -66,7 +68,7 @@ void GameObject::render(Camera* c) {
 	if (mDisplayComponent) {
 		mDisplayComponent->use();
 		mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
-		mDisplayComponent->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));
+		mDisplayComponent->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));	// If things are sorted by Program for rendering, then all the references to Camera here can be removed!
 		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(c->getPosition()));
 		if (mTexture) mTexture->activate();
 	}
@@ -89,5 +91,6 @@ GameObject* GameObject::copy() const {
 	if (mAudioComponent) result->mAudioComponent = mAudioComponent->copy(result->mPhysicsComponent);
 	result->mSounds = mSounds;
 	if (mState) result->setState(mState->getEntry(result));
+	if (mCameraComponent) result->mCameraComponent = mCameraComponent->copy();
 	return result;
 }

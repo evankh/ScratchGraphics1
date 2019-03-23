@@ -31,7 +31,7 @@ Camera* OrthoCamera::copy() const {
 }
 
 PerspCamera::~PerspCamera() {
-	if (mPhysicsComponent) delete mPhysicsComponent;
+	//if (mPhysicsComponent) delete mPhysicsComponent;
 }
 
 void PerspCamera::resize(unsigned int width, unsigned int height) {

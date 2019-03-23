@@ -14,7 +14,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 		else if (file.extract("Object \"`S\"", &objectName)) {
 			if (mSceneObjects.count(objectName)) {
 				ServiceLocator::getLoggingService().error("Attempted redefinition of object", objectName);
-				delete objectName;
+				delete[] objectName;
 				file.extract("`S`L", NULL);
 				continue;
 			}
@@ -42,11 +42,11 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						catch (std::out_of_range) {
 							geom = mSharedLibraries.geometries.get(geomName);
 						}
-						delete geomName;
+						delete[] geomName;
 					}
 					catch (std::out_of_range e) {
 						ServiceLocator::getLoggingService().error("Geometry not found", e.what());
-						delete geomName;
+						delete[] geomName;
 						valid = false;
 						file.extract("`?S`L", NULL);
 						break;
@@ -60,11 +60,11 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						catch (std::out_of_range) {
 							program = mSharedLibraries.programs.get(progName);
 						}
-						delete progName;
+						delete[] progName;
 					}
 					catch (std::out_of_range e) {
 						ServiceLocator::getLoggingService().error("Program not found", e.what());
-						delete progName;
+						delete[] progName;
 						valid = false;
 						file.extract("`?S`L", NULL);
 						break;
@@ -78,11 +78,11 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						catch (std::out_of_range) {
 							texture = mSharedLibraries.textures.get(texName);
 						}
-						delete texName;
+						delete[] texName;
 					}
 					catch (std::out_of_range e) {
 						ServiceLocator::getLoggingService().error("Texture not found", e.what());
-						delete texName;
+						delete[] texName;
 						valid = false;
 						file.extract("`?S`L", NULL);
 						break;
@@ -92,7 +92,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				else if (file.extract(" sounds:(", NULL)) {
 					while (file.extract("\"`S\"", &soundName)) {
 						sounds.push_back(soundName);
-						delete soundName;
+						delete[] soundName;
 						file.extract(",", NULL);	// No checking to make sure it's properly formatted
 					}
 					file.extract(")", NULL);
@@ -111,19 +111,19 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				else if (file.extract(" input:\"`S\"", &inputName));
 				else if (file.extract("`S:", &err)) {
 					ServiceLocator::getLoggingService().error("Unexpected keyword in line", err);
-					delete err;
+					delete[] err;
 					if (file.extract("`S ", &err)) {
 						ServiceLocator::getLoggingService().error("Skipping parameter", err);
-						delete err;
+						delete[] err;
 						file.putBack(" ");	// To continue with proper parsing
 					}
 				}
 				else if (file.extract("`?S`L", &err)) {
 					if (err) {
 						ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line (skipping line)", err);
-						delete err;
+						delete[] err;
 					}
-					file.putBack("\n");	// Not really sure how I should handle this with the new `L, but his works fine for now
+					file.putBack("\n");	// Not really sure how I should handle this with the new `L, but this works fine for now
 					valid = false;
 					break;
 				}
@@ -177,12 +177,12 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				mSceneObjects[objectName] = object;
 			}
 			// Cleanup
-			delete objectName;
+			delete[] objectName;
 		}
 		else if (file.extract("Camera \"`S\"", &objectName)) {
 			if (mSceneCameras.count(objectName)) {
 				ServiceLocator::getLoggingService().error("Attempted redefinition of camera", objectName);
-				delete objectName;
+				delete[] objectName;
 				file.extract("`S`L", NULL);
 				continue;
 			}
@@ -195,25 +195,40 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				else if (file.extract(" fov:`F", &fov));
 				else if (file.extract("`S:", &err)) {
 					ServiceLocator::getLoggingService().warning("Unexpected keyword in line", err);
-					delete err;
+					delete[] err;
 					if (file.extract("`S ", &err)) {
 						ServiceLocator::getLoggingService().warning("Skipping parameter", err);
-						delete err;
+						delete[] err;
 						file.putBack(" ");	// To continue with proper parsing
 					}
 				}
 				else if (file.extract("`?S`L", &err)) {
 					if (err) {
 						ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line", err);
-						delete err;
+						delete[] err;
 					}
 					file.putBack("\n");
 					break;
 				}
 			}
-			PerspCamera* camera = new PerspCamera(new PhysicsComponent({ pos.x,pos.y,pos.z }, { at.x,at.y,at.z }), 800, 600, fov);	// How do I get these values in here?
-			mSceneCameras[objectName] = camera;
-			delete objectName;
+			PhysicsComponent* phys = new PhysicsComponent({ pos.x,pos.y,pos.z }, { at.x,at.y,at.z });
+			PerspCamera* camera = new PerspCamera(phys, 800, 600, fov);	// How do I get these values in here?
+			GameObject* camera_object = new GameObject(NULL, NULL, phys, NULL);
+			camera_object->setCameraComponent(camera);
+			try {
+				State* state = State::getNewEntryState("camera", camera_object);
+				camera_object->setState(state);	// It just occured to me that State could probably do this
+			}
+			catch (std::out_of_range e) {
+				ServiceLocator::getLoggingService().error("Cannot find AI state", e.what());
+				delete camera_object;
+				delete camera;
+				// Does GameObject take care of its PhysicsComponent? Does Camera? Uh oh
+				delete[] objectName;
+				continue;
+			}
+			mSceneCameras[objectName] = camera_object;
+			delete[] objectName;
 		}
 		else if (file.extract("Music \"`S\"", &objectName)) {
 			if (mBackgroundMusic) {
@@ -230,12 +245,12 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			catch (std::out_of_range &e) {
 				ServiceLocator::getLoggingService().error("Background music not found", e.what());
 			}
-			delete objectName;
+			delete[] objectName;
 		}
 		else if (file.extract("`?S`L", &objectName)) {
 			if (objectName) {
 				ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
-				delete objectName;
+				delete[] objectName;
 			}
 		}
 	}
@@ -244,7 +259,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 	else
 		ServiceLocator::getLoggingService().error("No camera \"main\" defined in level", filepath);
 	if (mBackgroundMusic) {
-		mSceneAudio = new Source(mCurrentCamera->getPhysics(), true);
+		mSceneAudio = new Source(mCurrentCamera->getPhysicsComponent(), true);
 		mSceneAudio->update();
 		mSceneAudio->playSound(mBackgroundMusic);
 	}

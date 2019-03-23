@@ -44,7 +44,7 @@ private:
 	} mCommonLibraries;
 	// Working set of Level data
 	std::vector<GameObject*> mWorkingObjectList;
-	Camera* mWorkingActiveCamera;
+	GameObject* mWorkingActiveCamera;
 	// Actual game information
 	Window* mWindow;
 	Level* mCurrentLevel;

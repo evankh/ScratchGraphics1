@@ -20,6 +20,8 @@ private:
 	Program* mDisplayComponent;
 	Texture* mTexture;
 
+	Camera* mCameraComponent = NULL;	// This will be moved somewhere else (probably GraphicsComponent?) later but for now I just want it to work
+
 	PhysicsComponent* mPhysicsComponent;
 	Source* mAudioComponent;
 	SoundLibrary mSounds;
@@ -42,6 +44,9 @@ public:
 	void scale(glm::vec3 scale) { mPhysicsComponent->scale(scale); };
 	bool hasCollision() { return mHasCollision; };
 	GameObject* copy() const;
+
+	void setCameraComponent(Camera* cam) { mCameraComponent = cam; };
+	Camera* getCameraComponent() const { return mCameraComponent; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__

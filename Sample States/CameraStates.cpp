@@ -1,6 +1,7 @@
 #include "CameraStates.h"
 #include "../GameObject.h"
 #include "../MouseHandler.h"
+#include "../ServiceLocator.h"
 
 bool CameraState::sRegistered = State::setBaseState("camera", new CameraState(NULL));
 
@@ -50,13 +51,15 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 	int current_x = MouseHandler::getInstance().getMouseX();
 	int current_y = MouseHandler::getInstance().getMouseY();
 	if (mLeftDrag) {
-		dx = float(current_x) - mLeftDragStartPos[0];
-		dy = float(current_y) - mLeftDragStartPos[1];
+		dx = current_x - mLeftDragStartPos[0];
+		dy = current_y - mLeftDragStartPos[1];
 		// Something magic
+		ServiceLocator::getLoggingService().log("Currently leftdragging with dx = " + std::to_string(dx) + " and dy = " + std::to_string(dy));
 	}
 	if (mRightDrag) {
-		dx = float(current_x) - mRightDragStartPos[0];
-		dy = float(current_y) - mRightDragStartPos[1];
+		dx = current_x - mRightDragStartPos[0];
+		dy = current_y - mRightDragStartPos[1];
 		// Something magic
+		ServiceLocator::getLoggingService().log("Currently leftdragging with dx = " + std::to_string(dx) + " and dy = " + std::to_string(dy));
 	}
 }
