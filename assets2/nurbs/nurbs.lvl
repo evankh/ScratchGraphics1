@@ -1,2 +1,4 @@
-Camera "main" pos:(2.0,3.0,1.5) at:(0.0,0.0,0.0) fov:90.0
+Camera "main" pos:(2.0,3.0,2.0) at:(0.0,0.0,0.0) fov:90.0
+Object "control grid" geom:"small mesh" bounds:"AABB" prog:"control_grid" pos:(0.0,0.0,0.0) axis:(0.0,0.0,1.0) mom:30.0
 Object "NURBS" geom:"small mesh" bounds:"AABB" prog:"nurbs_phong" pos:(0.0,0.0,0.0) input:"mouseover" axis:(0.0,0.0,1.0) mom:30.0
+Object "NURBS grid" geom:"small mesh" bounds:"AABB" prog:"nurbs_grid" pos:(0.0,0.0,0.0) axis:(0.0,0.0,1.0) mom:30.0

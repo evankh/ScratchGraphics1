@@ -4,6 +4,8 @@ Vertex "raymarch+mvp" 130:"130/raymarch.vert"
 Tessellation Control "nurbs_control" 130:"130/nurbs.tesc"
 Tessellation Evaluation "nurbs_eval" 130:"130/nurbs.tese"
 
+Geometry "wireframe" 130:"130/wireframe.geom"
+
 Fragment "debug_position" 130:"130/debug_position.frag"
 Fragment "debug_normal" 130:"130/debug_normal.frag"
 Fragment "debug_texcoord" 130:"130/debug_texcoord.frag"
@@ -31,7 +33,9 @@ Program "texture" Vertex:"mvp" Fragment:"texture"
 Program "solid_color" Vertex:"mvp" Fragment:"solid"
 Program "mouse_selection" Vertex:"mvp" Fragment:"mouse_selection"
 
+Program "control_grid" Vertex:"mvp" Geometry:"wireframe" Fragment:"solid"
 Program "nurbs_phong" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"phong"
+Program "nurbs_grid" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Geometry:"wireframe" Fragment:"solid"
 
 Program "ray_sphere" Vertex:"raymarch+mvp" Fragment:"raymarch" Fragment:"ray_sphere"
 Program "ray_sierpinski" Vertex:"raymarch+mvp" Fragment:"raymarch" Fragment:"ray_sierpinski"
