@@ -3,15 +3,23 @@
 
 class Shader;
 
+struct ShaderNode {
+	Shader* shader;
+	ShaderNode* next;
+};
+
 class Program {
 	static Program* sScreenDraw;
 	static void generateScreenDrawProgram();
 private:
 	Program(const char* vs, const char* fs);
 	unsigned int mHandle;
-	Shader* mVS;
-	Shader* mGS;
-	Shader* mFS;
+	ShaderNode mVS;
+	ShaderNode mTCS;
+	ShaderNode mTES;
+	ShaderNode mGS;
+	ShaderNode mFS;
+	ShaderNode mCS;
 	int mSamplesIn, mSamplesOut;
 public:
 	Program();
@@ -25,7 +33,6 @@ public:
 	void detachAll();
 	void link();
 	void validate();
-	// I'm wondering if maybe subclassing for each type of uniforms is the right way to go? Should something else be sending uniforms?
 	void use() const;	// I'm not sure if it's correct to call this const, because while it's not changing the Program object, it is affecting the OpenGL state.
 	void sendUniform(const char* name, const float value) const;	// Same goes for the uniforms
 	void sendUniform(const char* name, const float* matrix) const;
