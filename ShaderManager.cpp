@@ -22,10 +22,10 @@ Shader* ShaderManager::get(std::string name) {
 		if (highestversion)
 			return mShaderLibrary[name][highestversion];
 		else
-			return NULL;	// All stored shader versions are too high
+			throw std::out_of_range(name);	// All stored shader versions are too high, probably not the most logical exception to be using
 	}
 	else
-		return NULL;
+		throw std::out_of_range(name);
 }
 
 void ShaderManager::clear() {

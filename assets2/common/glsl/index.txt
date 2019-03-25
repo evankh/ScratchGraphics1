@@ -1,20 +1,22 @@
 Vertex "mvp" 130:"130/mvp.vert" (mat4:"uM" mat4:"uVP" vec3:"uCamera")
 Vertex "raymarch+mvp" 130:"130/raymarch.vert" (mat4:"uM" mat4:"uVP vec3:"uCamera")
 
-Tessellation Control "nurbs" 130:"130/nurbs.tesc"
-Tessellation Evaluation "nurbs" 130:"130/nurbs.tese"
+Tessellation Control "nurbs_control" 130:"130/nurbs.tesc"
+Tessellation Evaluation "nurbs_eval" 130:"130/nurbs.tese"
 
 Fragment "debug_position" 130:"130/debug_position.frag"
 Fragment "debug_normal" 130:"130/debug_normal.frag"
 Fragment "debug_texcoord" 130:"130/debug_texcoord.frag"
 Fragment "texture" 130:"130/texture.frag" (sampler2D:"uTexture")
-Fragment "metal" 130:"130/phong.frag"
+Fragment "metal" 130:"130/metal.frag"
 Fragment "solid" 130:"130/solid.frag" (vec3:"uColor")
+Fragment "phong" 130:"130/phong.frag"
 Fragment "debug_bbs" 130:"130/debug_bbs.frag"
 Fragment "debug_axes" 130:"130/debug_axes.frag"
 Fragment "rimjob" 130:"130/rim.frag"
 Fragment "mouse_selection" 150:"130/mouse_selection.frag"
 
+Fragment "raymarch" 130:"130/raymarch.frag"
 Fragment "ray_sphere" 130:"Analytic/sphere.frag"
 Fragment "ray_sierpinski" 130:"Analytic/sierpinski.frag"
 
@@ -28,4 +30,7 @@ Program "texture" Vertex:"mvp" Fragment:"texture"
 Program "solid_color" Vertex:"mvp" Fragment:"solid"
 Program "mouse_selection" Vertex:"mvp" Fragment:"mouse_selection"
 
-Program "ray_sphere" Vertex:"raymarch+mvp" Fragment:"ray_sphere"
+Program "nurbs_phong" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"phong"
+
+Program "ray_sphere" Vertex:"raymarch+mvp" Fragment:"raymarch" Fragment:"ray_sphere"
+Program "ray_sierpinski" Vertex:"raymarch+mvp" Fragment:"raymarch" Fragment:"ray_sierpinski"

@@ -560,52 +560,80 @@ void Game::parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibr
 
 void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary) {
 	FileService glslIndex(path + mIndexFilename);
-	if (!glslIndex.good()) throw std::exception(glslIndex.getPath().data());
+	if (!glslIndex.good()) throw FileException(glslIndex.getPath().data());
 	struct { char* name; int version; char* path, *extra = NULL; } glslData;
-	struct { char* name = NULL, *vert = NULL, *frag = NULL, *geom = NULL, *extra = NULL; } progData;
+	struct { char* name = NULL, *vert = NULL, *tesc = NULL, *tese = NULL, *geom = NULL, *frag = NULL, *comp = NULL, *extra = NULL; } progData;
 	int type;
 	while (glslIndex.good()) {
 		if (glslIndex.extract("//`S`L", NULL)) type = NULL;
 		else if (glslIndex.extract("Vertex ", NULL)) type = GL_VERTEX_SHADER;
-		else if (glslIndex.extract("Fragment ", NULL)) type = GL_FRAGMENT_SHADER;
+		else if (glslIndex.extract("Tessellation Control ", NULL)) type = GL_TESS_CONTROL_SHADER;
+		else if (glslIndex.extract("Tessellation Evaluation ", NULL)) type = GL_TESS_EVALUATION_SHADER;
 		else if (glslIndex.extract("Geometry ", NULL)) type = GL_GEOMETRY_SHADER;
+		else if (glslIndex.extract("Fragment ", NULL)) type = GL_FRAGMENT_SHADER;
+		else if (glslIndex.extract("Compute ", NULL)) type = GL_COMPUTE_SHADER;
 		else if (glslIndex.extract("Program \"`S\"", &progData.name)) {
 			type = NULL;
+			std::vector<char*> vert, tesc, tese, geom, frag, comp;
 			while (!glslIndex.extract("`L", NULL)) {
-				if (glslIndex.extract(" Vertex:\"`S\"", &progData.vert));
-				else if (glslIndex.extract(" Fragment:\"`S\"", &progData.frag));
-				else if (glslIndex.extract(" Geometry:\"`S\"", &progData.geom));
-				else if (glslIndex.extract("`S`L", progData.extra)) {
+				if (glslIndex.extract(" Vertex:\"`S\"", &progData.vert)) { vert.push_back(progData.vert); }
+				else if (glslIndex.extract(" Geometry:\"`S\"", &progData.geom)) { geom.push_back(progData.geom); }
+				else if (glslIndex.extract(" Tessellation Control:\"`S\"", &progData.tesc)) { tesc.push_back(progData.tesc); }
+				else if (glslIndex.extract(" Tessellation Evaluation:\"`S\"", &progData.tese)) { tese.push_back(progData.tese); }
+				else if (glslIndex.extract(" Fragment:\"`S\"", &progData.frag)) { frag.push_back(progData.frag); }
+				else if (glslIndex.extract(" Compute:\"`S\"", &progData.comp)) { comp.push_back(progData.comp); }
+				else if (glslIndex.extract(" `S:\"`S\"", &progData.comp)) {
+					ServiceLocator::getLoggingService().error("Unknown shader type", progData.comp);
+					ServiceLocator::getLoggingService().error(" ... with name", progData.extra);
+					delete[] progData.comp;
+					delete[] progData.extra;
+					progData.comp = NULL;
+					progData.extra = NULL;
+				}
+				else if (glslIndex.extract("`S`L", &progData.extra)) {
 					ServiceLocator::getLoggingService().error("Unexpected data in program definition", progData.extra);
 					delete[] progData.extra;
 					progData.extra = NULL;
 					break;
 				}
 			}
-			Shader *vert = NULL, *frag = NULL, *geom = NULL;
-			bool badvert = false, badfrag = false, badgeom = false;
-			try { vert = shaderLibrary.get(progData.vert); }
-			catch (std::exception) { badvert = true; }
-			try { frag = shaderLibrary.get(progData.frag); }
-			catch (std::exception) { badfrag = true; }
-			if (progData.geom) try { geom = shaderLibrary.get(progData.geom); }
-			catch (std::exception) { badgeom = true; }
-			if (progData.vert && !badvert && progData.frag && !badfrag) {
-				if (progData.geom && !badgeom) progLibrary.add(progData.name, new Program(vert, geom, frag));
-				else progLibrary.add(progData.name, new Program(vert, frag));
+			Program* prog = new Program();
+			for (auto i : vert) {
+				try { prog->attach(shaderLibrary.get(i), GL_VERTEX_SHADER); }
+				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Vertex shader named but not present", i); }
 			}
-			else {
-				// Report whatever errors
-				if (progData.vert && badvert) ServiceLocator::getLoggingService().error("Vertex shader named but not present", progData.vert);
-				if (progData.frag && badfrag) ServiceLocator::getLoggingService().error("Fragment shader named but not present", progData.frag);
-				if (progData.geom && badgeom) ServiceLocator::getLoggingService().error("Geometry shader named but not present", progData.geom);
-				if (!progData.vert) ServiceLocator::getLoggingService().error("Vertex shader not named", progData.name);
-				if (!progData.frag) ServiceLocator::getLoggingService().error("Fragment shader not named", progData.frag);
+			for (auto i : tesc) {
+				try { prog->attach(shaderLibrary.get(i), GL_TESS_CONTROL_SHADER); }
+				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Tessellation Control shader named but not present", i); }
 			}
+			for (auto i : tese) {
+				try { prog->attach(shaderLibrary.get(i), GL_TESS_EVALUATION_SHADER); }
+				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Tessellation Evaluation shader named but not present", i); }
+			}
+			for (auto i : geom) {
+				try { prog->attach(shaderLibrary.get(i), GL_GEOMETRY_SHADER); }
+				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Geometry shader named but not present", i); }
+			}
+			for (auto i : frag) {
+				try { prog->attach(shaderLibrary.get(i), GL_FRAGMENT_SHADER); }
+				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Fragment shader named but not present", i); }
+			}
+			for (auto i : comp) {
+				try { prog->attach(shaderLibrary.get(i), GL_COMPUTE_SHADER); }
+				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Compute shader named but not present", i); }
+			}
+			if (prog->link() && prog->validate())
+				progLibrary.add(progData.name, prog);
+			else
+				// Might need to get more specific with the error information but it should work just fine
+				delete prog;
 			// Cleanup
-			if (progData.vert) { delete[] progData.vert; progData.vert = NULL; }
-			if (progData.frag) { delete[] progData.frag; progData.frag = NULL; }
-			if (progData.geom) { delete[] progData.geom; progData.geom = NULL; }
+			for (auto i : vert) delete[] i;
+			for (auto i : tesc) delete[] i;
+			for (auto i : tese) delete[] i;
+			for (auto i : geom) delete[] i;
+			for (auto i : frag) delete[] i;
+			for (auto i : comp) delete[] i;
 			delete[] progData.name;
 		}
 		else if (glslIndex.extract("`S`L", &glslData.name)) {
@@ -615,7 +643,14 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 		}
 		if (type && glslIndex.extract("\"`S\" `I:\"`S\"`?S`L", &glslData)) {
 			try {
-				shaderLibrary.add(glslData.name, glslData.version, new Shader(path + glslData.path, type));
+				Shader* temp = new Shader(path + glslData.path, type);
+				try {
+					shaderLibrary.get(glslData.name);
+					ServiceLocator::getLoggingService().error("Attempted redefintion of shader", glslData.name);
+				}
+				catch (std::out_of_range e) {
+					shaderLibrary.add(glslData.name, glslData.version, temp);
+				}
 				if (glslData.extra) ServiceLocator::getLoggingService().error("Extra data at end of shader definition", glslData.extra);
 			}
 			catch (...) {

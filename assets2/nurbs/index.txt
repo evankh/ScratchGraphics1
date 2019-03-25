@@ -1,0 +1,2 @@
+Level: "nurbs.lvl"
+obj: "obj/"

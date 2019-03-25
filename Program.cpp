@@ -144,7 +144,7 @@ void Program::detachAll() {
 	mCS.shader = NULL;
 }
 
-void Program::link() {
+bool Program::link() {
 	glLinkProgram(mHandle);
 	int status;
 	glGetProgramiv(mHandle, GL_LINK_STATUS, &status);
@@ -157,10 +157,12 @@ void Program::link() {
 			ServiceLocator::getLoggingService().error("Program linking failed", log);
 			delete[] log;
 		}
+		return false;
 	}
+	return true;
 }
 
-void Program::validate() {
+bool Program::validate() {
 	glValidateProgram(mHandle);
 	int status;
 	glGetProgramiv(mHandle, GL_VALIDATE_STATUS, &status);
@@ -173,7 +175,9 @@ void Program::validate() {
 			ServiceLocator::getLoggingService().error("Shader validation failed", log);
 			delete[] log;
 		}
+		return false;
 	}
+	return true;
 }
 
 void Program::use() const {

@@ -1,0 +1,2 @@
+Camera "main" pos:(5.0,5.0,3.0) at:(0.0,0.0,0.0) fov:90.0
+Object "NURBS" geom:"control mesh" bounds:"AABB" prog:"nurbs_phong" pos:(0.0,0.0,0.0) input:"mouseover"
