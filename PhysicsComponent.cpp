@@ -94,6 +94,7 @@ PhysicsComponent* PhysicsComponent::copy() const {
 	result->mAxis = mAxis;
 	result->mAngularVelocity = mAngularVelocity;
 	delete result->mBounds;
-	result->mBounds = mBounds->copy();
+	if (mBounds) result->mBounds = mBounds->copy();
+	else result->mBounds = NULL;
 	return result;
 }
