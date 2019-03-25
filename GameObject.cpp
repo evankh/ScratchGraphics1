@@ -75,7 +75,11 @@ void GameObject::render(Camera* c) {
 		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(c->getPosition()));
 		if (mTexture) mTexture->activate();
 	}
-	if (mGeometryComponent) mGeometryComponent->render();
+	if (mGeometryComponent)
+		if (mDisplayComponent && mDisplayComponent->isTesselated())
+			mGeometryComponent->render_patches();
+		else
+			mGeometryComponent->render();
 }
 
 void GameObject::render(Program* p) {

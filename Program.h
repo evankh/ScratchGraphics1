@@ -14,12 +14,12 @@ class Program {
 private:
 	Program(const char* vs, const char* fs);
 	unsigned int mHandle;
-	ShaderNode mVS;
-	ShaderNode mTCS;
-	ShaderNode mTES;
-	ShaderNode mGS;
-	ShaderNode mFS;
-	ShaderNode mCS;
+	ShaderNode* mVS = nullptr;
+	ShaderNode* mTCS = nullptr;
+	ShaderNode* mTES = nullptr;
+	ShaderNode* mGS = nullptr;
+	ShaderNode* mFS = nullptr;
+	ShaderNode* mCS = nullptr;
 	int mSamplesIn, mSamplesOut;
 public:
 	Program();
@@ -46,6 +46,7 @@ public:
 	static const Program* getScreenDraw() { return sScreenDraw; };
 	int getSamplesIn() const { return mSamplesIn; };
 	int getSamplesOut() const { return mSamplesOut; };
+	bool isTesselated() const { return mTCS != nullptr; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PROGRAM__

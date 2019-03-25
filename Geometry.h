@@ -58,6 +58,7 @@ public:
 	void transfer() const;
 	void cleanup();
 	void render() const;
+	void render_patches() const;
 	AABB* getBoundingBox() const { return mBoundingBox; };
 	static const Geometry* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const Geometry* getUnitQuad() { return &sUnitQuad; };

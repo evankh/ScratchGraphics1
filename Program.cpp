@@ -7,19 +7,19 @@ Program* Program::sScreenDraw = NULL;
 
 Program::Program() {
 	mHandle = glCreateProgram();
-	mVS = mTCS = mTES = mGS = mFS = mCS = { NULL, NULL };
+	mVS = mTCS = mTES = mGS = mFS = mCS = NULL;
 }
 
 Program::Program(const char* vs, const char* fs) {
 	mHandle = glCreateProgram();
-	mVS = { new Shader(vs, GL_VERTEX_SHADER), NULL };
-	mFS = { new Shader(fs, GL_FRAGMENT_SHADER), NULL };
-	if (mVS.shader) glAttachShader(mHandle, mVS.shader->mHandle);
-	if (mFS.shader) glAttachShader(mHandle, mFS.shader->mHandle);
+	mVS = new ShaderNode{new Shader(vs, GL_VERTEX_SHADER), NULL };
+	mFS = new ShaderNode{new Shader(fs, GL_FRAGMENT_SHADER), NULL };
+	if (mVS->shader) glAttachShader(mHandle, mVS->shader->mHandle);
+	if (mFS->shader) glAttachShader(mHandle, mFS->shader->mHandle);
 	link();
 	validate();
-	if (mVS.shader) glDetachShader(mHandle, mVS.shader->mHandle);
-	if (mFS.shader) glDetachShader(mHandle, mFS.shader->mHandle);
+	if (mVS->shader) glDetachShader(mHandle, mVS->shader->mHandle);
+	if (mFS->shader) glDetachShader(mHandle, mFS->shader->mHandle);
 }
 
 void Program::generateScreenDrawProgram() {
@@ -32,14 +32,14 @@ Program::Program(Shader* vs, Shader* fs) {
 	if (!sScreenDraw)
 		generateScreenDrawProgram();	// Since this is the constructor we're actually using, let's put it here
 	mHandle = glCreateProgram();
-	mVS = { vs, NULL };
-	mFS = { fs, NULL };
-	if (mVS.shader) glAttachShader(mHandle, mVS.shader->mHandle);
-	if (mFS.shader) glAttachShader(mHandle, mFS.shader->mHandle);
+	mVS = new ShaderNode{ vs, NULL };
+	mFS = new ShaderNode{ fs, NULL };
+	if (mFS->shader) glAttachShader(mHandle, mFS->shader->mHandle);
+	if (mVS->shader) glAttachShader(mHandle, mVS->shader->mHandle);
 	link();
 	validate();
-	if (mVS.shader) glDetachShader(mHandle, mVS.shader->mHandle);
-	if (mFS.shader) glDetachShader(mHandle, mFS.shader->mHandle);
+	if (mVS->shader) glDetachShader(mHandle, mVS->shader->mHandle);
+	if (mFS->shader) glDetachShader(mHandle, mFS->shader->mHandle);
 }
 
 Program::Program(Shader* vs, Shader* fs, int in, int out) :Program(vs, fs) {
@@ -49,65 +49,63 @@ Program::Program(Shader* vs, Shader* fs, int in, int out) :Program(vs, fs) {
 
 Program::Program(Shader* vs, Shader* gs, Shader* fs) {
 	mHandle = glCreateProgram();
-	mVS = { vs, NULL };
-	mGS = { gs, NULL };
-	mFS = { fs, NULL };
-	if (mVS.shader) glAttachShader(mHandle, mVS.shader->mHandle);
-	if (mGS.shader) glAttachShader(mHandle, mGS.shader->mHandle);
-	if (mFS.shader) glAttachShader(mHandle, mFS.shader->mHandle);
+	mVS = new ShaderNode{ vs, NULL };
+	mGS = new ShaderNode{ gs, NULL };
+	mFS = new ShaderNode{ fs, NULL };
+	if (mVS->shader) glAttachShader(mHandle, mVS->shader->mHandle);
+	if (mGS->shader) glAttachShader(mHandle, mGS->shader->mHandle);
+	if (mFS->shader) glAttachShader(mHandle, mFS->shader->mHandle);
 	link();
 	validate();
-	if (mVS.shader) glDetachShader(mHandle, mVS.shader->mHandle);
-	if (mGS.shader) glDetachShader(mHandle, mGS.shader->mHandle);
-	if (mFS.shader) glDetachShader(mHandle, mFS.shader->mHandle);
+	if (mVS->shader) glDetachShader(mHandle, mVS->shader->mHandle);
+	if (mGS->shader) glDetachShader(mHandle, mGS->shader->mHandle);
+	if (mFS->shader) glDetachShader(mHandle, mFS->shader->mHandle);
 }
 
 [[deprecated]]
 Program::Program(char* vsFilepath, char* fsFilepath) {
 	mHandle = glCreateProgram();
-	mVS = {new Shader(vsFilepath, GL_VERTEX_SHADER), NULL },
-	mFS = { new Shader(fsFilepath, GL_FRAGMENT_SHADER), NULL };
-	glAttachShader(mHandle, mVS.shader->mHandle);
-	glAttachShader(mHandle, mFS.shader->mHandle);
+	mVS = new ShaderNode{new Shader(vsFilepath, GL_VERTEX_SHADER), NULL },
+	mFS = new ShaderNode{new Shader(fsFilepath, GL_FRAGMENT_SHADER), NULL };
+	glAttachShader(mHandle, mVS->shader->mHandle);
+	glAttachShader(mHandle, mFS->shader->mHandle);
 	link();
 	validate();
-	glDetachShader(mHandle, mVS.shader->mHandle);
-	glDetachShader(mHandle, mFS.shader->mHandle);
+	glDetachShader(mHandle, mVS->shader->mHandle);
+	glDetachShader(mHandle, mFS->shader->mHandle);
 }
 
 Program::~Program() {
-	//delete mVS;
-	//delete mFS;
 	glDeleteProgram(mHandle);
 }
 
 void Program::attach(Shader* s, unsigned int type) {
 	if (type == GL_VERTEX_SHADER)
-		mVS = { s, new ShaderNode{mVS.shader, mVS.next} };	// Ironically, if I had dynamically allocated these like I usually would, the original code would have worked just fine
+		mVS = new ShaderNode{ s, mVS };
 	else if (type == GL_TESS_CONTROL_SHADER)
-		mTCS = { s, new ShaderNode{ mTCS.shader, mTCS.next } };
+		mTCS = new ShaderNode{ s, mTCS };
 	else if (type == GL_TESS_EVALUATION_SHADER)
-		mTES = { s, new ShaderNode{ mTES.shader, mTES.next } };
+		mTES = new ShaderNode{ s, mTES };
 	else if (type == GL_GEOMETRY_SHADER)
-		mGS = { s, new ShaderNode{ mGS.shader, mGS.next } };
+		mGS = new ShaderNode{ s, mGS };
 	else if (type == GL_FRAGMENT_SHADER)
-		mFS = { s, new ShaderNode{ mFS.shader, mFS.next } };
+		mFS = new ShaderNode{ s, mFS };
 	else if (type == GL_COMPUTE_SHADER)
-		mCS = { s, new ShaderNode{ mCS.shader, mCS.next } };
+		mCS = new ShaderNode{ s, mCS };
 	glAttachShader(mHandle, s->mHandle);
 	// When to detach?
 }
 
 void Program::attach(Shader* vs, Shader* fs) {
-	mVS = { vs, &mVS };
-	mFS = { fs, &mFS };
-	glAttachShader(mHandle, mVS.shader->mHandle);
-	glAttachShader(mHandle, mFS.shader->mHandle);
+	mVS = new ShaderNode{ vs, mVS };
+	mFS = new ShaderNode{ fs, mFS };
+	glAttachShader(mHandle, mVS->shader->mHandle);
+	glAttachShader(mHandle, mFS->shader->mHandle);
 }
 
 void Program::detachAll() {
-	for (ShaderNode* iter : { &mVS,&mTCS,&mTES,&mGS,&mFS,&mCS }) {
-		while (iter && iter->shader) {
+	for (ShaderNode* iter : { mVS,mTCS,mTES,mGS,mFS,mCS }) {
+		while (iter) {
 			glDetachShader(mHandle, iter->shader->mHandle);
 			iter = iter->next;
 		}
@@ -115,94 +113,92 @@ void Program::detachAll() {
 }
 
 void Program::removeAll() {
-	// Fuuuucckkk, all these nodes are going to leak too
-	while (mVS.next) {
-		glDetachShader(mHandle, mVS.shader->mHandle);
-		//mVS = *mVS.next;	// Not 100% sure why that doesn't work
-		mVS = { mVS.next->shader, mVS.next->next };
+	while (mVS) {
+		glDetachShader(mHandle, mVS->shader->mHandle);
+		auto temp = mVS;
+		mVS = mVS->next;
+		delete temp;
 	};
-	if (mVS.shader) glDetachShader(mHandle, mVS.shader->mHandle);
-	mVS.shader = NULL;
-	while (mTCS.next) {
-		glDetachShader(mHandle, mTCS.shader->mHandle);
-		mTCS = { mTCS.next->shader, mTCS.next->next };
+	while (mTCS) {
+		glDetachShader(mHandle, mTCS->shader->mHandle);
+		auto temp = mVS;
+		mVS = mVS->next;
+		delete temp;
 	};
-	if (mTCS.shader) glDetachShader(mHandle, mTCS.shader->mHandle);
-	mTCS.shader = NULL;
-	while (mTES.next) {
-		glDetachShader(mHandle, mTES.shader->mHandle);
-		mTES = { mTES.next->shader, mTES.next->next };
+	while (mTES) {
+		glDetachShader(mHandle, mTES->shader->mHandle);
+		auto temp = mVS;
+		mVS = mVS->next;
+		delete temp;
 	};
-	if (mTES.shader) glDetachShader(mHandle, mTES.shader->mHandle);
-	mTES.shader = NULL;
-	while (mGS.next) {
-		glDetachShader(mHandle, mGS.shader->mHandle);
-		mGS = { mGS.next->shader, mGS.next->next };
+	while (mGS) {
+		glDetachShader(mHandle, mGS->shader->mHandle);
+		auto temp = mVS;
+		mVS = mVS->next;
+		delete temp;
 	};
-	if (mGS.shader) glDetachShader(mHandle, mGS.shader->mHandle);
-	mGS.shader = NULL;
-	while (mFS.next) {
-		glDetachShader(mHandle, mFS.shader->mHandle);
-		mFS = { mFS.next->shader, mFS.next->next };
+	while (mFS) {
+		glDetachShader(mHandle, mFS->shader->mHandle);
+		auto temp = mVS;
+		mVS = mVS->next;
+		delete temp;
 	};
-	if (mFS.shader) glDetachShader(mHandle, mFS.shader->mHandle);
-	mFS.shader = NULL;
-	while (mCS.next) {
-		glDetachShader(mHandle, mCS.shader->mHandle);
-		mCS = { mCS.next->shader, mCS.next->next };
+	while (mCS) {
+		glDetachShader(mHandle, mCS->shader->mHandle);
+		auto temp = mVS;
+		mVS = mVS->next;
+		delete temp;
 	};
-	if (mCS.shader) glDetachShader(mHandle, mCS.shader->mHandle);
-	mCS.shader = NULL;
 }
 
 void Program::removeAll(unsigned int type) {
 	if (type == GL_VERTEX_SHADER) {
-		while (mVS.next) {
-			glDetachShader(mHandle, mVS.shader->mHandle);
-			mVS = { mVS.next->shader, mVS.next->next };
+		while (mVS) {
+			glDetachShader(mHandle, mVS->shader->mHandle);
+			auto temp = mVS;
+			mVS = mVS->next;
+			delete temp;
 		};
-		if (mVS.shader) glDetachShader(mHandle, mVS.shader->mHandle);
-		mVS.shader = NULL;
 	}
 	if (type == GL_TESS_CONTROL_SHADER) {
-		while (mTCS.next) {
-			glDetachShader(mHandle, mTCS.shader->mHandle);
-			mTCS = { mTCS.next->shader, mTCS.next->next };
+		while (mTCS) {
+			glDetachShader(mHandle, mTCS->shader->mHandle);
+			auto temp = mVS;
+			mVS = mVS->next;
+			delete temp;
 		};
-		if (mTCS.shader) glDetachShader(mHandle, mTCS.shader->mHandle);
-		mTCS.shader = NULL;
 	}
 	if (type == GL_TESS_EVALUATION_SHADER) {
-		while (mTES.next) {
-			glDetachShader(mHandle, mTES.shader->mHandle);
-			mTES = { mTES.next->shader, mTES.next->next };
+		while (mTES) {
+			glDetachShader(mHandle, mTES->shader->mHandle);
+			auto temp = mVS;
+			mVS = mVS->next;
+			delete temp;
 		};
-		if (mTES.shader) glDetachShader(mHandle, mTES.shader->mHandle);
-		mTES.shader = NULL;
 	}
 	if (type == GL_GEOMETRY_SHADER) {
-		while (mGS.next) {
-			glDetachShader(mHandle, mGS.shader->mHandle);
-			mGS = { mGS.next->shader, mGS.next->next };
+		while (mGS) {
+			glDetachShader(mHandle, mGS->shader->mHandle);
+			auto temp = mVS;
+			mVS = mVS->next;
+			delete temp;
 		};
-		if (mGS.shader) glDetachShader(mHandle, mGS.shader->mHandle);
-		mGS.shader = NULL;
 	}
 	if (type == GL_FRAGMENT_SHADER) {
-		while (mFS.next) {
-			glDetachShader(mHandle, mFS.shader->mHandle);
-			mFS = { mFS.next->shader, mFS.next->next };
+		while (mFS) {
+			glDetachShader(mHandle, mFS->shader->mHandle);
+			auto temp = mVS;
+			mVS = mVS->next;
+			delete temp;
 		};
-		if (mFS.shader) glDetachShader(mHandle, mFS.shader->mHandle);
-		mFS.shader = NULL;
 	}
 	if (type == GL_COMPUTE_SHADER) {
-		while (mCS.next) {
-			glDetachShader(mHandle, mCS.shader->mHandle);
-			mCS = { mCS.next->shader, mCS.next->next };
+		while (mCS) {
+			glDetachShader(mHandle, mCS->shader->mHandle);
+			auto temp = mVS;
+			mVS = mVS->next;
+			delete temp;
 		};
-		if (mCS.shader) glDetachShader(mHandle, mCS.shader->mHandle);
-		mCS.shader = NULL;
 	}
 	// default: throw std::invalid_argument(type);
 }

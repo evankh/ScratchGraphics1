@@ -213,6 +213,17 @@ void Geometry::render() const {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void Geometry::render_patches() const {
+	if (!mHandles.good)
+		transfer();
+	glBindVertexArray(mHandles.vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mHandles.indexHandle);
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
+	glDrawElements(GL_PATCHES, 3 * mNumTris, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
 #ifndef PI
 #define PI 3.141592f
 #endif//PI

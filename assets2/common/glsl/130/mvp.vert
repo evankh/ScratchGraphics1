@@ -11,7 +11,7 @@ out vec3 pNormal;
 out vec2 pTexCoord;
 out vec3 pView;
 
-uniform mat4 uM;
+uniform mat4 uM = mat4(1.0);
 uniform mat4 uVP;
 uniform vec3 uCamera;
 
@@ -20,6 +20,6 @@ void main() {
 	pColor = iColor;
 	pNormal = (uM * vec4(iNormal, 0.0)).xyz;
 	pTexCoord = iTexCoord;
-	pView = uCamera.xyz - pPosition.xyz;
+	pView = uCamera - pPosition.xyz;
 	gl_Position = uVP * pPosition;
 }
