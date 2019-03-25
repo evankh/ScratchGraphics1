@@ -31,7 +31,8 @@ public:
 	void attach(Shader* shader, unsigned int type);
 	void attach(Shader* vs, Shader* fs);
 	void detachAll();
-	void detachAll(unsigned int type);
+	void removeAll();
+	void removeAll(unsigned int type);
 	bool link(bool allow_output);
 	bool link() { return link(true); };
 	bool validate(bool allow_output);

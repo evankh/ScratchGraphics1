@@ -622,24 +622,29 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 				try { prog->attach(shaderLibrary.get(i), GL_COMPUTE_SHADER); }
 				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Compute shader named but not present", i); }
 			}
-			if (prog->link() && prog->validate())
+			if (prog->link() && prog->validate()) {
 				progLibrary.add(progData.name, prog);
+				prog->detachAll();
+			}
 			else {
-				prog->detachAll(GL_COMPUTE_SHADER);
+				prog->removeAll(GL_COMPUTE_SHADER);
 				if (prog->link(false) && prog->validate(false)) {
+					prog->detachAll();
 					ServiceLocator::getLoggingService().log(std::string("Recovered by removing compute shaders. ") + progData.name + " may not function as expected.");
 					progLibrary.add(progData.name, prog);
 				}
 				else {
-					prog->detachAll(GL_TESS_CONTROL_SHADER);
-					prog->detachAll(GL_TESS_EVALUATION_SHADER);
+					prog->removeAll(GL_TESS_CONTROL_SHADER);
+					prog->removeAll(GL_TESS_EVALUATION_SHADER);
 					if (prog->link(false) && prog->validate(false)) {
+						prog->detachAll();
 						ServiceLocator::getLoggingService().log(std::string("Recovered by removing tesselation shaders. ") + progData.name + " may not function as expected.");
 						progLibrary.add(progData.name, prog);
 					}
 					else {
-						prog->detachAll(GL_GEOMETRY_SHADER);
+						prog->removeAll(GL_GEOMETRY_SHADER);
 						if (prog->link(false) && prog->validate(false)) {
+							prog->detachAll();
 							ServiceLocator::getLoggingService().log(std::string("Recovered by removing geometry shaders. ") + progData.name + " may not function as expected.");
 							progLibrary.add(progData.name, prog);
 						}

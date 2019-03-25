@@ -85,15 +85,15 @@ void Program::attach(Shader* s, unsigned int type) {
 	if (type == GL_VERTEX_SHADER)
 		mVS = { s, new ShaderNode{mVS.shader, mVS.next} };	// Ironically, if I had dynamically allocated these like I usually would, the original code would have worked just fine
 	else if (type == GL_TESS_CONTROL_SHADER)
-		mTCS = { s, new ShaderNode{ mVS.shader, mVS.next } };
+		mTCS = { s, new ShaderNode{ mTCS.shader, mTCS.next } };
 	else if (type == GL_TESS_EVALUATION_SHADER)
-		mTES = { s, new ShaderNode{ mVS.shader, mVS.next } };
+		mTES = { s, new ShaderNode{ mTES.shader, mTES.next } };
 	else if (type == GL_GEOMETRY_SHADER)
-		mGS = { s, new ShaderNode{ mVS.shader, mVS.next } };
+		mGS = { s, new ShaderNode{ mGS.shader, mGS.next } };
 	else if (type == GL_FRAGMENT_SHADER)
-		mFS = { s, new ShaderNode{ mVS.shader, mVS.next } };
+		mFS = { s, new ShaderNode{ mFS.shader, mFS.next } };
 	else if (type == GL_COMPUTE_SHADER)
-		mCS = { s, new ShaderNode{ mVS.shader, mVS.next } };
+		mCS = { s, new ShaderNode{ mCS.shader, mCS.next } };
 	glAttachShader(mHandle, s->mHandle);
 	// When to detach?
 }
@@ -106,6 +106,16 @@ void Program::attach(Shader* vs, Shader* fs) {
 }
 
 void Program::detachAll() {
+	for (ShaderNode* iter : { &mVS,&mTCS,&mTES,&mGS,&mFS,&mCS }) {
+		while (iter && iter->shader) {
+			glDetachShader(mHandle, iter->shader->mHandle);
+			iter = iter->next;
+		}
+	}
+}
+
+void Program::removeAll() {
+	// Fuuuucckkk, all these nodes are going to leak too
 	while (mVS.next) {
 		glDetachShader(mHandle, mVS.shader->mHandle);
 		//mVS = *mVS.next;	// Not 100% sure why that doesn't work
@@ -145,7 +155,7 @@ void Program::detachAll() {
 	mCS.shader = NULL;
 }
 
-void Program::detachAll(unsigned int type) {
+void Program::removeAll(unsigned int type) {
 	if (type == GL_VERTEX_SHADER) {
 		while (mVS.next) {
 			glDetachShader(mHandle, mVS.shader->mHandle);
