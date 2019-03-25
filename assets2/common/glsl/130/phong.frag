@@ -17,5 +17,6 @@ void main() {
 	float angle = max(0.0, dot(reflection, view));
 	float specular = pow(angle, 16.0);
 	oFragColor.rgb = vec3(diffuse + specular + 0.025);
+	oFragColor.rgb = pNormal;
 	oFragColor.a = 1.0;
 }

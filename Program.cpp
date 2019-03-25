@@ -83,17 +83,17 @@ Program::~Program() {
 
 void Program::attach(Shader* s, unsigned int type) {
 	if (type == GL_VERTEX_SHADER)
-		mVS = { s, &mVS };
+		mVS = { s, new ShaderNode{mVS.shader, mVS.next} };	// Ironically, if I had dynamically allocated these like I usually would, the original code would have worked just fine
 	else if (type == GL_TESS_CONTROL_SHADER)
-		mTCS = { s, &mTCS };
+		mTCS = { s, new ShaderNode{ mVS.shader, mVS.next } };
 	else if (type == GL_TESS_EVALUATION_SHADER)
-		mTES = { s, &mTES };
+		mTES = { s, new ShaderNode{ mVS.shader, mVS.next } };
 	else if (type == GL_GEOMETRY_SHADER)
-		mGS = { s, &mGS };
+		mGS = { s, new ShaderNode{ mVS.shader, mVS.next } };
 	else if (type == GL_FRAGMENT_SHADER)
-		mFS = { s, &mFS };
+		mFS = { s, new ShaderNode{ mVS.shader, mVS.next } };
 	else if (type == GL_COMPUTE_SHADER)
-		mCS = { s, &mCS };
+		mCS = { s, new ShaderNode{ mVS.shader, mVS.next } };
 	glAttachShader(mHandle, s->mHandle);
 	// When to detach?
 }
@@ -108,50 +108,103 @@ void Program::attach(Shader* vs, Shader* fs) {
 void Program::detachAll() {
 	while (mVS.next) {
 		glDetachShader(mHandle, mVS.shader->mHandle);
-		mVS = *mVS.next;
+		//mVS = *mVS.next;	// Not 100% sure why that doesn't work
+		mVS = { mVS.next->shader, mVS.next->next };
 	};
-	glDetachShader(mHandle, mVS.shader->mHandle);
+	if (mVS.shader) glDetachShader(mHandle, mVS.shader->mHandle);
 	mVS.shader = NULL;
 	while (mTCS.next) {
 		glDetachShader(mHandle, mTCS.shader->mHandle);
-		mTCS = *mTCS.next;
+		mTCS = { mTCS.next->shader, mTCS.next->next };
 	};
-	glDetachShader(mHandle, mTCS.shader->mHandle);
+	if (mTCS.shader) glDetachShader(mHandle, mTCS.shader->mHandle);
 	mTCS.shader = NULL;
 	while (mTES.next) {
 		glDetachShader(mHandle, mTES.shader->mHandle);
-		mTES = *mTES.next;
+		mTES = { mTES.next->shader, mTES.next->next };
 	};
-	glDetachShader(mHandle, mTES.shader->mHandle);
+	if (mTES.shader) glDetachShader(mHandle, mTES.shader->mHandle);
 	mTES.shader = NULL;
 	while (mGS.next) {
 		glDetachShader(mHandle, mGS.shader->mHandle);
-		mGS = *mGS.next;
+		mGS = { mGS.next->shader, mGS.next->next };
 	};
-	glDetachShader(mHandle, mGS.shader->mHandle);
+	if (mGS.shader) glDetachShader(mHandle, mGS.shader->mHandle);
 	mGS.shader = NULL;
 	while (mFS.next) {
 		glDetachShader(mHandle, mFS.shader->mHandle);
-		mFS = *mFS.next;
+		mFS = { mFS.next->shader, mFS.next->next };
 	};
-	glDetachShader(mHandle, mFS.shader->mHandle);
+	if (mFS.shader) glDetachShader(mHandle, mFS.shader->mHandle);
 	mFS.shader = NULL;
 	while (mCS.next) {
 		glDetachShader(mHandle, mCS.shader->mHandle);
-		mCS = *mCS.next;
+		mCS = { mCS.next->shader, mCS.next->next };
 	};
-	glDetachShader(mHandle, mCS.shader->mHandle);
+	if (mCS.shader) glDetachShader(mHandle, mCS.shader->mHandle);
 	mCS.shader = NULL;
 }
 
-bool Program::link() {
+void Program::detachAll(unsigned int type) {
+	if (type == GL_VERTEX_SHADER) {
+		while (mVS.next) {
+			glDetachShader(mHandle, mVS.shader->mHandle);
+			mVS = { mVS.next->shader, mVS.next->next };
+		};
+		if (mVS.shader) glDetachShader(mHandle, mVS.shader->mHandle);
+		mVS.shader = NULL;
+	}
+	if (type == GL_TESS_CONTROL_SHADER) {
+		while (mTCS.next) {
+			glDetachShader(mHandle, mTCS.shader->mHandle);
+			mTCS = { mTCS.next->shader, mTCS.next->next };
+		};
+		if (mTCS.shader) glDetachShader(mHandle, mTCS.shader->mHandle);
+		mTCS.shader = NULL;
+	}
+	if (type == GL_TESS_EVALUATION_SHADER) {
+		while (mTES.next) {
+			glDetachShader(mHandle, mTES.shader->mHandle);
+			mTES = { mTES.next->shader, mTES.next->next };
+		};
+		if (mTES.shader) glDetachShader(mHandle, mTES.shader->mHandle);
+		mTES.shader = NULL;
+	}
+	if (type == GL_GEOMETRY_SHADER) {
+		while (mGS.next) {
+			glDetachShader(mHandle, mGS.shader->mHandle);
+			mGS = { mGS.next->shader, mGS.next->next };
+		};
+		if (mGS.shader) glDetachShader(mHandle, mGS.shader->mHandle);
+		mGS.shader = NULL;
+	}
+	if (type == GL_FRAGMENT_SHADER) {
+		while (mFS.next) {
+			glDetachShader(mHandle, mFS.shader->mHandle);
+			mFS = { mFS.next->shader, mFS.next->next };
+		};
+		if (mFS.shader) glDetachShader(mHandle, mFS.shader->mHandle);
+		mFS.shader = NULL;
+	}
+	if (type == GL_COMPUTE_SHADER) {
+		while (mCS.next) {
+			glDetachShader(mHandle, mCS.shader->mHandle);
+			mCS = { mCS.next->shader, mCS.next->next };
+		};
+		if (mCS.shader) glDetachShader(mHandle, mCS.shader->mHandle);
+		mCS.shader = NULL;
+	}
+	// default: throw std::invalid_argument(type);
+}
+
+bool Program::link(bool allow_output) {
 	glLinkProgram(mHandle);
 	int status;
 	glGetProgramiv(mHandle, GL_LINK_STATUS, &status);
 	if (!status) {
 		int length;
 		glGetProgramiv(mHandle, GL_INFO_LOG_LENGTH, &length);
-		if (length) {
+		if (length && allow_output) {
 			char* log = new char[length];
 			glGetProgramInfoLog(mHandle, length, &length, log);
 			ServiceLocator::getLoggingService().error("Program linking failed", log);
@@ -162,14 +215,14 @@ bool Program::link() {
 	return true;
 }
 
-bool Program::validate() {
+bool Program::validate(bool allow_output) {
 	glValidateProgram(mHandle);
 	int status;
 	glGetProgramiv(mHandle, GL_VALIDATE_STATUS, &status);
 	if (!status) {
 		int length;
 		glGetProgramiv(mHandle, GL_INFO_LOG_LENGTH, &length);
-		if (length) {
+		if (length && allow_output) {
 			char* log = new char[length];
 			glGetProgramInfoLog(mHandle, length, &length, log);
 			ServiceLocator::getLoggingService().error("Shader validation failed", log);
