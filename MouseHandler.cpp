@@ -21,9 +21,24 @@ void MouseHandler::registerReceiver(MouseButton button, Receiver* receiver) {
 }
 
 void MouseHandler::registerMouseoverReceiver(Receiver* receiver) {
-	receiver->setIndex(mMouseoverReceivers.size());	// May not necessarily agree well with removing them
-	if (receiver)
+	if (receiver) {
+		receiver->setIndex(mMouseoverReceivers.size());	// May not necessarily agree well with removing them
 		mMouseoverReceivers.push_back(receiver);
+	}
+}
+
+void MouseHandler::unregisterReceiver(Receiver* receiver) {
+	Handler::unregisterReceiver(receiver);
+	// Remove from mMouseoverReceivers too
+	int i = 0;
+	for (; i < mMouseoverReceivers.size(); i++)
+		if (mMouseoverReceivers[i] == receiver) break;
+	if (i == mMouseoverReceivers.size()) return;	// Wasn't in the list
+	for (; i < mMouseoverReceivers.size() - 1; i++) {
+		mMouseoverReceivers[i] = mMouseoverReceivers[i + 1];
+		mMouseoverReceivers[i]->setIndex(i);
+	}
+	mMouseoverReceivers.pop_back();
 }
 
 void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int mouse_y) {
@@ -97,7 +112,7 @@ void MouseHandler::init(unsigned int width, unsigned int height) {
 	int error = glGetError();
 	glGenTextures(3, mTextureHandles);
 	GLenum attachments[]{ GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_DEPTH_ATTACHMENT };
-	GLint sizes[]{ GL_R32UI,GL_RGBA32F, GL_DEPTH_COMPONENT };
+	GLint sizes[]{ GL_R32UI, GL_RGBA32F, GL_DEPTH_COMPONENT };
 	GLint formats[]{ GL_RED_INTEGER, GL_RGBA, GL_DEPTH_COMPONENT };
 	GLenum types[]{ GL_UNSIGNED_INT, GL_FLOAT, GL_FLOAT };
 	for (int i = 0; i < 3; i++) {
@@ -131,7 +146,6 @@ void MouseHandler::init(unsigned int width, unsigned int height) {
 		}
 		throw (std::runtime_error("Mouse framebuffer is incomplete"));
 	}
-	glViewport(0, 0, width, height);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -144,15 +158,25 @@ void MouseHandler::cleanup() {
 	mTextureHandles[2] = 0;
 }
 
-void MouseHandler::enableDrawing() {
+void MouseHandler::enableDrawing() const {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebufferHandle);
 	int error = glGetError();
 	unsigned int clearColor[4]{ 0,0,0,0 };
+	glViewport(0, 0, mWindowSize[0], mWindowSize[1]);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	glClearBufferuiv(GL_COLOR, 0, clearColor);
 	glDrawBuffer(GL_COLOR_ATTACHMENT1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	// Viewport has probably been overridden with something else at this point, but we'll cross that bridge when we come to it
 	mReadyToRead = true;
+}
+
+void MouseHandler::draw() const {
+	/*for (int i = 0; i < 3; i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, mTextureHandles[i]);
+	}*/
+	//glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mTextureHandles[1]);
+	//glActiveTexture(GL_TEXTURE0);
 }

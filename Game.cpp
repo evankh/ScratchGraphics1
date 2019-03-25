@@ -21,7 +21,7 @@ Game::Game() {
 	// ?
 	// I guess this would be the spot for the initialization of everything: Loading assets, starting services, initializing rendering, etc.
 //	mWindow = new Window(800, 600, "Game owns this window");
-	KeyboardHandler::getInstance().registerReceiver("rRbp", this);
+	KeyboardHandler::getInstance().registerReceiver("rRbp+", this);
 	KeyboardHandler::getInstance().registerReceiver(27, this);
 }
 
@@ -314,13 +314,22 @@ void Game::render(float dt) {
 	}
 	// Draw Mouse textures to prepare for next frame
 	MouseHandler::getInstance().enableDrawing();
+	//mWindow->enableDrawing();
 	auto program = mCommonLibraries.standard.programs.get("mouse_selection");
 	program->use();
 	program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
+	program->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getPosition()));
 	for (auto object : mWorkingObjectList) {
 		program->sendUniform("uObjectID", object->getIndex());
-		object->render(mWorkingActiveCamera->getCameraComponent());
+		object->render(program);
 	}
+	// DEBUG
+	/*mWindow->enableDrawing();
+	program = mCommonLibraries.post.filters.get("select");
+	program->use();
+	program->sendUniform("uSelector", mDebugStageSelection);
+	MouseHandler::getInstance().draw();
+	Geometry::getScreenQuad()->render();*/
 }
 
 void Game::resize(unsigned int width, unsigned int height) {
@@ -384,6 +393,10 @@ void Game::handle(Event event) {
 				ServiceLocator::getLoggingService().log("======== POSTPROCESSING: none ========");
 				mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("none");
 			}
+			break;
+		case '+':
+			mDebugStageSelection++;
+			mDebugStageSelection %= 3;
 			break;
 		case 27:
 			// Pause / unpause

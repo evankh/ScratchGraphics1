@@ -35,6 +35,7 @@ public:
 	~GameObject();
 	void update(float dt);
 	void render(Camera* c);
+	void render(Program* p);
 	void debugDraw();
 	virtual void handle(const Event e);
 	void setState(State* state);	// Probably should be private or something, could completely change the type of the object if given the wrong type of State

@@ -34,6 +34,7 @@ GameObject::~GameObject() {
 
 void GameObject::update(float dt) {
 	mHasCollision = false;
+	mHasMouseOver = false;
 	while (!mEventQueue.isEmpty()) {
 		Event e = mEventQueue.pop();
 		Sound* s = NULL;
@@ -52,6 +53,8 @@ void GameObject::update(float dt) {
 		}
 		if (e.mType == EventType::COLLISION)
 			mHasCollision = true;
+		if (e.mType == EventType::MOUSEOVER)
+			mHasMouseOver = true;
 	}
 	if (mState) mState->update(mPhysicsComponent, dt);
 	if (mAudioComponent) mAudioComponent->update();
@@ -72,6 +75,11 @@ void GameObject::render(Camera* c) {
 		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(c->getPosition()));
 		if (mTexture) mTexture->activate();
 	}
+	if (mGeometryComponent) mGeometryComponent->render();
+}
+
+void GameObject::render(Program* p) {
+	p->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 	if (mGeometryComponent) mGeometryComponent->render();
 }
 

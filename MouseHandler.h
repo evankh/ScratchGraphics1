@@ -26,7 +26,7 @@ private:
 	unsigned int mFramebufferHandle = 0;
 	unsigned int mTextureHandles[3]{ 0,0,0 };	// Index, worldpos, depth
 	unsigned int mWindowSize[2];
-	bool mReadyToRead = false;
+	mutable bool mReadyToRead = false;
 	void handleButton(MouseButton button, int edge, int mouse_x, int mouse_y);
 	void handleMove(int mouse_x, int mouse_y);
 	virtual int getIndexFrom(Event event) { return event.mData.mouse.button; };
@@ -43,9 +43,11 @@ public:
 	void registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Receiver* receiver);
 	void registerReceiver(MouseButton button, Receiver* receiver);
 	void registerMouseoverReceiver(Receiver* receiver);
+	void unregisterReceiver(Receiver* receiver) final;
 	virtual void step();
 	void dispatchAll() final;
-	void enableDrawing();
+	void enableDrawing() const;
+	void draw() const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_MOUSE_HANDLER__

@@ -14,7 +14,7 @@ protected:
 public:
 	virtual void step() = 0;
 	virtual void dispatchAll();
-	void unregisterReceiver(Receiver* receiver);
+	virtual void unregisterReceiver(Receiver* receiver);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_HANDLER__

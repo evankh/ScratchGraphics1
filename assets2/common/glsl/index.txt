@@ -1,6 +1,9 @@
 Vertex "mvp" 130:"130/mvp.vert" (mat4:"uM" mat4:"uVP" vec3:"uCamera")
 Vertex "raymarch+mvp" 130:"130/raymarch.vert" (mat4:"uM" mat4:"uVP vec3:"uCamera")
 
+Tessellation Control "nurbs" 130:"130/nurbs.tesc"
+Tessellation Evaluation "nurbs" 130:"130/nurbs.tese"
+
 Fragment "debug_position" 130:"130/debug_position.frag"
 Fragment "debug_normal" 130:"130/debug_normal.frag"
 Fragment "debug_texcoord" 130:"130/debug_texcoord.frag"

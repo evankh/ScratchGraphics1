@@ -70,6 +70,8 @@ private:
 	void parseSoundIndex(std::string path, SoundLibrary &soundLibrary);
 	void parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary);
 	void parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibrary);
+
+	int mDebugStageSelection = 0;
 public:
 	static Game& getInstance();
 	void init();

@@ -41,7 +41,7 @@ void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, i
 	mProcessingStages.push_back({ target, 1, program, numSamplersIn, numSamplersOut, numKernels, kernels, Kernel{0,NULL}, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale, numSamplersOut) });
 	program->use();
 	for (int i = 0; i < numSamplersIn; i++)
-		program->sendUniform((std::string("uTexture") + std::to_string(i)).data(), i);
+		program->sendUniform((std::string("uTexture") + std::to_string(i)).data(), i);	// Does that even work? I don't think it's supposed to
 	if (isCompositingInput) mCompositingInputs.push_back(mProcessingStages.back().target);
 	mOutputFB = mProcessingStages.back().target;
 }
