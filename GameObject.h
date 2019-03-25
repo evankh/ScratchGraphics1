@@ -27,7 +27,9 @@ private:
 	SoundLibrary mSounds;
 	State* mState;
 	EventQueue mEventQueue;
+
 	bool mHasCollision = false;
+	bool mHasMouseOver = false;
 public:
 	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture = NULL);
 	~GameObject();
@@ -42,7 +44,8 @@ public:
 	void translate(glm::vec3 dxyz) { mPhysicsComponent->translate(dxyz); };
 	void rotate(glm::vec3 axis, float degrees) { mPhysicsComponent->rotate(axis, degrees); };
 	void scale(glm::vec3 scale) { mPhysicsComponent->scale(scale); };
-	bool hasCollision() { return mHasCollision; };
+	bool hasCollision() const { return mHasCollision; };
+	bool hasMouseOver() const { return mHasMouseOver; };
 	GameObject* copy() const;
 
 	void setCameraComponent(Camera* cam) { mCameraComponent = cam; };

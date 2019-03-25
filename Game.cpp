@@ -28,6 +28,8 @@ Game::Game() {
 void Game::init() {
 	mWindow = new Window(800, 600, "Game owns this window");
 	// Set up the MouseHandler textures, probably
+	// Really probably ought to move GLEW initialization (and other inits) in here, so I know where they're being initialized
+	// And in what order instead of aving them spread across several different files
 }
 
 void Game::load() {
@@ -246,6 +248,8 @@ void Game::render(float dt) {
 	//    - run a second post-processing step
 	//    - render all menu items
 
+	float debug_true[]{ 0.0f,1.0f,0.0f,0.5f }, debug_false[]{ 0.0f,0.0f,1.0f,0.5f };
+
 	// Set the active framebuffer to the appropriate target
 	if (mCurrentPostProcessing)
 		mCurrentPostProcessing->enableDrawing();	// Draw on the PPFBO, if there is one
@@ -255,21 +259,9 @@ void Game::render(float dt) {
 		for (auto object : mWorkingObjectList)
 			object->render(mWorkingActiveCamera->getCameraComponent());	// Draw each object in the scene
 
-		float debug_collision[]{ 0.0f,1.0f,0.0f,0.5f }, debug_nocollision[]{ 0.0f,0.0f,1.0f,0.5f };
-		if (mDebugMode) {
-			auto program = mCommonLibraries.standard.programs.get("debug_bbs");
-			program->use();
-			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
-			for (auto object : mWorkingObjectList) {
-				if (object->hasCollision())
-					program->sendUniform("uDebugColor", 4, 1, debug_collision);
-				else
-					program->sendUniform("uDebugColor", 4, 1, debug_nocollision);
-				program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));	// AABB's and spheres, at least, will be tracking their world coordinates
-				object->debugDraw();
-			}
-
-			program = mCommonLibraries.standard.programs.get("debug_axes");
+		if (mDebugMode != DEBUG_NONE) {
+			// Draw object axes
+			auto program = mCommonLibraries.standard.programs.get("debug_axes");
 			program->use();
 			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
 			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
@@ -277,6 +269,32 @@ void Game::render(float dt) {
 			for (auto object : mWorkingObjectList) {
 				program->sendUniform("uM", glm::value_ptr(object->getPhysicsComponent()->getModelMatrix()));
 				Geometry::drawAxes();
+			}
+			// Draw a debug value with solid colors
+			program = mCommonLibraries.standard.programs.get("debug_bbs");
+			program->use();
+			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
+			switch (mDebugMode) {
+			case DEBUG_COLLISION:
+				for (auto object : mWorkingObjectList) {
+					if (object->hasCollision())
+						program->sendUniform("uDebugColor", 4, 1, debug_true);
+					else
+						program->sendUniform("uDebugColor", 4, 1, debug_false);
+					program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));	// AABB's and spheres, at least, will be tracking their world coordinates
+					object->debugDraw();
+				}
+				break;
+			case DEBUG_MOUSE:
+				for (auto object : mWorkingObjectList) {
+					if (object->hasMouseOver())
+						program->sendUniform("uDebugColor", 4, 1, debug_true);
+					else
+						program->sendUniform("uDebugColor", 4, 1, debug_false);
+					program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
+					object->debugDraw();
+				}
+				break;
 			}
 		}
 	}
@@ -294,11 +312,21 @@ void Game::render(float dt) {
 		// Needs a default program to use
 		mCurrentMenu->draw();
 	}
+	// Draw Mouse textures to prepare for next frame
+	MouseHandler::getInstance().enableDrawing();
+	auto program = mCommonLibraries.standard.programs.get("mouse_selection");
+	program->use();
+	program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
+	for (auto object : mWorkingObjectList) {
+		program->sendUniform("uObjectID", object->getIndex());
+		object->render(mWorkingActiveCamera->getCameraComponent());
+	}
 }
 
 void Game::resize(unsigned int width, unsigned int height) {
 	// Presumably OpenGL won't let me resize it to something impossible, so there's no need to check the dimensions
 	mWindow->resize(width, height);
+	MouseHandler::getInstance().resize(width, height);
 	if (mCurrentLevel)
 		for (auto a : mCurrentLevel->getCameraList())
 			a.second->getCameraComponent()->resize(width, height);
@@ -328,11 +356,20 @@ void Game::handle(Event event) {
 			softReload();
 			break;
 		case 'b':
-			mDebugMode = !mDebugMode;
-			if (mDebugMode)
-				ServiceLocator::getLoggingService().log("======== DEBUG ON ========");
-			else
-				ServiceLocator::getLoggingService().log("======== DEBUG OFF ========");
+			switch (mDebugMode) {
+			case DEBUG_NONE:
+				mDebugMode = DEBUG_COLLISION;
+				ServiceLocator::getLoggingService().log("======== DEBUG: COLLISION ========");
+				break;
+			case DEBUG_COLLISION:
+				mDebugMode = DEBUG_MOUSE;
+				ServiceLocator::getLoggingService().log("======== DEBUG: MOUSE ========");
+				break;
+			case DEBUG_MOUSE:
+				mDebugMode = DEBUG_NONE;
+				ServiceLocator::getLoggingService().log("======== DEBUG: NONE ========");
+				break;
+			}
 			break;
 		case 'p':
 			if (mCurrentPostProcessing == mCommonLibraries.post.pipelines.get("none")) {

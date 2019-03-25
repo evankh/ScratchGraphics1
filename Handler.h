@@ -13,7 +13,7 @@ protected:
 	virtual int getNumReceivers() = 0;
 public:
 	virtual void step() = 0;
-	void dispatchAll();
+	virtual void dispatchAll();
 	void unregisterReceiver(Receiver* receiver);
 };
 

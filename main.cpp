@@ -116,6 +116,7 @@ int GL_TEST_MAIN(int argc, char* argv[]) {
 	iluInit();
 	ilutInit();
 	ilutRenderer(ILUT_OPENGL);
+	MouseHandler::getInstance().init(800, 600);
 	Game::getInstance().load();
 	glutMainLoop();
 	ServiceLocator::getLoggingService().log("After the main loop");

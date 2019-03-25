@@ -26,6 +26,12 @@ enum GameState {
 	EKH_MENU_STATE
 };
 
+enum DebugMode {
+	DEBUG_NONE,
+	DEBUG_COLLISION,
+	DEBUG_MOUSE
+};
+
 class Game :public Receiver {
 private:
 	Game();
@@ -55,7 +61,8 @@ private:
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
 	const std::string mAssetBasePath = "assets2/";
 	const std::string mIndexFilename = "index.txt";
-	bool mDebugMode = false, mPaused = false;
+	DebugMode mDebugMode = DEBUG_NONE;
+	bool mPaused = false;
 	Level* loadLevel(std::string path);
 	void parseGeometryIndex(std::string path, NamedContainer<Geometry*> &geomLibrary);
 	void parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary);

@@ -10,6 +10,7 @@ enum class EventType {
 	BUTTON_PRESSED,
 	BUTTON_RELEASED,
 	BUTTON_HELD,
+	MOUSEOVER,
 	PLAY_SOUND_REQUEST,
 	COLLISION,
 	COMMAND
@@ -27,6 +28,11 @@ struct KeyboardData {
 struct MouseData {
 	MouseButton button;
 	int edge;
+	int mouse_x, mouse_y;
+	float world_pos[3];
+};
+
+struct MouseoverData {
 	int mouse_x, mouse_y;
 	float world_pos[3];
 };
@@ -60,6 +66,7 @@ struct Event {
 		EmptyData empty;
 		KeyboardData keyboard;
 		MouseData mouse;
+		MouseoverData mouseover;
 		SoundData sound;
 		CollisionData collision;
 		CommandData command;
@@ -67,6 +74,7 @@ struct Event {
 	Event() :mType(EventType::NONE) { mData.empty = EmptyData(); };
 	Event(EventType type, KeyboardData data) :mType(type) { mData.keyboard = data; };
 	Event(EventType type, MouseData data) :mType(type) { mData.mouse = data; };
+	Event(MouseoverData data) :mType(EventType::MOUSEOVER) { mData.mouseover = data; };
 	Event(SoundData data) :mType(EventType::PLAY_SOUND_REQUEST) { mData.sound = data; };
 	Event(CollisionData data) :mType(EventType::COLLISION) { mData.collision = data; };
 	Event(CommandData data) :mType(EventType::COMMAND) { mData.command = data; };
