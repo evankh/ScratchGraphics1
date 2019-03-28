@@ -121,32 +121,32 @@ void Program::removeAll() {
 	};
 	while (mTCS) {
 		glDetachShader(mHandle, mTCS->shader->mHandle);
-		auto temp = mVS;
-		mVS = mVS->next;
+		auto temp = mTCS;
+		mTCS = mTCS->next;
 		delete temp;
 	};
 	while (mTES) {
 		glDetachShader(mHandle, mTES->shader->mHandle);
-		auto temp = mVS;
-		mVS = mVS->next;
+		auto temp = mTES;
+		mTES = mTES->next;
 		delete temp;
 	};
 	while (mGS) {
 		glDetachShader(mHandle, mGS->shader->mHandle);
-		auto temp = mVS;
-		mVS = mVS->next;
+		auto temp = mGS;
+		mGS = mGS->next;
 		delete temp;
 	};
 	while (mFS) {
 		glDetachShader(mHandle, mFS->shader->mHandle);
-		auto temp = mVS;
-		mVS = mVS->next;
+		auto temp = mFS;
+		mFS = mFS->next;
 		delete temp;
 	};
 	while (mCS) {
 		glDetachShader(mHandle, mCS->shader->mHandle);
-		auto temp = mVS;
-		mVS = mVS->next;
+		auto temp = mCS;
+		mCS = mCS->next;
 		delete temp;
 	};
 }
@@ -163,40 +163,40 @@ void Program::removeAll(unsigned int type) {
 	if (type == GL_TESS_CONTROL_SHADER) {
 		while (mTCS) {
 			glDetachShader(mHandle, mTCS->shader->mHandle);
-			auto temp = mVS;
-			mVS = mVS->next;
+			auto temp = mTCS;
+			mTCS = mTCS->next;
 			delete temp;
 		};
 	}
 	if (type == GL_TESS_EVALUATION_SHADER) {
 		while (mTES) {
 			glDetachShader(mHandle, mTES->shader->mHandle);
-			auto temp = mVS;
-			mVS = mVS->next;
+			auto temp = mTES;
+			mTES = mTES->next;
 			delete temp;
 		};
 	}
 	if (type == GL_GEOMETRY_SHADER) {
 		while (mGS) {
 			glDetachShader(mHandle, mGS->shader->mHandle);
-			auto temp = mVS;
-			mVS = mVS->next;
+			auto temp = mGS;
+			mGS = mGS->next;
 			delete temp;
 		};
 	}
 	if (type == GL_FRAGMENT_SHADER) {
 		while (mFS) {
 			glDetachShader(mHandle, mFS->shader->mHandle);
-			auto temp = mVS;
-			mVS = mVS->next;
+			auto temp = mFS;
+			mFS = mFS->next;
 			delete temp;
 		};
 	}
 	if (type == GL_COMPUTE_SHADER) {
 		while (mCS) {
 			glDetachShader(mHandle, mCS->shader->mHandle);
-			auto temp = mVS;
-			mVS = mVS->next;
+			auto temp = mCS;
+			mCS = mCS->next;
 			delete temp;
 		};
 	}

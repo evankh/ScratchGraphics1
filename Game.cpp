@@ -311,7 +311,7 @@ void Game::render(float dt) {
 		mCurrentMenuPost->draw();
 		// Needs a default program to use
 		mCurrentMenu->draw();
-	}
+	}//*/
 	// Draw Mouse textures to prepare for next frame
 	MouseHandler::getInstance().enableDrawing();
 	//mWindow->enableDrawing();
@@ -329,7 +329,7 @@ void Game::render(float dt) {
 	program->use();
 	program->sendUniform("uSelector", mDebugStageSelection);
 	MouseHandler::getInstance().draw();
-	Geometry::getScreenQuad()->render();*/
+	Geometry::getScreenQuad()->render();//*/
 }
 
 void Game::resize(unsigned int width, unsigned int height) {

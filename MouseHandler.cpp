@@ -172,11 +172,11 @@ void MouseHandler::enableDrawing() const {
 }
 
 void MouseHandler::draw() const {
-	/*for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, mTextureHandles[i]);
-	}*/
+	}
 	//glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mTextureHandles[1]);
+	//glBindTexture(GL_TEXTURE_2D, mTextureHandles[1]);
 	//glActiveTexture(GL_TEXTURE0);
 }

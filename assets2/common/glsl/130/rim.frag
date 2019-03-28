@@ -1,7 +1,12 @@
 #version 150
 
-in vec3 pNormal;
-in vec2 pTexCoord;
+in PassData {
+	vec4 position;
+	vec3 color;
+	vec3 normal;
+	vec2 texCoord;
+	vec3 view;
+} pIn;
 
 out vec4 oFragColor;
 
@@ -14,9 +19,9 @@ const vec3 rimcolor = vec3(0.0, 0.5, 1.0);
 
 void main(void)
 {
-	vec3 diffuse = texture2D(uTexture, pTexCoord).rgb;
-	float light = dot(pNormal, lightvec) * 0.5 + 0.5;
-	float rim = max(dot(pNormal, rimvec) * (1.0 - uRimFactor) + uRimFactor, 0.0);
+	vec3 diffuse = texture2D(uTexture, pIn.texCoord).rgb;
+	float light = dot(pIn.normal, lightvec) * 0.5 + 0.5;
+	float rim = max(dot(pIn.normal, rimvec) * (1.0 - uRimFactor) + uRimFactor, 0.0);
 	oFragColor.rgb = rim * rimcolor + light * diffuse;
 	oFragColor.a = 1.0;
 }

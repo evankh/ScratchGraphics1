@@ -5,21 +5,23 @@ layout (location = 2) in vec3 iNormal;
 layout (location = 3) in vec3 iColor;
 layout (location = 8) in vec2 iTexCoord;
 
-out vec4 pPosition;
-out vec3 pColor;
-out vec3 pNormal;
-out vec2 pTexCoord;
-out vec3 pView;
+out PassData {
+	vec4 position;
+	vec3 color;
+	vec3 normal;
+	vec2 texCoord;
+	vec3 view;
+} pOut;
 
 uniform mat4 uM = mat4(1.0);
 uniform mat4 uVP;
 uniform vec3 uCamera;
 
 void main() {
-	pPosition = uM * vec4(iPosition, 1.0);
-	pColor = iColor;
-	pNormal = (uM * vec4(iNormal, 0.0)).xyz;
-	pTexCoord = iTexCoord;
-	pView = uCamera - pPosition.xyz;
-	gl_Position = uVP * pPosition;
+	pOut.position = uM * vec4(iPosition, 1.0);
+	pOut.color = iColor;
+	pOut.normal = (uM * vec4(iNormal, 0.0)).xyz;
+	pOut.texCoord = iTexCoord;
+	pOut.view = uCamera - pOut.position.xyz;
+	gl_Position = uVP * pOut.position;
 }

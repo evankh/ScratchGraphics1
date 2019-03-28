@@ -1,24 +1,22 @@
 #version 150
 
 layout (triangles) in;
-layout (line_strip, max_vertices = 4) out; 
-/*
-// These damn name conflicts make it impossible to pop a shader stage in between two already-existing ones
-in vec4 tPosition[];
-in vec3 tNormal[];
-*/
+layout (line_strip, max_vertices = 4) out;
+
 in PassData {
 	vec4 position;
-	vec3 normal;
-	vec3 view;
 	vec3 color;
+	vec3 normal;
+	vec2 texCoord;
+	vec3 view;
 } pIn[];
 
 out PassData {
 	vec4 position;
-	vec3 normal;
-	vec3 view;
 	vec3 color;
+	vec3 normal;
+	vec2 texCoord;
+	vec3 view;
 } pOut;
 
 uniform mat4 uVP;

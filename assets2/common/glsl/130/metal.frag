@@ -1,10 +1,12 @@
 #version 150
 
-in vec4 pPosition;
-in vec3 pColor;
-in vec3 pNormal;
-in vec2 pTexCoord;
-in vec3 pView;
+in PassData {
+	vec4 position;
+	vec3 color;
+	vec3 normal;
+	vec2 texCoord;
+	vec3 view;
+} pIn;
 
 out vec4 oFragColor;
 
@@ -14,11 +16,11 @@ const vec3 specular = vec3(0.85,0.85,0.85);
 const vec3 ambient = vec3(0.05,0.05,0.05);
 
 void main() {
-	vec3 view = normalize(pView);
+	vec3 view = normalize(pIn.view);
 
-	float diff = dot(pNormal, lightvec);
+	float diff = dot(pIn.normal, lightvec);
 
-	vec3 r = 2.0 * diff * pNormal - lightvec;
+	vec3 r = 2.0 * diff * pIn.normal - lightvec;
 	r = normalize(r);
 	float spec = dot(view, r);
 	spec = max(0.0,spec);
