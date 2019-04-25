@@ -71,25 +71,21 @@ FrameBuffer::~FrameBuffer() {
 	glDeleteTextures(1, &mDepthTextureHandle);
 }
 
+// Activate the FrameBuffer as a target for drawing.
 void FrameBuffer::setActive() {
 	glBindFramebuffer(GL_FRAMEBUFFER, mHandle);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, mWidth, mHeight);
 }
 
-void FrameBuffer::draw(int start) {
-	// Draw the Magic Quad to the active FrameBuffer (which should already be set) using the active Program (which should already be set)
-	/*glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mColorTextureHandle);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);*/
+// Activate the outputs of the FrameBuffer as inputs for drawing.
+void FrameBuffer::activate(int start) {
 	for (int i = 0; i < mSamplersOut; i++) {
 		glActiveTexture(GL_TEXTURE0 + i + start);
 		glBindTexture(GL_TEXTURE_2D, mColorTextureHandles[i]);
 	}
 	glActiveTexture(GL_TEXTURE0 + mSamplersOut + start);
 	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
-	//Geometry::getScreenQuad()->render();
 	glActiveTexture(GL_TEXTURE0);
 }
 

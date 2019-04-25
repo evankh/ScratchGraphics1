@@ -75,9 +75,11 @@ void MouseHandler::resize(unsigned int width, unsigned int height) {
 }
 
 #include "GL/glew.h"
+#include "ServiceLocator.h"
 
 void MouseHandler::dispatchAll() {
 	Handler::dispatchAll();
+	static int cooldown = 10;
 	if (mReadyToRead) {
 		// Sample textures
 		unsigned int index = 0;
@@ -86,23 +88,31 @@ void MouseHandler::dispatchAll() {
 		// glBindFramebuffer sometimes (but not always) gives a GL_INVALID_OPERATION error even though it's obviously a valid framebuffer (and glIsFramebuffer confirms it).
 		// This appears to be something of a known issue? (https://devtalk.nvidia.com/default/topic/1026791/glbindframebuffer-with-a-valid-framebuffer-gives-gl_invalid_operation/)
 		int error = glGetError();
+		if (error) ServiceLocator::getLoggingService().error("glBindFramebuffer error", std::to_string(error));
 		glClampColor(GL_CLAMP_READ_COLOR, GL_FALSE);
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
 		glReadPixels(mMousePosition[0], mMousePosition[1], 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &index);
 		error = glGetError();
-		if (index) {
+		if (error) ServiceLocator::getLoggingService().error("glReadPixels error", std::to_string(error));
+		//if (index) {
 			glReadBuffer(GL_COLOR_ATTACHMENT1);
 			glReadnPixels(mMousePosition[0], mMousePosition[1], 1, 1, GL_RGBA, GL_FLOAT, 4 * sizeof(float), world_pos);
 			error = glGetError();
+			if (error) ServiceLocator::getLoggingService().error("glReadnPixels error", std::to_string(error));
 			// Notify the Receiver
 			MouseoverData eventdata{ mMousePosition[0], mMousePosition[1], world_pos[0], world_pos[1], world_pos[2] };
-			mMouseoverReceivers[index]->handle(eventdata);
+			//mMouseoverReceivers[index]->handle(eventdata);
+		//}
+		if (cooldown == 0) {
+			ServiceLocator::getLoggingService().log("mouse position: (" + std::to_string(mMousePosition[0]) + "," + std::to_string(mMousePosition[1]) + ")");
+			ServiceLocator::getLoggingService().log("index: " + std::to_string(index));
+			ServiceLocator::getLoggingService().log("world pos: (" + std::to_string(world_pos[0]) + "," + std::to_string(world_pos[1]) + "," + std::to_string(world_pos[2]) + ")");
+			cooldown = 10;
 		}
+		else cooldown--;
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 }
-
-#include "ServiceLocator.h"
 
 void MouseHandler::init(unsigned int width, unsigned int height) {
 	mWindowSize[0] = width;
@@ -123,10 +133,10 @@ void MouseHandler::init(unsigned int width, unsigned int height) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(GL_TEXTURE_2D, 0, sizes[i], width, height, 0, formats[i], types[i], NULL);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, attachments[i], GL_TEXTURE_2D, mTextureHandles[i], 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDrawBuffers(2, attachments);
+	glDrawBuffers(3, attachments);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		// Abort
 		// Danger Will Robinson
@@ -167,7 +177,7 @@ void MouseHandler::enableDrawing() const {
 	glClearBufferuiv(GL_COLOR, 0, clearColor);
 	glDrawBuffer(GL_COLOR_ATTACHMENT1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	mReadyToRead = true;
 }
 

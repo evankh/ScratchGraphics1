@@ -220,9 +220,9 @@ void Game::update(float dt) {
 			}
 		}
 		// If there's a lag spike, all inputs from any frames will be processed on the first frame... Not sure yet if that's a problem (it probably is)
-		KeyboardHandler::getInstance().step();
+		//KeyboardHandler::getInstance().step();
 		KeyboardHandler::getInstance().dispatchAll();
-		MouseHandler::getInstance().step();
+		//MouseHandler::getInstance().step();
 		MouseHandler::getInstance().dispatchAll();
 		mWorkingActiveCamera->update(dt);	// Hmm
 		if (!mPaused) {
@@ -317,12 +317,15 @@ void Game::render(float dt) {
 	//mWindow->enableDrawing();
 	auto program = mCommonLibraries.standard.programs.get("mouse_selection");
 	program->use();
-	program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
+	//program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
+	program->sendUniform("uVP", glm::value_ptr(glm::mat4(1.0)));
 	program->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getPosition()));
-	for (auto object : mWorkingObjectList) {
+	program->sendUniform("uObjectID", 300);
+	/*for (auto object : mWorkingObjectList) {
 		program->sendUniform("uObjectID", object->getIndex());
 		object->render(program);
-	}
+	}*/
+	Geometry::getScreenQuad()->render();
 	// DEBUG
 	/*mWindow->enableDrawing();
 	program = mCommonLibraries.post.filters.get("select");
@@ -339,6 +342,8 @@ void Game::resize(unsigned int width, unsigned int height) {
 	if (mCurrentLevel)
 		for (auto a : mCurrentLevel->getCameraList())
 			a.second->getCameraComponent()->resize(width, height);
+	if (mWorkingActiveCamera)
+		mWorkingActiveCamera->getCameraComponent()->resize(width, height);
 	for (auto processor : mCommonLibraries.post.pipelines)
 		processor.second->resize(width, height);
 	if (mCurrentMenu) mCurrentMenu->layout(width, height);

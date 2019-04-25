@@ -14,7 +14,7 @@ void PostProcessingPipeline::init(unsigned int width, unsigned int height) {
 PostProcessingPipeline::~PostProcessingPipeline() {
 	mProcessingStages.clear();
 }
-
+/*
 void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, int numSamplersIn, int numSamplersOut, Kernel kernel, float relativeScale) {
 	if (numSamplersIn != mOutputFB->getSamplersOut()) throw std::invalid_argument("That stage won't fit here");
 	FrameBuffer** target = new FrameBuffer*;
@@ -67,9 +67,28 @@ void PostProcessingPipeline::attach(Program* program, int numSamplersIn, int num
 	delete[] inputs;
 	mOutputFB = mProcessingStages.back().target;
 }
+*/
+
+void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, float relativeScale) {
+	ProcessingStage stage;
+	stage.filter = program;
+	stage.data.numKernels = 0;
+	stage.data.kernels = nullptr;
+	Uniform pixSize;
+	pixSize.type = UniformType::FLOAT;
+	pixSize.f = 1.0f / (relativeScale * mWindowWidth);
+	stage.data.uniforms.add("uPixWidth", pixSize);
+	pixSize.f = 1.0f / (relativeScale * mWindowHeight);
+	stage.data.uniforms.add("uPixHeight", pixSize);
+	stage.numInputs = 1;
+	stage.input = new FrameBuffer*;
+	stage.input[0] = mOutputFB;
+	stage.output = new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale);
+	mProcessingStages.push_back(stage);
+}
 
 #include "Geometry.h"
-
+/*
 void PostProcessingPipeline::process() {
 	if (mProcessingStages.size() == 0)
 		return;
@@ -86,11 +105,29 @@ void PostProcessingPipeline::process() {
 			mProcessingStages[i].sources[j]->draw(i);	// Will only allow one output from each source for compositors
 		Geometry::getScreenQuad()->render();
 	}
+}*/
+
+void PostProcessingPipeline::process() {
+	for (auto stage : mProcessingStages) {
+		stage.output->setActive();
+		stage.data.use();
+		stage.filter->use();
+		stage.input[0]->activate(0);
+		Geometry::getScreenQuad()->render();
+	}
+	if (mCompositingStage) {
+		int texInputs = 0;
+		for (int i = 0; i < mCompositingStage->numInputs; i++) {
+			mCompositingStage->filter->use();
+			mCompositingStage->input[i]->activate(texInputs);
+			Geometry::getScreenQuad()->render();
+			texInputs += mCompositingStage->input[i]->getSamplersOut();
+		}
+	}
 }
 
 void PostProcessingPipeline::draw() {
-	// Set the active program to an ortho one
-	if (mOutputFB) mOutputFB->draw(0);
+	if (mOutputFB) mOutputFB->activate(0);
 	Geometry::getScreenQuad()->render();
 }
 
@@ -99,7 +136,7 @@ void PostProcessingPipeline::resize(unsigned int width, unsigned int height) {
 	mWindowHeight = height;
 	if (mInputFB) mInputFB->resize(mWindowWidth, mWindowHeight);
 	for (auto buffer : mProcessingStages)
-		buffer.target->resize(mWindowWidth, mWindowHeight);
+		buffer.output->resize(mWindowWidth, mWindowHeight);
 }
 
 void PostProcessingPipeline::enableDrawing() {
@@ -108,6 +145,6 @@ void PostProcessingPipeline::enableDrawing() {
 
 void PostProcessingPipeline::clear() {
 	for (auto stage : mProcessingStages)
-		delete stage.target;
+		delete stage.output;
 	mProcessingStages.clear();
 }

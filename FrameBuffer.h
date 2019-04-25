@@ -17,7 +17,7 @@ public:
 	FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale = 1.0f, int samplersOut = 1);
 	~FrameBuffer();
 	void setActive();
-	void draw(int start);
+	void activate(int start);
 	void resize(unsigned int width, unsigned int height);
 	float getRelativeScale() const { return mRelativeScale; };
 	int getSamplersOut() const { return mSamplersOut; };
