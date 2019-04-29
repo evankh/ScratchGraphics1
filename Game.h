@@ -7,7 +7,8 @@ class Geometry;
 #include "KernelManager.h"
 #include "Level.h"
 #include "NamedContainer.h"
-#include "PostProcessingPipeline.h"
+//#include "PostProcessingPipeline.h"
+#include "Postprocessing.h"
 #include "Program.h"
 #include "ShaderManager.h"
 #include "SoundLibrary.h"
@@ -45,7 +46,7 @@ private:
 			ShaderManager shaders;	// Do I need a new container type to handle matching sample sizes? Probably.
 			NamedContainer<Program*> filters;
 			KernelManager kernels;
-			NamedContainer<PostProcessingPipeline*> pipelines;
+			NamedContainer<PostprocessingPipeline*> pipelines;
 		} post;
 	} mCommonLibraries;
 	// Working set of Level data
@@ -54,10 +55,10 @@ private:
 	// Actual game information
 	Window* mWindow;
 	Level* mCurrentLevel;
-	PostProcessingPipeline* mCurrentPostProcessing;
+	PostprocessingPipeline* mCurrentPostProcessing;
 	Menu* mCurrentMenu = NULL;
 	Menu* mHUD = NULL;
-	PostProcessingPipeline* mCurrentMenuPost;
+	PostprocessingPipeline* mCurrentMenuPost;
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
 	const std::string mAssetBasePath = "assets2/";
 	const std::string mIndexFilename = "index.txt";
@@ -66,7 +67,8 @@ private:
 	Level* loadLevel(std::string path);
 	void parseGeometryIndex(std::string path, NamedContainer<Geometry*> &geomLibrary);
 	void parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary);
-	void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostProcessingPipeline*> &pipelineLibrary);
+	//void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostProcessingPipeline*> &pipelineLibrary);
+	void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostprocessingPipeline*> &pipelineLibrary);
 	void parseSoundIndex(std::string path, SoundLibrary &soundLibrary);
 	void parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary);
 	void parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibrary);

@@ -1,5 +1,7 @@
 #include "Texture.h"
 #include "ServiceLocator.h"
+
+#include "GL/glew.h"
 #include "IL\ilut.h"
 
 Texture::Texture(std::string filepath) {
@@ -56,7 +58,8 @@ void Texture::setWrapY(bool shouldWrap) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Texture::activate() {
+void Texture::activate(int slot) {
+	glActiveTexture(GL_TEXTURE0 + slot);
 	glBindTexture(GL_TEXTURE_2D, mHandle);
 }
 

@@ -82,9 +82,8 @@ void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, f
 	pixSize.f = 1.0f / (relativeScale * mWindowHeight);
 	stage.data.uniforms.add("uPixHeight", pixSize);
 	stage.numInputs = program->getSamplesIn();
-	stage.input = new FrameBuffer*;
-	stage.input[0] = mOutputFB;
-	stage.output = new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale);
+	stage.input = mOutputFB;
+	stage.output = new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale, program->getSamplesOut());
 	mOutputFB = stage.output;
 	mProcessingStages.push_back(stage);
 	if (isCompositingInput) mCompositingInputs.push_back(mOutputFB);
@@ -100,7 +99,7 @@ void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, K
 
 void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, int numKernels, Kernel* kernels, float relativeScale) {
 	attach(program, isCompositingInput, relativeScale);
-	auto that = mProcessingStages.back();
+	ProcessingStage& that = mProcessingStages.back();
 	that.data.numKernels = numKernels;
 	that.data.kernels = new Kernel[numKernels];
 	// Probably (definitely) can build this in Game and save the trouble of transferring it
@@ -122,7 +121,7 @@ void PostProcessingPipeline::attachCompositor(Program* program) {
 	pixelsize.f = 1.0f / mWindowHeight;
 	mCompositingStage->data.uniforms.add("uPixHeight", pixelsize);
 	mCompositingStage->numInputs = mCompositingInputs.size();
-	mCompositingStage->input = mCompositingInputs.data();
+	//mCompositingStage->input = mCompositingInputs.data();
 }
 
 #include "Geometry.h"
@@ -150,16 +149,16 @@ void PostProcessingPipeline::process() {
 		stage.output->setActive();
 		stage.data.use();
 		stage.filter->use();
-		stage.input[0]->activate(0);
+		stage.input->activate(0);
 		Geometry::getScreenQuad()->render();
 	}
 	if (mCompositingStage) {
 		int texInputs = 0;
-		for (int i = 0; i < mCompositingStage->numInputs; i++) {
+		for (auto input : mCompositingInputs) {
 			mCompositingStage->filter->use();
-			mCompositingStage->input[i]->activate(texInputs);
+			input->activate(texInputs);
 			Geometry::getScreenQuad()->render();
-			texInputs += mCompositingStage->input[i]->getSamplersOut();
+			texInputs += input->getSamplersOut();
 		}
 	}
 }

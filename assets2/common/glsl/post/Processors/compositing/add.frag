@@ -10,11 +10,11 @@ uniform unsigned int uNumTextures;
 uniform sampler2D uTexture[MAX_TEXTURES];
 
 void main() {
-	vec3 composite = vec3(1.0);
-	// Screen compositing
+	vec3 composite = vec3(0.0);
+	// Additive compositing
 	for (int i = 0; i < MAX_TEXTURES && i < uNumTextures; i++) {
-		composite *= 1.0 - texture(uTexture[i], pTexCoord).rgb;
+		composite += texture(uTexture[i], pTexCoord).rgb;
 	}
-	oFragColor.rgb = 1.0 - composite;
+	oFragColor.rgb = composite;
 	oFragColor.a = 1.0;
 }

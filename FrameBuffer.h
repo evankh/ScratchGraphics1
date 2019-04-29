@@ -1,14 +1,10 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
 #define __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
 
-#ifndef NULL
-#define NULL 0
-#endif//NULL
-
 class FrameBuffer {
 private:
 	unsigned int mHandle;
-	unsigned int* mColorTextureHandles = NULL;
+	unsigned int* mColorTextureHandles = nullptr;
 	unsigned int mDepthTextureHandle;
 	float mRelativeScale;
 	unsigned int mWidth, mHeight;

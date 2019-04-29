@@ -40,7 +40,7 @@ void Game::load() {
 	if (!baseIndex.good()) throw "Asset file could not be opened.";
 	struct { char *name, *path; } levelData;
 	struct { int w, h; } resolution;
-	char* commonFolder;
+	char* commonFolder, *ppp;
 	while (baseIndex.good()) {
 		if (baseIndex.extract("//`S`L", NULL));	// Comment
 		else if (baseIndex.extract("Level \"`S\" \"`S\"`L", &levelData)) {
@@ -131,16 +131,20 @@ void Game::load() {
 				}
 			}
 		}
+		else if (baseIndex.extract("ppp: \"`S\"`L", &ppp)) {
+			try {
+				mCurrentPostProcessing = mCommonLibraries.post.pipelines.get(ppp);
+			}
+			catch (std::out_of_range) {
+				ServiceLocator::getLoggingService().error("Not a valid default postprocessor", ppp);
+				mCurrentPostProcessing = nullptr;
+			}
+			delete[] ppp;
+		}
 		else if (baseIndex.extract("`S`L", &levelData.name)) {
 			ServiceLocator::getLoggingService().error("Unexpected line in root index file", levelData.name);
 			delete[] levelData.name;
 		}
-	}
-	try {
-		mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("none");
-	}
-	catch (std::out_of_range) {
-		mCurrentPostProcessing = NULL;
 	}
 	softReload();
 }
@@ -161,7 +165,7 @@ void Game::softReload() {
 
 void Game::cleanup() {
 	delete mCurrentLevel;
-	mCurrentLevel = NULL;
+	mCurrentLevel = nullptr;
 	mLevelDirectory.clear();
 
 	while (mCurrentMenu) {
@@ -169,9 +173,9 @@ void Game::cleanup() {
 		mCurrentMenu = top->mParent;
 		delete top;
 	}
-	mCurrentMenu = NULL;
-	mCurrentPostProcessing = NULL;
-	mCurrentMenuPost = NULL;
+	mCurrentMenu = nullptr;
+	mCurrentPostProcessing = nullptr;
+	mCurrentMenuPost = nullptr;
 
 	mCommonLibraries.menus.clear();
 	mCommonLibraries.standard.geometries.clear();
@@ -249,16 +253,18 @@ void Game::render(float dt) {
 	//    - render all menu items
 
 	float debug_true[]{ 0.0f,1.0f,0.0f,0.5f }, debug_false[]{ 0.0f,0.0f,1.0f,0.5f };
+	//mCurrentPostProcessing = nullptr;
 
-	// Set the active framebuffer to the appropriate target
-	if (mCurrentPostProcessing)
-		mCurrentPostProcessing->enableDrawing();	// Draw on the PPFBO, if there is one
-	else if (mCurrentMenu) mCurrentMenuPost->enableDrawing();	// If not, and there's a menu, draw on the menu PPFBO
-	else mWindow->enableDrawing();	// If not, draw directly on the window backbuffer
+	// Set the active framebuffer to the appropriate target:
+	if (mCurrentPostProcessing) mCurrentPostProcessing->setAsDrawTarget();	// If we're doing any scene PP, draw on that
+	else if (mCurrentMenu) mCurrentMenuPost->setAsDrawTarget();				// If not, and we're doing any menu PP, draw on that
+	else mWindow->enableDrawing();											// If not, draw directly on the window backbuffer
+
 	if (mWorkingActiveCamera) {
+		// Draw each object in the scene
 		for (auto object : mWorkingObjectList)
-			object->render(mWorkingActiveCamera->getCameraComponent());	// Draw each object in the scene
-
+			object->render(mWorkingActiveCamera->getCameraComponent());
+		// Draw any debug information
 		if (mDebugMode != DEBUG_NONE) {
 			// Draw object axes
 			auto program = mCommonLibraries.standard.programs.get("debug_axes");
@@ -298,20 +304,29 @@ void Game::render(float dt) {
 			}
 		}
 	}
-	if (mCurrentPostProcessing) mCurrentPostProcessing->process();	// Do any scene PP
-	if (mCurrentMenu) mCurrentMenuPost->enableDrawing();	// If there's a menu, draw on its FBO
-	else mWindow->enableDrawing();	// If not, draw on the window
-	mCommonLibraries.post.filters.get("none")->use();
-	if (mCurrentPostProcessing) mCurrentPostProcessing->draw();	// Draw the PP'd scene
-	if (mHUD) mHUD->draw();
+
+	if (mCurrentPostProcessing) {
+		mCurrentPostProcessing->process();
+		mCommonLibraries.post.filters.get("none")->use();
+		mCurrentPostProcessing->setAsTextureSource();
+		if (mCurrentMenu) mCurrentMenuPost->setAsDrawTarget();	// If we're doing any menu PP, draw on that
+		else mWindow->enableDrawing();							// If not, draw on the window
+		Geometry::getScreenQuad()->render();
+	}
+
+	if (mHUD) mHUD->draw();	// If there was any PP, this will be drawn onto the same target that the PP was; if not, it will be drawn onto the same target as the scene
+
 	if (mCurrentMenu) {
-		mWindow->enableDrawing();
 		mCurrentMenuPost->process();
 		mCommonLibraries.post.filters.get("none")->use();
-		mCurrentMenuPost->draw();
-		// Needs a default program to use
+		mCurrentMenuPost->setAsTextureSource();
+		mWindow->enableDrawing();	// There are no more layers, any further drawing is directly on the window
+		Geometry::getScreenQuad()->render();
 		mCurrentMenu->draw();
-	}//*/
+	}
+
+	// Mouse picking stuff
+	/*
 	// Draw Mouse textures to prepare for next frame
 	MouseHandler::getInstance().enableDrawing();
 	//mWindow->enableDrawing();
@@ -321,18 +336,19 @@ void Game::render(float dt) {
 	program->sendUniform("uVP", glm::value_ptr(glm::mat4(1.0)));
 	program->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getPosition()));
 	program->sendUniform("uObjectID", 300);
-	/*for (auto object : mWorkingObjectList) {
+	for (auto object : mWorkingObjectList) {
 		program->sendUniform("uObjectID", object->getIndex());
 		object->render(program);
-	}*/
+	}
 	Geometry::getScreenQuad()->render();
 	// DEBUG
-	/*mWindow->enableDrawing();
+	mWindow->enableDrawing();
 	program = mCommonLibraries.post.filters.get("select");
 	program->use();
 	program->sendUniform("uSelector", mDebugStageSelection);
 	MouseHandler::getInstance().draw();
-	Geometry::getScreenQuad()->render();//*/
+	Geometry::getScreenQuad()->render();
+	*/
 }
 
 void Game::resize(unsigned int width, unsigned int height) {
@@ -699,21 +715,38 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 	}
 }
 
-void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostProcessingPipeline*> &pipelineLibrary) {
+void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostprocessingPipeline*> &pipelineLibrary) {
 	FileService postIndex(path + mIndexFilename);
 	if (!postIndex.good()) throw std::exception(postIndex.getPath().data());
-	struct { char* name; int samples; char* path, *extra = NULL; } shaderData;
+	struct { char* name; int samples; char* path, *extra = nullptr; } shaderData;
 	struct { char* name; Kernel kernel; } kernelData;
 	struct { char* name, *sampler, *processor; int in = 0, out = 0; } filterData;
 	struct { char* name; } pipelineData;
-	struct { char* name; float scale = 1.0f; char* kernel = NULL; } stageData;
-	int type;
 	while (postIndex.good()) {
-		if (postIndex.extract("//`S`L", NULL)) type = NULL;
-		else if (postIndex.extract("Sampler ", NULL)) type = GL_VERTEX_SHADER;
-		else if (postIndex.extract("Processor ", NULL)) type = GL_FRAGMENT_SHADER;
+		if (postIndex.extract("//`S`L")) {}
+		else if (postIndex.extract("Sampler \"`S\" `I \"`S\"", &shaderData)) {
+			postIndex.extract("`?S`L", &shaderData.extra);
+			if (shaderData.extra) {
+				ServiceLocator::getLoggingService().error("Extra data at end of shader definition", shaderData.extra);
+				delete[] shaderData.extra;
+				shaderData.extra = nullptr;
+			}
+			shaderLibrary.add(shaderData.name, shaderData.samples, new Shader(path + shaderData.path, GL_VERTEX_SHADER));
+			delete[] shaderData.name;
+			delete[] shaderData.path;
+		}
+		else if (postIndex.extract("Processor \"`S\" `I \"`S\"", &shaderData)) {
+			postIndex.extract("`?S`L", &shaderData.extra);
+			if (shaderData.extra) {
+				ServiceLocator::getLoggingService().error("Extra data at end of shader definition", shaderData.extra);
+				delete[] shaderData.extra;
+				shaderData.extra = nullptr;
+			}
+			shaderLibrary.add(shaderData.name, shaderData.samples, new Shader(path + shaderData.path, GL_FRAGMENT_SHADER));
+			delete[] shaderData.name;
+			delete[] shaderData.path;
+		}
 		else if (postIndex.extract("Kernel \"`S\" `I [", &kernelData)) {
-			type = NULL;
 			kernelData.kernel.weights = new float[kernelData.kernel.samples];
 			bool valid = true;
 			for (int i = 0; i < kernelData.kernel.samples; i++) {
@@ -721,13 +754,13 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 					valid = false;
 					break;
 				}
-				else if (postIndex.extract(", ", NULL) || postIndex.extract("]", NULL));
+				else if (postIndex.extract(", ") || postIndex.extract("]"));
 				else {
 					valid = false;
 					break;
 				}
 			}
-			if (valid && postIndex.extract("`L", NULL)) {
+			if (valid && postIndex.extract("`L")) {
 				kernelLibrary.add(kernelData.name, kernelData.kernel);
 				delete[] kernelData.name;
 				// Can't delete value array because kernel owns it now
@@ -743,9 +776,8 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			}
 		}
 		else if (postIndex.extract("Filter \"`S\" Sampler:\"`S\" Processor:\"`S\" in:`I out:`I`L", &filterData)) {
-			type = NULL;
 			// Do error checking, then construct the filter program
-			Shader* sampler = NULL, *processor = NULL;
+			Shader* sampler = nullptr, *processor = nullptr;
 			bool valid = true;
 			try { sampler = shaderLibrary.get(filterData.sampler); }
 			catch (std::exception e) { ServiceLocator::getLoggingService().error("Sampler not found", e.what()); valid = false; }
@@ -753,8 +785,21 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			catch (std::exception e) { ServiceLocator::getLoggingService().error("Processor not found", e.what()); valid = false; }
 			if (filterData.in < 0) { ServiceLocator::getLoggingService().error("Invalid number of input samples", std::to_string(filterData.in)); valid = false; };
 			if (filterData.out == 0) { ServiceLocator::getLoggingService().error("Invalid number of output samples", std::to_string(filterData.out)); valid = false; };
-			if (valid) filterLibrary.add(filterData.name, new Program(sampler, processor, filterData.in, filterData.out));
+			if (valid) {
+				Program* filter = new Program(sampler, processor, filterData.in, filterData.out);
+				// There should be a smarter way to set these, maybe by listing them all out in the index file
+				filter->sendUniform("uColorBuffer", 0);
+				filter->sendUniform("uDepthBuffer", 1);
+				for (int i = 0; i < 10; i++) {
+					std::string name("uTexture");
+					name += std::to_string(i);
+					filter->sendUniform(name.c_str(), i);
+				}
+				filter->sendUniform("uTexture", 0);
+				filterLibrary.add(filterData.name, filter);
+			}
 		}
+		/*
 		else if (postIndex.extract("Pipeline \"`S\" [", &pipelineData)) {
 			type = NULL;
 			// Read filter names or filter/kernel pairs from the list, check their existence, then add them to the pipeline
@@ -920,26 +965,103 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			}
 			delete[] pipelineData.name;
 		}
+		*/
+		else if (postIndex.extract("Pipeline \"`S\" [", &pipelineData)) {
+			PostprocessingPipeline* temp = new PostprocessingPipeline(mWindow->getWidth(), mWindow->getHeight());
+			bool valid = true;
+			while (true) {
+				// Read
+				struct { char* name; float scale = 1.0f; char* kernel = nullptr; } stageData;
+				bool stageValid = true, compositingInput = false;
+				std::vector<char*> kernels;
+				if (postIndex.extract("\"`S\"", &stageData.name)) {
+					compositingInput = postIndex.extract("*");
+					if (postIndex.extract(":`F", &stageData.scale));
+					if (postIndex.extract(":\"`S\"", &stageData.kernel));
+					else if (postIndex.extract(":[")) {
+						kernels.push_back(nullptr);
+						while (!postIndex.extract("]")) {
+							postIndex.extract("\"`S\"", &kernels.back());
+							kernels.push_back(nullptr);
+							postIndex.extract(",");
+						}
+						kernels.pop_back();
+					}
+					// Verify
+					StageData stage;
+					try {
+						stage.filter = filterLibrary.get(stageData.name);
+					}
+					catch (std::invalid_argument e) {
+						stageValid = false;
+						ServiceLocator::getLoggingService().error("Not a valid filter", e.what());
+					}
+					stage.scale = stageData.scale;
+					if (stageData.kernel) {
+						try {
+							stage.kernels.push_back(kernelLibrary.get(stageData.kernel));
+						}
+						catch (std::invalid_argument e) {
+							stageValid = false;
+							ServiceLocator::getLoggingService().error("Not a valid kernel", e.what());
+						}
+					}
+					else if (kernels.size()) {
+						for (auto kernel : kernels) {
+							try {
+								stage.kernels.push_back(kernelLibrary.get(kernel));
+							}
+							catch (std::invalid_argument e) {
+								stageValid = false;
+								ServiceLocator::getLoggingService().error("Not a valid kernel", e.what());
+							}
+						}
+					}
+					// Add
+					if (stageValid) temp->attach(stage, compositingInput);
+					else valid = false;
+					// Cleanup
+					delete[] stageData.name;
+					for (auto i : kernels)
+						delete[] i;
+					kernels.clear();
+					if (stageData.kernel) {
+						delete[] stageData.kernel;
+						stageData.kernel = nullptr;
+					}
+				}
+				else if (postIndex.extract("compositor:\"`S\"", &stageData.name)) {
+					try {
+						Program* compositor = filterLibrary.get(stageData.name);
+						temp->attachCompositor(compositor);
+					}
+					catch (std::invalid_argument e) {
+						ServiceLocator::getLoggingService().error("Not a valid compositing stage", e.what());
+					}
+					delete[] stageData.name;
+				}
+				if (postIndex.extract(", ")) continue;
+				if (postIndex.extract("]")) break;
+			}
+			// Verify
+			if (valid)
+				pipelineLibrary.add(pipelineData.name, temp);
+			else
+				delete temp;
+			// Cleanup
+			char* err = nullptr;
+			postIndex.extract("`?S`L", &err);
+			if (err) {
+				ServiceLocator::getLoggingService().error("Extra data at end of pipeline definition", err);
+				delete[] err;
+			}
+			delete[] pipelineData.name;
+		}
 		else if (postIndex.extract("`?S`L", &pipelineData.name)) {
-			type = NULL;
 			if (pipelineData.name) {
 				ServiceLocator::getLoggingService().error("Unexpected line in postprocessing index file", pipelineData.name);
 				delete[] pipelineData.name;
-			}
-		}
-		if (type && postIndex.extract("\"`S\" `I \"`S\"`L", &shaderData)) {
-			try {
-				shaderLibrary.add(shaderData.name, shaderData.samples, new Shader(path + shaderData.path, type));
-				if (shaderData.extra) ServiceLocator::getLoggingService().error("Extra data at end of shader definition", shaderData.extra);
-			}
-			catch (...) {
-				ServiceLocator::getLoggingService().badFileError(path + shaderData.path);
-			}
-			delete[] shaderData.name;
-			delete[] shaderData.path;
-			if (shaderData.extra) {
-				delete[] shaderData.extra;
-				shaderData.extra = NULL;
+				pipelineData.name = nullptr;
 			}
 		}
 	}

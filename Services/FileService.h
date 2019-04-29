@@ -26,7 +26,7 @@ public:
 	bool good() { return in.good(); };
 	const std::string getPath() const { return mPath; };
 	std::string getAll();
-	bool extract(const char* pattern, void* target);
+	bool extract(const char* pattern, void* target = nullptr);
 	void restart();
 	bool putBack(const char* pattern);
 	bool putBack(const char pattern);

@@ -252,8 +252,8 @@ bool Program::validate(bool allow_output) const {
 }
 
 void Program::use() const {
-	glUseProgram(mHandle);
 	validate();
+	glUseProgram(mHandle);
 }
 
 void Program::sendUniform(const char* name, const float value) const {

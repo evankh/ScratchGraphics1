@@ -73,7 +73,7 @@ void GameObject::render(Camera* c) {
 		mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 		mDisplayComponent->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));	// If things are sorted by Program for rendering, then all the references to Camera here can be removed!
 		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(c->getPosition()));
-		if (mTexture) mTexture->activate();
+		if (mTexture) mTexture->activate(0);	// This will make a lot more sense when DisplayComponent becomes an actual Component
 	}
 	if (mGeometryComponent)
 		if (mDisplayComponent && mDisplayComponent->isTesselated())

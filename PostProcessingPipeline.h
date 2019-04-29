@@ -22,7 +22,7 @@ struct ProcessingStage {
 	Program* filter;
 	ProgramData data;
 	int numInputs;
-	FrameBuffer** input;
+	FrameBuffer* input;
 	FrameBuffer* output;
 };
 
