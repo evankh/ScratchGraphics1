@@ -73,8 +73,8 @@ public:
 	void removeAll(unsigned int type);
 	bool link(bool allow_output);
 	bool link() { return link(true); };
-	bool validate(bool allow_output);
-	bool validate() { return validate(true); };
+	bool validate(bool allow_output) const;
+	bool validate() const { return validate(true); };
 	void use() const;	// I'm not sure if it's correct to call this const, because while it's not changing the Program object, it is affecting the OpenGL state.
 	void sendUniform(const char* name, const float value) const;	// Same goes for the uniforms
 	void sendUniform(const char* name, const float* matrix) const;

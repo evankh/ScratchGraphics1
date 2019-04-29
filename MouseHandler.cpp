@@ -6,7 +6,6 @@ MouseHandler& MouseHandler::getInstance() {
 	return *sInstance;
 }
 
-// It thoroughly irks me to have to rewrite all of this code instead of using inheritance, but since everything has to be static and static doesn't play nice with inheritance... I really did try.
 void MouseHandler::registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Receiver* receiver) {
 	// Relies entirely on outside code to not register the same receiver twice (which would probably break removal); should't be a problem, but something to keep in mind
 	if (receiver)	// Dunno why you would try registering NULL as a receiver, but might as well check it
@@ -107,7 +106,7 @@ void MouseHandler::dispatchAll() {
 			ServiceLocator::getLoggingService().log("mouse position: (" + std::to_string(mMousePosition[0]) + "," + std::to_string(mMousePosition[1]) + ")");
 			ServiceLocator::getLoggingService().log("index: " + std::to_string(index));
 			ServiceLocator::getLoggingService().log("world pos: (" + std::to_string(world_pos[0]) + "," + std::to_string(world_pos[1]) + "," + std::to_string(world_pos[2]) + ")");
-			cooldown = 10;
+			cooldown = -1;
 		}
 		else cooldown--;
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

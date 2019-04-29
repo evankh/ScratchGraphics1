@@ -3,6 +3,22 @@
 #include "ServiceLocator.h"
 #include "Shader.h"
 
+void ProgramData::use() {
+	if (numKernels == 1) {
+
+	}
+	else if (numKernels > 1) {
+
+	}
+	for (auto uniform : uniforms) {
+		
+	}
+	for (int i = 0; i < textures.size(); i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
+	}
+}
+
 Program* Program::sScreenDraw = NULL;
 
 Program::Program() {
@@ -17,7 +33,6 @@ Program::Program(const char* vs, const char* fs) {
 	if (mVS->shader) glAttachShader(mHandle, mVS->shader->mHandle);
 	if (mFS->shader) glAttachShader(mHandle, mFS->shader->mHandle);
 	link();
-	validate();
 	if (mVS->shader) glDetachShader(mHandle, mVS->shader->mHandle);
 	if (mFS->shader) glDetachShader(mHandle, mFS->shader->mHandle);
 }
@@ -37,7 +52,6 @@ Program::Program(Shader* vs, Shader* fs) {
 	if (mFS->shader) glAttachShader(mHandle, mFS->shader->mHandle);
 	if (mVS->shader) glAttachShader(mHandle, mVS->shader->mHandle);
 	link();
-	validate();
 	if (mVS->shader) glDetachShader(mHandle, mVS->shader->mHandle);
 	if (mFS->shader) glDetachShader(mHandle, mFS->shader->mHandle);
 }
@@ -56,7 +70,6 @@ Program::Program(Shader* vs, Shader* gs, Shader* fs) {
 	if (mGS->shader) glAttachShader(mHandle, mGS->shader->mHandle);
 	if (mFS->shader) glAttachShader(mHandle, mFS->shader->mHandle);
 	link();
-	validate();
 	if (mVS->shader) glDetachShader(mHandle, mVS->shader->mHandle);
 	if (mGS->shader) glDetachShader(mHandle, mGS->shader->mHandle);
 	if (mFS->shader) glDetachShader(mHandle, mFS->shader->mHandle);
@@ -70,7 +83,6 @@ Program::Program(char* vsFilepath, char* fsFilepath) {
 	glAttachShader(mHandle, mVS->shader->mHandle);
 	glAttachShader(mHandle, mFS->shader->mHandle);
 	link();
-	validate();
 	glDetachShader(mHandle, mVS->shader->mHandle);
 	glDetachShader(mHandle, mFS->shader->mHandle);
 }
@@ -221,7 +233,7 @@ bool Program::link(bool allow_output) {
 	return true;
 }
 
-bool Program::validate(bool allow_output) {
+bool Program::validate(bool allow_output) const {
 	glValidateProgram(mHandle);
 	int status;
 	glGetProgramiv(mHandle, GL_VALIDATE_STATUS, &status);
@@ -241,6 +253,7 @@ bool Program::validate(bool allow_output) {
 
 void Program::use() const {
 	glUseProgram(mHandle);
+	validate();
 }
 
 void Program::sendUniform(const char* name, const float value) const {

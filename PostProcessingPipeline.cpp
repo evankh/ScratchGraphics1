@@ -70,6 +70,7 @@ void PostProcessingPipeline::attach(Program* program, int numSamplersIn, int num
 */
 
 void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, float relativeScale) {
+	if (program->getSamplesIn() != mOutputFB->getSamplersOut()) throw std::invalid_argument("That stage won't fit here");
 	ProcessingStage stage;
 	stage.filter = program;
 	stage.data.numKernels = 0;
@@ -80,11 +81,48 @@ void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, f
 	stage.data.uniforms.add("uPixWidth", pixSize);
 	pixSize.f = 1.0f / (relativeScale * mWindowHeight);
 	stage.data.uniforms.add("uPixHeight", pixSize);
-	stage.numInputs = 1;
+	stage.numInputs = program->getSamplesIn();
 	stage.input = new FrameBuffer*;
 	stage.input[0] = mOutputFB;
 	stage.output = new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale);
+	mOutputFB = stage.output;
 	mProcessingStages.push_back(stage);
+	if (isCompositingInput) mCompositingInputs.push_back(mOutputFB);
+}
+
+void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, Kernel kernel, float relativeScale) {
+	attach(program, isCompositingInput, relativeScale);
+	auto that = mProcessingStages.back();
+	that.data.numKernels = 1;
+	that.data.kernels = new Kernel[1];
+	that.data.kernels[0] = kernel;
+}
+
+void PostProcessingPipeline::attach(Program* program, bool isCompositingInput, int numKernels, Kernel* kernels, float relativeScale) {
+	attach(program, isCompositingInput, relativeScale);
+	auto that = mProcessingStages.back();
+	that.data.numKernels = numKernels;
+	that.data.kernels = new Kernel[numKernels];
+	// Probably (definitely) can build this in Game and save the trouble of transferring it
+	for (int i = 0; i < numKernels; i++)
+		that.data.kernels[i] = kernels[i];
+}
+
+void PostProcessingPipeline::attachCompositor(Program* program) {
+	// Probably wrong actually, compositors should probably be able to take as many inputs as they like and use a uniform to say how many to use
+	if (program->getSamplesIn() != mCompositingInputs.size()) throw std::invalid_argument("That compositor won't fit here");
+	mCompositingStage = new ProcessingStage;
+	mCompositingStage->filter = program;
+	mCompositingStage->data.numKernels = 0;
+	mCompositingStage->data.kernels = nullptr;
+	Uniform pixelsize;
+	pixelsize.type = UniformType::FLOAT;
+	pixelsize.f = 1.0f / mWindowWidth;
+	mCompositingStage->data.uniforms.add("uPixWidth", pixelsize);
+	pixelsize.f = 1.0f / mWindowHeight;
+	mCompositingStage->data.uniforms.add("uPixHeight", pixelsize);
+	mCompositingStage->numInputs = mCompositingInputs.size();
+	mCompositingStage->input = mCompositingInputs.data();
 }
 
 #include "Geometry.h"

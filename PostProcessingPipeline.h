@@ -34,7 +34,7 @@ private:
 	FrameBuffer* mOutputFB;
 	std::vector<ProcessingStage> mProcessingStages;
 	ProcessingStage* mCompositingStage = nullptr;
-	//std::vector<FrameBuffer*> mCompositingInputs;
+	std::vector<FrameBuffer*> mCompositingInputs;
 public:
 	PostProcessingPipeline();
 	~PostProcessingPipeline();
@@ -45,10 +45,11 @@ public:
 	void attach(Program* program, bool isCompositingInput, float relativeScale = 1.0f);
 	void attach(Program* program, bool isCompositingInput, Kernel kernel, float relativeScale = 1.0f);
 	void attach(Program* program, bool isCompositingInput, int numKernels, Kernel* kernels, float relativeScale = 1.0f);
+	void attachCompositor(Program* compositor);
 	void process();
-	void draw();
+	void draw();	// Draw from the output of this PPP
 	void resize(unsigned int width, unsigned int height);
-	void enableDrawing();
+	void enableDrawing();	// Enable drawing onto the input this PPP
 	void clear();
 };
 

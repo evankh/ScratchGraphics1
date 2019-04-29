@@ -33,7 +33,7 @@ void Game::init() {
 }
 
 void Game::load() {
-	// Load certain very important objects
+	// Load certain very important objects (Shaders?)
 	mCommonLibraries.standard.geometries.add("plane", Geometry::getNewQuad());
 	// Load everything else from file
 	FileService baseIndex(mAssetBasePath + mIndexFilename);
@@ -386,15 +386,15 @@ void Game::handle(Event event) {
 			}
 			break;
 		case 'p':
-			if (mCurrentPostProcessing == mCommonLibraries.post.pipelines.get("none")) {
+			if (mCommonLibraries.post.pipelines.contains("none") && mCurrentPostProcessing == mCommonLibraries.post.pipelines.get("none")) {
 				ServiceLocator::getLoggingService().log("======== POSTPROCESSING: Sobel ========");
 				mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("Sobel");
 			}
-			else if (mCurrentPostProcessing==mCommonLibraries.post.pipelines.get("Sobel")) {
+			else if (mCommonLibraries.post.pipelines.contains("Sobel") && mCurrentPostProcessing==mCommonLibraries.post.pipelines.get("Sobel")) {
 				ServiceLocator::getLoggingService().log("======== POSTPROCESSING: bloom ========");
 				mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("bloom");
 			}
-			else if (mCurrentPostProcessing == mCommonLibraries.post.pipelines.get("bloom")) {
+			else if (mCommonLibraries.post.pipelines.contains("bloom") && mCurrentPostProcessing == mCommonLibraries.post.pipelines.get("bloom")) {
 				ServiceLocator::getLoggingService().log("======== POSTPROCESSING: none ========");
 				mCurrentPostProcessing = mCommonLibraries.post.pipelines.get("none");
 			}
@@ -767,7 +767,7 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 			//  - A name, a scale and n kernels ("name":1.0:["kernel1","kernel2","kernel3"])
 			// The name may optionally have an asterisk after, to mark it as an output for the compositor
 			// Compositor must come last? Maybe not?
-			// And the number of inputs and outputs need to match, and the number of kernels in each stage needs to match the number of outputs for that stage
+			// And the number of inputs and outputs need to match, and the number of kernels in each stage needs to match the number of outputs for the previous stage
 			PostProcessingPipeline* temp = new PostProcessingPipeline();
 			int compositingInputs = 0;
 			temp->init(mWindow->getWidth(), mWindow->getHeight());
@@ -808,7 +808,13 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 						stageValid = false;
 					}
 					else {
-						if (stageValid) temp->attach(filter, compositingInputs, filter->getSamplesOut());
+						if (stageValid) {
+							try { temp->attachCompositor(filter); }
+							catch (std::invalid_argument e) {
+								ServiceLocator::getLoggingService().error(e.what(), stageData.name);
+								pipelineValid = false;
+							}
+						}
 						else pipelineValid = false;
 					}
 					continue;
@@ -839,7 +845,13 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 						ServiceLocator::getLoggingService().error("Kernel not found", e.what());
 						stageValid = false;
 					}
-					if (stageValid) temp->attach(filter, compositingOutput, filter->getSamplesIn(), filter->getSamplesOut(), kernel, stageData.scale);
+					if (stageValid) {
+						try { temp->attach(filter, compositingOutput, kernel, stageData.scale); }
+						catch (std::invalid_argument e) {
+							ServiceLocator::getLoggingService().error(e.what(), stageData.name);
+							pipelineValid = false;
+						}
+					}
 					else pipelineValid = false;
 				}
 				else if (kernels.size() > 0) {
@@ -855,11 +867,23 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 							// Don't break, keep going and print out all the error messages
 						}
 					}
-					if (stageValid) temp->attach(filter, compositingOutput, filter->getSamplesIn(), filter->getSamplesOut(), kernels.size(), allKernels, stageData.scale);
+					if (stageValid) {
+						try { temp->attach(filter, compositingOutput, kernels.size(), allKernels, stageData.scale); }
+						catch (std::invalid_argument e) {
+							ServiceLocator::getLoggingService().error(e.what(), stageData.name);
+							pipelineValid = false;
+						}
+					}
 					else pipelineValid = false;
 				}
 				else {
-					if (stageValid) temp->attach(filter, compositingOutput, filter->getSamplesIn(), filter->getSamplesOut(), Kernel{ 0,NULL }, stageData.scale);
+					if (stageValid) {
+						try { temp->attach(filter, compositingOutput, stageData.scale); }
+						catch (std::invalid_argument e) {
+							ServiceLocator::getLoggingService().error(e.what(), stageData.name);
+							pipelineValid = false;
+						}
+					}
 					else pipelineValid = false;
 				};
 				if (stageValid && compositingOutput) compositingInputs++;
