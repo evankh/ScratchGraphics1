@@ -1,9 +1,26 @@
 #include "FrameBuffer.h"
-#include "Geometry.h"
-#include "ServiceLocator.h"
-#include "GL\glew.h"
 
-const GLenum FRAMEBUFFER_ATTACHMENTS[] = {
+#include "GL/glew.h"
+#include "ServiceLocator.h"
+
+// This would make much more sense if I could somehow make my enum have members, e.g. AttachmentType::COLOR.size == GL_RGBA32F
+// There may be some way to make that syntax work but I think it's more complicated than necessary
+GLint attachmentSizes[] = {
+	GL_RGBA32F,
+	GL_R32UI,
+	GL_DEPTH_COMPONENT
+};
+GLint attachmentFormats[] = {
+	GL_RGBA,
+	GL_RED_INTEGER,
+	GL_DEPTH_COMPONENT
+};
+GLint attachmentTypes[] = {
+	GL_FLOAT,
+	GL_UNSIGNED_INT,
+	GL_FLOAT
+};
+GLenum attachments[] = {
 	GL_COLOR_ATTACHMENT0,
 	GL_COLOR_ATTACHMENT1,
 	GL_COLOR_ATTACHMENT2,
@@ -16,87 +33,88 @@ const GLenum FRAMEBUFFER_ATTACHMENTS[] = {
 	GL_COLOR_ATTACHMENT9,
 };
 
-FrameBuffer::FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale, int samplersOut) {
-	mRelativeScale = scale;
-	mWidth = (int)(mRelativeScale * windowWidth);
-	mHeight = (int)(mRelativeScale * windowHeight);
-	mSamplersOut = samplersOut;
-	mColorTextureHandles = new unsigned int[mSamplersOut];
+Framebuffer::Framebuffer(unsigned int width, unsigned int height, float baseScale) {
+	mRelativeScale = baseScale;
+	mWidth = (unsigned int)(width * baseScale);
+	mHeight = (unsigned int)(height * baseScale);
 	glGenFramebuffers(1, &mHandle);
+}
 
-	// Attach the typical images to it: Color, Depth
+Framebuffer::~Framebuffer() {
+	glDeleteFramebuffers(1, &mHandle);
+	glDeleteTextures(mAttachments.size(), mAttachments.data());
+	glDeleteTextures(1, &mDepthAttachment);
+	mAttachments.clear();
+}
+
+void Framebuffer::attach(AttachmentType type) {
+	unsigned int handle;
 	glBindFramebuffer(GL_FRAMEBUFFER, mHandle);
-	glGenTextures(mSamplersOut, mColorTextureHandles);
-	for (int i = 0; i < mSamplersOut; i++) {
-		glBindTexture(GL_TEXTURE_2D, mColorTextureHandles[i]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, FRAMEBUFFER_ATTACHMENTS[i], GL_TEXTURE_2D, mColorTextureHandles[i], 0);
-	}
-	glDrawBuffers(mSamplersOut, FRAMEBUFFER_ATTACHMENTS);
-
-	glGenTextures(1, &mDepthTextureHandle);
-	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
+	glGenTextures(1, &handle);
+	glBindTexture(GL_TEXTURE_2D, handle);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, mWidth, mHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTextureHandle, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexImage2D(GL_TEXTURE_2D, 0, attachmentSizes[type], mWidth, mHeight, 0, attachmentFormats[type], attachmentTypes[type], NULL);
+	if (type == ATTACHMENT_DEPTH) {
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, handle, 0);
+		mDepthAttachment = handle;
+	}
+	else {
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + mAttachments.size(), GL_TEXTURE_2D, handle, 0);
+		mAttachments.push_back(handle);
+		mTypes.push_back(type);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDrawBuffers(mAttachments.size(), attachments);
+}
 
+void Framebuffer::validate() {
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		switch (glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
 			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+			throw std::invalid_argument("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
 			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER");
+			throw std::invalid_argument("GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER");
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
 			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+			throw std::invalid_argument("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
 			break;
 		default:
 			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", std::to_string((int)glCheckFramebufferStatus(GL_FRAMEBUFFER)));
+			throw std::invalid_argument(std::to_string((int)glCheckFramebufferStatus(GL_FRAMEBUFFER)));
 			break;
 		}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	Geometry::getScreenQuad()->transfer();
 }
 
-FrameBuffer::~FrameBuffer() {
-	glDeleteFramebuffers(1, &mHandle);
-	glDeleteTextures(mSamplersOut, mColorTextureHandles);
-	glDeleteTextures(1, &mDepthTextureHandle);
+void Framebuffer::resize(unsigned int width, unsigned int height) {
+	mWidth = (unsigned int)(width * mRelativeScale);
+	mHeight = (unsigned int)(height * mRelativeScale);
+	for (unsigned int i = 0; i < mAttachments.size(); i++) {
+		unsigned int handle = mAttachments[i];
+		AttachmentType type = mTypes[i];
+		glBindTexture(GL_TEXTURE_2D, handle);
+		glTexImage2D(GL_TEXTURE_2D, 0, attachmentSizes[type], mWidth, mHeight, 0, attachmentFormats[type], attachmentTypes[type], NULL);
+	}
+	glBindTexture(GL_TEXTURE_2D, mDepthAttachment);
+	glTexImage2D(GL_TEXTURE_2D, 0, attachmentSizes[ATTACHMENT_DEPTH], mWidth, mHeight, 0, attachmentFormats[ATTACHMENT_DEPTH], attachmentTypes[ATTACHMENT_DEPTH], NULL);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-// Activate the FrameBuffer as a target for drawing.
-void FrameBuffer::setActive() {
-	glBindFramebuffer(GL_FRAMEBUFFER, mHandle);
+void Framebuffer::setAsDrawingTarget() {
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mHandle);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, mWidth, mHeight);
 }
 
-// Activate the outputs of the FrameBuffer as inputs for drawing.
-void FrameBuffer::activate(int start) {
-	for (int i = 0; i < mSamplersOut; i++) {
+void Framebuffer::setAsTextureSource(int start) {
+	for (unsigned int i = 0; i < mAttachments.size(); i++) {
 		glActiveTexture(GL_TEXTURE0 + i + start);
-		glBindTexture(GL_TEXTURE_2D, mColorTextureHandles[i]);
+		glBindTexture(GL_TEXTURE_2D, mAttachments[i]);
 	}
-	glActiveTexture(GL_TEXTURE0 + mSamplersOut + start);
-	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
-	glActiveTexture(GL_TEXTURE0);
-}
-
-void FrameBuffer::resize(unsigned int width, unsigned int height) {
-	mWidth = (int)(mRelativeScale * width);
-	mHeight = (int)(mRelativeScale * height);
-	for (int i = 0; i < mSamplersOut; i++) {
-		glBindTexture(GL_TEXTURE_2D, mColorTextureHandles[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-	}
-	glBindTexture(GL_TEXTURE_2D, mDepthTextureHandle);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, mWidth, mHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }

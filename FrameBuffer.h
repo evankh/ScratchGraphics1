@@ -1,23 +1,34 @@
-#ifndef __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
-#define __EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
+#ifndef __EKH_SCRATCH_GRAPHICS_1_FRAMEBUFFER__
+#define __EKH_SCRATCH_GRAPHICS_1_FRAMEBUFFER__
 
-class FrameBuffer {
-private:
-	unsigned int mHandle;
-	unsigned int* mColorTextureHandles = nullptr;
-	unsigned int mDepthTextureHandle;
-	float mRelativeScale;
-	unsigned int mWidth, mHeight;
-	int mSamplersOut;
-public:
-	FrameBuffer(unsigned int windowWidth, unsigned int windowHeight, float scale = 1.0f, int samplersOut = 1);
-	~FrameBuffer();
-	void setActive();
-	void activate(int start);
-	void resize(unsigned int width, unsigned int height);
-	float getRelativeScale() const { return mRelativeScale; };
-	int getSamplersOut() const { return mSamplersOut; };
-	unsigned int const* getOutputTextures() const { return mColorTextureHandles; };
+#include <map>
+#include <vector>
+
+enum AttachmentType {
+	ATTACHMENT_COLOR = 0,
+	ATTACHMENT_INTEGER,
+	ATTACHMENT_DEPTH
 };
 
-#endif//__EKH_SCRATCH_GRAPHICS_1_FRAME_BUFFER__
+class Framebuffer {
+private:
+	unsigned int mHandle;
+	unsigned int mWidth, mHeight;
+	float mRelativeScale = 1.0f;
+	std::vector<unsigned int> mAttachments;
+	unsigned int mDepthAttachment;
+	std::vector<AttachmentType> mTypes;
+public:
+	Framebuffer(unsigned int width, unsigned int height, float relativeScale = 1.0f);
+	~Framebuffer();
+	void attach(AttachmentType type);
+	void validate();
+	void resize(unsigned int width, unsigned int height);
+	void setAsDrawingTarget();
+	void setAsTextureSource(int start = 0);
+	int getNumAttachments() const { return mAttachments.size(); };
+	float getPixelWidth() const { return 1.0f / (mWidth * mRelativeScale); };
+	float getPixelHeight() const { return 1.0f / (mHeight * mRelativeScale); };
+};
+
+#endif//__EKH_SCRATCH_GRAPHICS_1_FRAMEBUFFER__

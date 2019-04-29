@@ -253,7 +253,6 @@ void Game::render(float dt) {
 	//    - render all menu items
 
 	float debug_true[]{ 0.0f,1.0f,0.0f,0.5f }, debug_false[]{ 0.0f,0.0f,1.0f,0.5f };
-	//mCurrentPostProcessing = nullptr;
 
 	// Set the active framebuffer to the appropriate target:
 	if (mCurrentPostProcessing) mCurrentPostProcessing->setAsDrawTarget();	// If we're doing any scene PP, draw on that
@@ -340,13 +339,6 @@ void Game::render(float dt) {
 		program->sendUniform("uObjectID", object->getIndex());
 		object->render(program);
 	}
-	Geometry::getScreenQuad()->render();
-	// DEBUG
-	mWindow->enableDrawing();
-	program = mCommonLibraries.post.filters.get("select");
-	program->use();
-	program->sendUniform("uSelector", mDebugStageSelection);
-	MouseHandler::getInstance().draw();
 	Geometry::getScreenQuad()->render();
 	*/
 }
@@ -799,173 +791,6 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 				filterLibrary.add(filterData.name, filter);
 			}
 		}
-		/*
-		else if (postIndex.extract("Pipeline \"`S\" [", &pipelineData)) {
-			type = NULL;
-			// Read filter names or filter/kernel pairs from the list, check their existence, then add them to the pipeline
-			// Pretty sure this bit in particular has piles of memory leaks and data not being cleared
-			// Needs to handle:
-			//  - Just a name ("name")
-			//  - A name and a scale ("name":1.0)
-			//  - A name and a kernel ("name":"kernel")
-			//  - A name and n kernels ("name":["kernel1","kernel2","kernel3"])
-			//  - A name, a scale and n kernels ("name":1.0:["kernel1","kernel2","kernel3"])
-			// The name may optionally have an asterisk after, to mark it as an output for the compositor
-			// Compositor must come last? Maybe not?
-			// And the number of inputs and outputs need to match, and the number of kernels in each stage needs to match the number of outputs for the previous stage
-			PostProcessingPipeline* temp = new PostProcessingPipeline();
-			int compositingInputs = 0;
-			temp->init(mWindow->getWidth(), mWindow->getHeight());
-			std::vector<char*> kernels;
-			bool pipelineValid = true;
-			while (pipelineValid && !postIndex.extract("]", NULL)) {
-				bool stageValid = true, compositingOutput = false;
-				if (postIndex.extract("\"`S\"", &stageData.name)) {
-					compositingOutput = postIndex.extract("*", NULL);
-					if (postIndex.extract(":`F", &stageData.scale));
-					if (postIndex.extract(":\"`S\"", &stageData.kernel));
-					else if (postIndex.extract(":[", NULL)) {
-						kernels.push_back(NULL);
-						while (!postIndex.extract("]", NULL)) {
-							postIndex.extract("\"`S\"", &kernels.back());
-							kernels.push_back(NULL);
-							postIndex.extract(",", NULL);
-						}
-						kernels.pop_back();	// Remove the last NULL
-					}
-				}
-				else if (postIndex.extract("compositor:\"`S\"", &stageData.name)) {
-					Program* filter = NULL;
-					try {
-						filter = filterLibrary.get(stageData.name);
-					}
-					catch (std::exception e) {
-						ServiceLocator::getLoggingService().error("Filter not found", e.what());
-						stageValid = false;
-					}
-					// Won't have any kernels, so don't bother with that
-					// Shouldn't have any additional stages after (for now), so can just skip to the end
-					char* err;
-					if (postIndex.extract("`S]", &err)) {
-						ServiceLocator::getLoggingService().error("Extra data after compositing definition", err);
-						delete[] err;
-						postIndex.putBack(']');
-						stageValid = false;
-					}
-					else {
-						if (stageValid) {
-							try { temp->attachCompositor(filter); }
-							catch (std::invalid_argument e) {
-								ServiceLocator::getLoggingService().error(e.what(), stageData.name);
-								pipelineValid = false;
-							}
-						}
-						else pipelineValid = false;
-					}
-					continue;
-				}
-				else {
-					char* err;
-					postIndex.extract("`S`L", &err);
-					ServiceLocator::getLoggingService().error("Malformed filter name", err);
-					delete[] err;
-					pipelineValid = false;
-					break;
-				}
-				// Add stage to pipeline
-				Program* filter = NULL;
-				try {
-					filter = filterLibrary.get(stageData.name);
-				}
-				catch (std::exception e) {
-					ServiceLocator::getLoggingService().error("Filter not found", e.what());
-					stageValid = false;
-				}
-				if (stageData.kernel) {
-					Kernel kernel{ 0, NULL };
-					try {
-						kernel = kernelLibrary.get(stageData.kernel);
-					}
-					catch (std::exception e) {
-						ServiceLocator::getLoggingService().error("Kernel not found", e.what());
-						stageValid = false;
-					}
-					if (stageValid) {
-						try { temp->attach(filter, compositingOutput, kernel, stageData.scale); }
-						catch (std::invalid_argument e) {
-							ServiceLocator::getLoggingService().error(e.what(), stageData.name);
-							pipelineValid = false;
-						}
-					}
-					else pipelineValid = false;
-				}
-				else if (kernels.size() > 0) {
-					Kernel* allKernels = new Kernel[kernels.size()];
-					// Confirm validity of all kernels
-					for (unsigned int i = 0; i < kernels.size(); i++) {
-						try {
-							allKernels[i] = kernelLibrary.get(kernels[i]);
-						}
-						catch (std::out_of_range e) {
-							stageValid = false;
-							ServiceLocator::getLoggingService().error("Kernel not found", e.what());
-							// Don't break, keep going and print out all the error messages
-						}
-					}
-					if (stageValid) {
-						try { temp->attach(filter, compositingOutput, kernels.size(), allKernels, stageData.scale); }
-						catch (std::invalid_argument e) {
-							ServiceLocator::getLoggingService().error(e.what(), stageData.name);
-							pipelineValid = false;
-						}
-					}
-					else pipelineValid = false;
-				}
-				else {
-					if (stageValid) {
-						try { temp->attach(filter, compositingOutput, stageData.scale); }
-						catch (std::invalid_argument e) {
-							ServiceLocator::getLoggingService().error(e.what(), stageData.name);
-							pipelineValid = false;
-						}
-					}
-					else pipelineValid = false;
-				};
-				if (stageValid && compositingOutput) compositingInputs++;
-				// Cleanup
-				for (unsigned int i = 0; i < kernels.size(); i++)
-					delete kernels[i];
-				kernels.clear();
-				delete[] stageData.name;
-				stageData.scale = 1.0f;
-				if (stageData.kernel) {
-					delete[] stageData.kernel;
-					stageData.kernel = NULL;
-				}
-				if (postIndex.extract(", ", NULL)) continue;
-				else if (postIndex.extract("]", NULL)) break;
-				else {
-					// Wrong separator
-					pipelineValid = false;
-					break;
-				}
-			}
-			if (pipelineValid) {
-				pipelineLibrary.add(pipelineData.name, temp);
-				// No need to delete temp, the library owns it now
-				char* err;
-				postIndex.extract("`?S`L", &err);
-				if (err) {
-					ServiceLocator::getLoggingService().error("Extra data found at end of pipeline", err);
-					delete[] err;
-				}
-			}
-			else {
-				delete[] temp;
-			}
-			delete[] pipelineData.name;
-		}
-		*/
 		else if (postIndex.extract("Pipeline \"`S\" [", &pipelineData)) {
 			PostprocessingPipeline* temp = new PostprocessingPipeline(mWindow->getWidth(), mWindow->getHeight());
 			bool valid = true;
@@ -1018,7 +843,14 @@ void Game::parsePostprocessingIndex(std::string path, ShaderManager &shaderLibra
 						}
 					}
 					// Add
-					if (stageValid) temp->attach(stage, compositingInput);
+					if (stageValid) {
+						try { temp->attach(stage, compositingInput); }
+						catch (std::invalid_argument e) {
+							ServiceLocator::getLoggingService().error(stageData.name, e.what());
+							valid = false;
+							delete temp;
+						}
+					}
 					else valid = false;
 					// Cleanup
 					delete[] stageData.name;
