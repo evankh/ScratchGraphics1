@@ -38,7 +38,7 @@ public:
 	void resize(unsigned int width, unsigned int height);
 	bool getButtonStatus(MouseButton button) const { return mButtonStatus[button]; };
 	int getMouseX() const { return mMousePosition[0]; };
-	int getMouseY() const { return mMousePosition[1]; };
+	int getMouseY() const { return mWindowHeight - mMousePosition[1]; };
 	int const* getDragStartPosition(MouseButton button) const;
 	void registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Receiver* receiver);
 	void registerReceiver(MouseButton button, Receiver* receiver);

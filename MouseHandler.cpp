@@ -97,27 +97,6 @@ void MouseHandler::dispatchAll() {
 			data.local_pos[i] = localPos[i];
 		}
 		if (index) mMouseoverReceivers[index]->handle(Event(data));
-		static int cooldown = 100;
-		if (cooldown < 0) {
-			cooldown = 100;
-			ServiceLocator::getLoggingService().log("Index: " + std::to_string(index));
-			ServiceLocator::getLoggingService().log("worldPos: (" + std::to_string(worldPos[0]) + "," + std::to_string(worldPos[1]) + "," + std::to_string(worldPos[2]) + "," + std::to_string(worldPos[3]) + ")");
-			ServiceLocator::getLoggingService().log("localPos: (" + std::to_string(localPos[0]) + "," + std::to_string(localPos[1]) + "," + std::to_string(localPos[2]) + "," + std::to_string(localPos[3]) + ")");
-		}
-		else {
-			cooldown--;
-		}
-		/*static bool generated = false;
-		static bool array[200][200];
-		if (!generated) {
-			generated = true;
-			for (int x = 0; x < 200; x++) {
-				for (int y = 0; y < 200; y++) {
-					mFramebuffer->getPixel(326 + x, y + 200, 0, &index);
-					array[x][y] = (index == 157);
-				}
-			}
-		}*/
 	}
 }
 

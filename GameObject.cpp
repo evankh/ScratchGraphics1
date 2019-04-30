@@ -57,6 +57,7 @@ void GameObject::update(float dt) {
 			mHasMouseOver = true;
 	}
 	if (mState) mState->update(mPhysicsComponent, dt);
+	if (mCameraComponent) mCameraComponent->update(dt);
 	if (mAudioComponent) mAudioComponent->update();
 }
 
@@ -103,6 +104,9 @@ GameObject* GameObject::copy() const {
 	if (mAudioComponent) result->mAudioComponent = mAudioComponent->copy(result->mPhysicsComponent);
 	result->mSounds = mSounds;
 	if (mState) result->setState(mState->getEntry(result));
-	if (mCameraComponent) result->mCameraComponent = mCameraComponent->copy();
+	if (mCameraComponent) {
+		result->mCameraComponent = mCameraComponent->copy();
+		result->mCameraComponent->setPhysics(result->getPhysicsComponent());
+	}
 	return result;
 }

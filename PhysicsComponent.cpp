@@ -52,6 +52,19 @@ void PhysicsComponent::translate(glm::vec3 dxyz) {
 	if (mBounds) mBounds->translate(dxyz);
 }
 
+void PhysicsComponent::set(const PhysicsComponent* other) {
+	mScale = other->mScale;
+	mPosition = other->mPosition;
+	mVelocity = other->mVelocity;
+	mAcceleration = other->mAcceleration;
+	mRotation = other->mRotation;
+	mAxis = other->mAxis;
+	mAngularVelocity = other->mAngularVelocity;
+	if (mBounds) delete mBounds;
+	if (other->mBounds) mBounds = other->mBounds->copy();
+	else mBounds = nullptr;
+}
+
 void PhysicsComponent::rotate(glm::vec3 axis, float degrees) {
 	mRotation = glm::rotate(mRotation, glm::radians(degrees), axis);
 	if (mBounds) mBounds->rotate(axis, degrees);
@@ -95,6 +108,6 @@ PhysicsComponent* PhysicsComponent::copy() const {
 	result->mAngularVelocity = mAngularVelocity;
 	delete result->mBounds;
 	if (mBounds) result->mBounds = mBounds->copy();
-	else result->mBounds = NULL;
+	else result->mBounds = nullptr;
 	return result;
 }

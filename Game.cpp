@@ -326,7 +326,6 @@ void Game::render(float dt) {
 
 	// Mouse picking stuff
 	MouseHandler::getInstance().setAsDrawingTarget();
-	//mWindow->enableDrawing();
 	Program* prog = mCommonLibraries.standard.programs.get("mouse_selection");
 	prog->use();
 	if (mWorkingActiveCamera) {
@@ -337,12 +336,6 @@ void Game::render(float dt) {
 			object->render(prog);
 		}
 	}
-	//*
-	prog = mCommonLibraries.post.filters.get("none");
-	prog->use();
-	MouseHandler::getInstance().setAsTextureSource();
-	mWindow->enableDrawing();
-	Geometry::getScreenQuad()->render();//*/
 }
 
 void Game::resize(unsigned int width, unsigned int height) {

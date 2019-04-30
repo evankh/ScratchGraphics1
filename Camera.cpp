@@ -54,6 +54,7 @@ glm::mat4& Camera::getViewProjectionMatrix() {
 }
 
 void PerspCamera::update(float dt) {
+	// Camera should lose ownership of its PhysicsComponent now that it's become a Component of GameObject itself
 	mPhysicsComponent->update(dt);
 	mViewProjectionMatrix = mProjectionMatrix * mPhysicsComponent->getInverseModelMatrix();
 }

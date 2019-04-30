@@ -16,6 +16,7 @@ public:
 	glm::mat4& getViewProjectionMatrix();
 	virtual glm::vec3 getPosition() const = 0;
 	virtual PhysicsComponent* getPhysics() const = 0;
+	virtual void setPhysics(PhysicsComponent* physics) = 0;
 	virtual Camera* copy() const = 0;
 	virtual void update(float dt) = 0;
 };
@@ -30,6 +31,7 @@ public:
 	void resize(unsigned int width, unsigned int height) final;
 	glm::vec3 getPosition() const final { return mPhysicsComponent->getPosition(); };
 	PhysicsComponent* getPhysics() const final { return mPhysicsComponent; };
+	void setPhysics(PhysicsComponent* physics) final { delete mPhysicsComponent; mPhysicsComponent = physics; };
 	Camera* copy() const final;
 	void update(float dt) final;
 };
@@ -39,7 +41,8 @@ public:
 	OrthoCamera(unsigned int width, unsigned int height);
 	void resize(unsigned int width, unsigned int height) final;
 	glm::vec3 getPosition() const final { return glm::vec3(INFINITY); };
-	PhysicsComponent* getPhysics() const final { return NULL; };
+	PhysicsComponent* getPhysics() const final { return nullptr; };
+	void setPhysics(PhysicsComponent* physics) final {};
 	Camera* copy() const final;
 	void update(float dt) final {};
 };

@@ -11,6 +11,7 @@ private:
 	GameObject* mOwner;
 	bool mLeftDrag = false, mRightDrag = false;
 	int mLeftDragStartPos[2], mRightDragStartPos[2];
+	PhysicsComponent* mDragStart = nullptr;
 	glm::vec3 mOrbitCenter;
 public:
 	CameraState(GameObject* owner) :mOwner(owner) {};
