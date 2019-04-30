@@ -2,7 +2,10 @@
 
 MouseHandler& MouseHandler::getInstance() {
 	static MouseHandler* sInstance = new MouseHandler;
-	if (!sInstance->mRegisteredReceivers) sInstance->mRegisteredReceivers = new ReceiverNode*[EKH_MOUSE_NUM_BUTTONS] {NULL};
+	if (!sInstance->mRegisteredReceivers) {
+		sInstance->mRegisteredReceivers = new ReceiverNode*[EKH_MOUSE_NUM_BUTTONS] {NULL};
+		sInstance->mMouseoverReceivers.push_back(nullptr);
+	}
 	return *sInstance;
 }
 
@@ -67,125 +70,74 @@ void MouseHandler::step() {
 }
 
 void MouseHandler::resize(unsigned int width, unsigned int height) {
-	if (width != mWindowSize[0] || height != mWindowSize[1]) {
-		cleanup();
-		init(width, height);
-	}
+	mWindowWidth = width;
+	mWindowHeight = height;
+	if (mFramebuffer) mFramebuffer->resize(width, height);
 }
 
-#include "GL/glew.h"
 #include "ServiceLocator.h"
 
 void MouseHandler::dispatchAll() {
 	Handler::dispatchAll();
-	static int cooldown = 10;
-	if (mReadyToRead) {
-		// Sample textures
-		unsigned int index = 0;
-		float world_pos[4]{ 0.0f,0.0f,0.0f,0.0f };
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, mFramebufferHandle);
-		// glBindFramebuffer sometimes (but not always) gives a GL_INVALID_OPERATION error even though it's obviously a valid framebuffer (and glIsFramebuffer confirms it).
-		// This appears to be something of a known issue? (https://devtalk.nvidia.com/default/topic/1026791/glbindframebuffer-with-a-valid-framebuffer-gives-gl_invalid_operation/)
-		int error = glGetError();
-		if (error) ServiceLocator::getLoggingService().error("glBindFramebuffer error", std::to_string(error));
-		glClampColor(GL_CLAMP_READ_COLOR, GL_FALSE);
-		glReadBuffer(GL_COLOR_ATTACHMENT0);
-		glReadPixels(mMousePosition[0], mMousePosition[1], 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &index);
-		error = glGetError();
-		if (error) ServiceLocator::getLoggingService().error("glReadPixels error", std::to_string(error));
-		//if (index) {
-			glReadBuffer(GL_COLOR_ATTACHMENT1);
-			glReadnPixels(mMousePosition[0], mMousePosition[1], 1, 1, GL_RGBA, GL_FLOAT, 4 * sizeof(float), world_pos);
-			error = glGetError();
-			if (error) ServiceLocator::getLoggingService().error("glReadnPixels error", std::to_string(error));
-			// Notify the Receiver
-			MouseoverData eventdata{ mMousePosition[0], mMousePosition[1], world_pos[0], world_pos[1], world_pos[2] };
-			//mMouseoverReceivers[index]->handle(eventdata);
-		//}
-		if (cooldown == 0) {
-			ServiceLocator::getLoggingService().log("mouse position: (" + std::to_string(mMousePosition[0]) + "," + std::to_string(mMousePosition[1]) + ")");
-			ServiceLocator::getLoggingService().log("index: " + std::to_string(index));
-			ServiceLocator::getLoggingService().log("world pos: (" + std::to_string(world_pos[0]) + "," + std::to_string(world_pos[1]) + "," + std::to_string(world_pos[2]) + ")");
-			cooldown = -1;
+	if (mFramebuffer) {
+		mFramebuffer->validate();
+		// Find the moused-over object
+		// Dispatch an event to that object
+		unsigned int index = 0u;
+		float worldPos[4] = { 0.1f, 0.1f, 0.1f, 0.1f };
+		float localPos[4] = { 0.8f, 0.8f, 0.8f, 0.8f };
+		mFramebuffer->getPixel(mMousePosition[0], mWindowHeight - mMousePosition[1], 0, &index);
+		mFramebuffer->getPixel(mMousePosition[0], mWindowHeight - mMousePosition[1], 1, worldPos);
+		mFramebuffer->getPixel(mMousePosition[0], mWindowHeight - mMousePosition[1], 2, localPos);
+		MouseoverData data;
+		data.mouse_x = mMousePosition[0];
+		data.mouse_y = mWindowWidth - mMousePosition[1];
+		for (int i = 0; i < 3; i++) {
+			data.world_pos[i] = worldPos[i];
+			data.local_pos[i] = localPos[i];
 		}
-		else cooldown--;
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		if (index) mMouseoverReceivers[index]->handle(Event(data));
+		static int cooldown = 100;
+		if (cooldown < 0) {
+			cooldown = 100;
+			ServiceLocator::getLoggingService().log("Index: " + std::to_string(index));
+			ServiceLocator::getLoggingService().log("worldPos: (" + std::to_string(worldPos[0]) + "," + std::to_string(worldPos[1]) + "," + std::to_string(worldPos[2]) + "," + std::to_string(worldPos[3]) + ")");
+			ServiceLocator::getLoggingService().log("localPos: (" + std::to_string(localPos[0]) + "," + std::to_string(localPos[1]) + "," + std::to_string(localPos[2]) + "," + std::to_string(localPos[3]) + ")");
+		}
+		else {
+			cooldown--;
+		}
+		/*static bool generated = false;
+		static bool array[200][200];
+		if (!generated) {
+			generated = true;
+			for (int x = 0; x < 200; x++) {
+				for (int y = 0; y < 200; y++) {
+					mFramebuffer->getPixel(326 + x, y + 200, 0, &index);
+					array[x][y] = (index == 157);
+				}
+			}
+		}*/
 	}
 }
 
 void MouseHandler::init(unsigned int width, unsigned int height) {
-	mWindowSize[0] = width;
-	mWindowSize[1] = height;
-	glGenFramebuffers(1, &mFramebufferHandle);
-	glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferHandle);
-	int error = glGetError();
-	glGenTextures(3, mTextureHandles);
-	GLenum attachments[]{ GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_DEPTH_ATTACHMENT };
-	GLint sizes[]{ GL_R32UI, GL_RGBA32F, GL_DEPTH_COMPONENT };
-	GLint formats[]{ GL_RED_INTEGER, GL_RGBA, GL_DEPTH_COMPONENT };
-	GLenum types[]{ GL_UNSIGNED_INT, GL_FLOAT, GL_FLOAT };
-	for (int i = 0; i < 3; i++) {
-		glBindTexture(GL_TEXTURE_2D, mTextureHandles[i]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, sizes[i], width, height, 0, formats[i], types[i], NULL);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, attachments[i], GL_TEXTURE_2D, mTextureHandles[i], 0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	glDrawBuffers(3, attachments);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		// Abort
-		// Danger Will Robinson
-		switch (glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
-		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER");
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-			break;
-		default:
-			ServiceLocator::getLoggingService().error("FrameBuffer isn't complete", std::to_string((int)glCheckFramebufferStatus(GL_FRAMEBUFFER)));
-			break;
-		}
-		throw (std::runtime_error("Mouse framebuffer is incomplete"));
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	mFramebuffer = new Framebuffer(width, height);
+	mFramebuffer->attach(ATTACHMENT_INTEGER);	// Index
+	mFramebuffer->attach(ATTACHMENT_COLOR);	// World position
+	mFramebuffer->attach(ATTACHMENT_COLOR);	// Local position
+	mFramebuffer->attach(ATTACHMENT_DEPTH);	// Probably useful
+	mFramebuffer->validate();
 }
 
 void MouseHandler::cleanup() {
-	glDeleteFramebuffers(1, &mFramebufferHandle);
-	mFramebufferHandle = 0;
-	glDeleteTextures(3, mTextureHandles);
-	mTextureHandles[0] = 0;
-	mTextureHandles[1] = 0;
-	mTextureHandles[2] = 0;
+	if (mFramebuffer) delete mFramebuffer;
 }
 
-void MouseHandler::enableDrawing() const {
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebufferHandle);
-	int error = glGetError();
-	unsigned int clearColor[4]{ 0,0,0,0 };
-	glViewport(0, 0, mWindowSize[0], mWindowSize[1]);
-	glDrawBuffer(GL_COLOR_ATTACHMENT0);
-	glClearBufferuiv(GL_COLOR, 0, clearColor);
-	glDrawBuffer(GL_COLOR_ATTACHMENT1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	mReadyToRead = true;
+void MouseHandler::setAsDrawingTarget() const {
+	mFramebuffer->setAsDrawingTarget();
 }
 
-void MouseHandler::draw() const {
-	for (int i = 0; i < 3; i++) {
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, mTextureHandles[i]);
-	}
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, mTextureHandles[1]);
-	//glActiveTexture(GL_TEXTURE0);
+void MouseHandler::setAsTextureSource() const {
+	if (mFramebuffer) mFramebuffer->setAttachmentAsTextureSource(1, 0);
 }

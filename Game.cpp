@@ -325,22 +325,23 @@ void Game::render(float dt) {
 	}
 
 	// Mouse picking stuff
-	/*
-	// Draw Mouse textures to prepare for next frame
-	MouseHandler::getInstance().enableDrawing();
+	MouseHandler::getInstance().setAsDrawingTarget();
 	//mWindow->enableDrawing();
-	auto program = mCommonLibraries.standard.programs.get("mouse_selection");
-	program->use();
-	//program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
-	program->sendUniform("uVP", glm::value_ptr(glm::mat4(1.0)));
-	program->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getPosition()));
-	program->sendUniform("uObjectID", 300);
-	for (auto object : mWorkingObjectList) {
-		program->sendUniform("uObjectID", object->getIndex());
-		object->render(program);
+	Program* prog = mCommonLibraries.standard.programs.get("mouse_selection");
+	prog->use();
+	if (mWorkingActiveCamera) {
+		prog->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
+		prog->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getPosition()));
+		for (auto object : mWorkingObjectList) {
+			prog->sendUniform("uObjectID", object->getIndex());
+			object->render(prog);
+		}
 	}
-	Geometry::getScreenQuad()->render();
-	*/
+	/*prog = mCommonLibraries.post.filters.get("none");
+	prog->use();
+	MouseHandler::getInstance().setAsTextureSource();
+	mWindow->enableDrawing();
+	Geometry::getScreenQuad()->render();*/
 }
 
 void Game::resize(unsigned int width, unsigned int height) {

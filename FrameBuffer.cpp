@@ -70,7 +70,7 @@ void Framebuffer::attach(AttachmentType type) {
 	glDrawBuffers(mAttachments.size(), attachments);
 }
 
-void Framebuffer::validate() {
+void Framebuffer::validate() const {
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		switch (glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
@@ -106,15 +106,29 @@ void Framebuffer::resize(unsigned int width, unsigned int height) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Framebuffer::setAsDrawingTarget() {
+void Framebuffer::setAsDrawingTarget() const {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mHandle);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, mWidth, mHeight);
 }
 
-void Framebuffer::setAsTextureSource(int start) {
+void Framebuffer::setAttachmentAsTextureSource(int attachment, int slot) const {
+	glActiveTexture(GL_TEXTURE0 + slot);
+	glBindTexture(GL_TEXTURE_2D, mAttachments[attachment]);
+}
+
+void Framebuffer::setAsTextureSource(int start) const {
 	for (unsigned int i = 0; i < mAttachments.size(); i++) {
 		glActiveTexture(GL_TEXTURE0 + i + start);
 		glBindTexture(GL_TEXTURE_2D, mAttachments[i]);
 	}
+}
+
+void Framebuffer::getPixel(unsigned int x, unsigned int y, unsigned int attachment, void* result) {
+	assert(x < mWidth);
+	assert(y < mWidth);
+	assert(attachment < mAttachments.size());
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mHandle);
+	glReadBuffer(GL_COLOR_ATTACHMENT0 + attachment);
+	glReadPixels(x, y, 1, 1, attachmentFormats[mTypes[attachment]], attachmentTypes[mTypes[attachment]], result);
 }

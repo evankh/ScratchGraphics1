@@ -34,7 +34,7 @@ struct MouseData {
 
 struct MouseoverData {
 	int mouse_x, mouse_y;
-	float world_pos[3];
+	float world_pos[3], local_pos[3];
 };
 
 struct SoundData {

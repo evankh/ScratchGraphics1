@@ -83,8 +83,7 @@ void GameObject::render(Camera* c) {
 }
 
 void GameObject::render(Program* p) {
-	//p->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
-	p->sendUniform("uM", glm::value_ptr(glm::mat4(1.0)));
+	p->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
 	if (mGeometryComponent) mGeometryComponent->render();
 }
 

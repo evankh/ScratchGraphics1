@@ -8,7 +8,7 @@ class Receiver {
 public:
 	virtual void handle(const Event event) = 0;
 	void setIndex(int i) { mIndex = i; };
-	int getIndex() const { return mIndex; };
+	unsigned int getIndex() const { return mIndex; };
 };
 
 struct ReceiverNode {

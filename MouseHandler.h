@@ -1,6 +1,7 @@
 #ifndef __EKH_SCRATCH_GRPAHICS_1_MOUSE_HANDLER__
 #define __EKH_SCRATCH_GRAPHICS_1_MOUSE_HANDLER__
 
+#include "FrameBuffer.h"
 #include "Handler.h"
 #include <vector>
 
@@ -21,12 +22,11 @@ private:
 	bool mButtonStatus[EKH_MOUSE_NUM_BUTTONS];
 	int mDragStartPosition[EKH_MOUSE_NUM_BUTTONS][2];	// It may be a better idea to leave tracking this up to whatever is interested in it
 	Command mButtonBindings[EKH_MOUSE_NUM_BUTTONS];
+	unsigned int mWindowWidth, mWindowHeight;
 	int mMousePosition[2];
 	std::vector<Receiver*> mMouseoverReceivers;
-	unsigned int mFramebufferHandle = 0;
-	unsigned int mTextureHandles[3]{ 0,0,0 };	// Index, worldpos, depth
-	unsigned int mWindowSize[2];
-	mutable bool mReadyToRead = false;
+	Framebuffer* mFramebuffer = nullptr;
+
 	void handleButton(MouseButton button, int edge, int mouse_x, int mouse_y);
 	void handleMove(int mouse_x, int mouse_y);
 	virtual int getIndexFrom(Event event) { return event.mData.mouse.button; };
@@ -46,8 +46,8 @@ public:
 	void unregisterReceiver(Receiver* receiver) final;
 	virtual void step();
 	void dispatchAll() final;
-	void enableDrawing() const;
-	void draw() const;
+	void setAsDrawingTarget() const;
+	void setAsTextureSource() const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_MOUSE_HANDLER__
