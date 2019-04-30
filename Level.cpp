@@ -212,7 +212,8 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				}
 			}
 			PhysicsComponent* phys = new PhysicsComponent({ pos.x,pos.y,pos.z }, { at.x,at.y,at.z });
-			PerspCamera* camera = new PerspCamera(phys, 800, 600, fov);	// How do I get these values in here?
+			PerspCamera* camera = new PerspCamera(800, 600, fov);	// How do I get these values in here?
+			camera->update(phys);
 			GameObject* camera_object = new GameObject(NULL, NULL, phys, NULL);
 			camera_object->setCameraComponent(camera);
 			try {

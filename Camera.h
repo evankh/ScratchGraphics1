@@ -14,37 +14,26 @@ public:
 	float getAspectRatio() const { return float(mWidth) / mHeight; };
 	virtual void resize(unsigned int width, unsigned int height) = 0;
 	glm::mat4& getViewProjectionMatrix();
-	virtual glm::vec3 getPosition() const = 0;
-	virtual PhysicsComponent* getPhysics() const = 0;
-	virtual void setPhysics(PhysicsComponent* physics) = 0;
 	virtual Camera* copy() const = 0;
-	virtual void update(float dt) = 0;
+	virtual void update(PhysicsComponent* physics) = 0;
 };
 
 class PerspCamera : public Camera {
 private:
-	PhysicsComponent* mPhysicsComponent;
 	float mZMin, mZMax, mFOV;
 public:
-	PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned int height, float fov);
-	~PerspCamera();
+	PerspCamera(unsigned int width, unsigned int height, float fov);
 	void resize(unsigned int width, unsigned int height) final;
-	glm::vec3 getPosition() const final { return mPhysicsComponent->getPosition(); };
-	PhysicsComponent* getPhysics() const final { return mPhysicsComponent; };
-	void setPhysics(PhysicsComponent* physics) final { delete mPhysicsComponent; mPhysicsComponent = physics; };
 	Camera* copy() const final;
-	void update(float dt) final;
+	void update(PhysicsComponent* physics) final;
 };
 
 class OrthoCamera : public Camera {
 public:
 	OrthoCamera(unsigned int width, unsigned int height);
 	void resize(unsigned int width, unsigned int height) final;
-	glm::vec3 getPosition() const final { return glm::vec3(INFINITY); };
-	PhysicsComponent* getPhysics() const final { return nullptr; };
-	void setPhysics(PhysicsComponent* physics) final {};
 	Camera* copy() const final;
-	void update(float dt) final {};
+	void update(PhysicsComponent* physics) final {};
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_CAMERA__

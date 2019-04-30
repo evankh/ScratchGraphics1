@@ -20,7 +20,7 @@ private:
 	Program* mDisplayComponent;
 	Texture* mTexture;
 
-	Camera* mCameraComponent = NULL;	// This will be moved somewhere else (probably GraphicsComponent?) later but for now I just want it to work
+	Camera* mCameraComponent = nullptr;	// This will be moved somewhere else (probably GraphicsComponent?) later but for now I just want it to work
 
 	PhysicsComponent* mPhysicsComponent;
 	Source* mAudioComponent;
@@ -34,13 +34,14 @@ public:
 	GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture = NULL);
 	~GameObject();
 	void update(float dt);
-	void render(Camera* c);
+	void render(GameObject* camera);
 	void render(Program* p);
 	void debugDraw();
 	virtual void handle(const Event e);
 	void setState(State* state);	// Probably should be private or something, could completely change the type of the object if given the wrong type of State
 	PhysicsComponent* getPhysicsComponent() const { return mPhysicsComponent; };
 	Bounds* getBounds() const { return mPhysicsComponent->getBounds(); };
+	glm::vec3 getPosition() const { return mPhysicsComponent->getPosition(); };
 	void registerSound(std::string name, Sound* sound);
 	void translate(glm::vec3 dxyz) { mPhysicsComponent->translate(dxyz); };
 	void rotate(glm::vec3 axis, float degrees) { mPhysicsComponent->rotate(axis, degrees); };

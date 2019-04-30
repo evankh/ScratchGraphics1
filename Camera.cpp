@@ -2,8 +2,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "GL/glew.h"
 
-PerspCamera::PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned int height, float fov) {
-	mPhysicsComponent = physics;
+PerspCamera::PerspCamera(unsigned int width, unsigned int height, float fov) {
 	mWidth = width;
 	mHeight = height;
 	mFOV = glm::radians(fov);
@@ -11,12 +10,12 @@ PerspCamera::PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned
 	mZMax = 100.0f;
 	glDepthRange(0.01f, 100.0f);
 	mProjectionMatrix = glm::perspective(mFOV, getAspectRatio(), mZMin, mZMax);
-	glm::mat4 imm = mPhysicsComponent->getInverseModelMatrix();
-	mViewProjectionMatrix = mProjectionMatrix * imm;
 }
 
 Camera* PerspCamera::copy() const {
-	return new PerspCamera(mPhysicsComponent->copy(), mWidth, mHeight, glm::degrees(mFOV));
+	PerspCamera* ret = new PerspCamera(mWidth, mHeight, glm::degrees(mFOV));
+	ret->mViewProjectionMatrix = mViewProjectionMatrix;
+	return ret;
 }
 
 OrthoCamera::OrthoCamera(unsigned int width, unsigned int height) {
@@ -30,16 +29,10 @@ Camera* OrthoCamera::copy() const {
 	return new OrthoCamera(mWidth, mHeight);
 }
 
-PerspCamera::~PerspCamera() {
-	//if (mPhysicsComponent) delete mPhysicsComponent;
-}
-
 void PerspCamera::resize(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::perspective(mFOV, getAspectRatio(), mZMin, mZMax);
-	glm::mat4 imm = mPhysicsComponent->getInverseModelMatrix();
-	mViewProjectionMatrix = mProjectionMatrix * imm;
 }
 
 void OrthoCamera::resize(unsigned int width, unsigned int height) {
@@ -53,8 +46,6 @@ glm::mat4& Camera::getViewProjectionMatrix() {
 	return mViewProjectionMatrix;
 }
 
-void PerspCamera::update(float dt) {
-	// Camera should lose ownership of its PhysicsComponent now that it's become a Component of GameObject itself
-	mPhysicsComponent->update(dt);
-	mViewProjectionMatrix = mProjectionMatrix * mPhysicsComponent->getInverseModelMatrix();
+void PerspCamera::update(PhysicsComponent* physics) {
+	mViewProjectionMatrix = mProjectionMatrix * physics->getInverseModelMatrix();
 }

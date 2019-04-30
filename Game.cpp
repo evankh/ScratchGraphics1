@@ -262,7 +262,7 @@ void Game::render(float dt) {
 	if (mWorkingActiveCamera) {
 		// Draw each object in the scene
 		for (auto object : mWorkingObjectList)
-			object->render(mWorkingActiveCamera->getCameraComponent());
+			object->render(mWorkingActiveCamera);
 		// Draw any debug information
 		if (mDebugMode != DEBUG_NONE) {
 			// Draw object axes
@@ -330,7 +330,7 @@ void Game::render(float dt) {
 	prog->use();
 	if (mWorkingActiveCamera) {
 		prog->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
-		prog->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getPosition()));
+		prog->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getPosition()));
 		for (auto object : mWorkingObjectList) {
 			prog->sendUniform("uObjectID", object->getIndex());
 			object->render(prog);

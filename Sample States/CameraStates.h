@@ -13,6 +13,7 @@ private:
 	int mLeftDragStartPos[2], mRightDragStartPos[2];
 	PhysicsComponent* mDragStart = nullptr;
 	glm::vec3 mOrbitCenter;
+	float mSpeed = 0.1f;
 public:
 	CameraState(GameObject* owner) :mOwner(owner) {};
 	CameraState* getEntry(GameObject* owner) final;

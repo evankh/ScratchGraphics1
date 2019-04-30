@@ -57,7 +57,7 @@ void GameObject::update(float dt) {
 			mHasMouseOver = true;
 	}
 	if (mState) mState->update(mPhysicsComponent, dt);
-	if (mCameraComponent) mCameraComponent->update(dt);
+	if (mCameraComponent) mCameraComponent->update(mPhysicsComponent);
 	if (mAudioComponent) mAudioComponent->update();
 }
 
@@ -68,12 +68,12 @@ void GameObject::registerSound(std::string name, Sound* sound) {
 
 #include "glm\gtc\type_ptr.hpp"
 // Eventually sorting Objects for rendering based on their materials would save time on switching and let me take the stupid Camera out of here
-void GameObject::render(Camera* c) {
+void GameObject::render(GameObject* camera) {
 	if (mDisplayComponent) {
 		mDisplayComponent->use();
 		mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
-		mDisplayComponent->sendUniform("uVP", glm::value_ptr(c->getViewProjectionMatrix()));	// If things are sorted by Program for rendering, then all the references to Camera here can be removed!
-		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(c->getPosition()));
+		mDisplayComponent->sendUniform("uVP", glm::value_ptr(camera->getCameraComponent()->getViewProjectionMatrix()));	// If things are sorted by Program for rendering, then all the references to Camera here can be removed!
+		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(camera->getPosition()));
 		if (mTexture) mTexture->activate(0);	// This will make a lot more sense when DisplayComponent becomes an actual Component
 	}
 	if (mGeometryComponent)
@@ -104,9 +104,6 @@ GameObject* GameObject::copy() const {
 	if (mAudioComponent) result->mAudioComponent = mAudioComponent->copy(result->mPhysicsComponent);
 	result->mSounds = mSounds;
 	if (mState) result->setState(mState->getEntry(result));
-	if (mCameraComponent) {
-		result->mCameraComponent = mCameraComponent->copy();
-		result->mCameraComponent->setPhysics(result->getPhysicsComponent());
-	}
+	if (mCameraComponent) result->mCameraComponent = mCameraComponent->copy();
 	return result;
 }

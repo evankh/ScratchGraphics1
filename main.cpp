@@ -42,6 +42,7 @@ void game_mouse_wrapper(int button, int edge, int mouse_x, int mouse_y) {
 }
 
 void game_movement_wrapper(int mouse_x, int mouse_y) {
+	// Mouse position can quite happily be outside the window, will have to rework some code to accommodate that
 	MouseHandler::getInstance().handleMove(mouse_x, mouse_y);
 }
 
