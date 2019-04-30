@@ -21,9 +21,7 @@ uniform uint uObjectID;
 
 void main() {
 	oObjectID = uObjectID;
-//	oObjectID += 4000000000u;
-	//oPosition = pIn.position;
-	//oLocalPosition = pLocal;
-	oPosition = vec4(1.0, 0.5, 0.0, 1.0);
-	oLocalPosition = vec4(0.0, 0.5, 1.0, 1.0);
+	oPosition = pIn.position;
+	oLocalPosition.rgb = pLocal;
+	oLocalPosition.a = 1.0;
 }

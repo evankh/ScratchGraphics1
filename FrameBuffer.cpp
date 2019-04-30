@@ -67,7 +67,6 @@ void Framebuffer::attach(AttachmentType type) {
 		mTypes.push_back(type);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDrawBuffers(mAttachments.size(), attachments);
 }
 
 void Framebuffer::validate() const {
@@ -108,6 +107,7 @@ void Framebuffer::resize(unsigned int width, unsigned int height) {
 
 void Framebuffer::setAsDrawingTarget() const {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mHandle);
+	glDrawBuffers(mAttachments.size(), attachments);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, mWidth, mHeight);
 }
@@ -129,6 +129,6 @@ void Framebuffer::getPixel(unsigned int x, unsigned int y, unsigned int attachme
 	assert(y < mWidth);
 	assert(attachment < mAttachments.size());
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, mHandle);
-	glReadBuffer(GL_COLOR_ATTACHMENT0 + attachment);
+	glReadBuffer(attachments[attachment]);
 	glReadPixels(x, y, 1, 1, attachmentFormats[mTypes[attachment]], attachmentTypes[mTypes[attachment]], result);
 }

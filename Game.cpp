@@ -337,11 +337,12 @@ void Game::render(float dt) {
 			object->render(prog);
 		}
 	}
-	/*prog = mCommonLibraries.post.filters.get("none");
+	//*
+	prog = mCommonLibraries.post.filters.get("none");
 	prog->use();
 	MouseHandler::getInstance().setAsTextureSource();
 	mWindow->enableDrawing();
-	Geometry::getScreenQuad()->render();*/
+	Geometry::getScreenQuad()->render();//*/
 }
 
 void Game::resize(unsigned int width, unsigned int height) {
