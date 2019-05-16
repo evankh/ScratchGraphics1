@@ -75,13 +75,16 @@ void PhysicsComponent::scale(glm::vec3 scale) {
 	if (mBounds) mBounds->scale(scale);
 }
 
-glm::mat4 PhysicsComponent::getModelMatrix() {
+glm::mat4 PhysicsComponent::getWorldTransform() {
+	// TODO : dirty flag, caching
 	glm::mat4 mm = glm::translate(glm::mat4(1.0), mPosition) * (mRotation * glm::scale(glm::mat4(1.0), mScale));
+	if (mParent)
+		return mParent->getWorldTransform() * mm;
 	return mm;
 }
 
-glm::mat4 PhysicsComponent::getInverseModelMatrix() {
-	return glm::inverse(getModelMatrix());
+glm::mat4 PhysicsComponent::getInverseWorldTransform() {
+	return glm::inverse(getWorldTransform());
 }
 
 float* PhysicsComponent::getOrientationVectors() const {

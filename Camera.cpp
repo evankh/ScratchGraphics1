@@ -47,5 +47,5 @@ glm::mat4& Camera::getViewProjectionMatrix() {
 }
 
 void PerspCamera::update(PhysicsComponent* physics) {
-	mViewProjectionMatrix = mProjectionMatrix * physics->getInverseModelMatrix();
+	mViewProjectionMatrix = mProjectionMatrix * physics->getInverseWorldTransform();
 }

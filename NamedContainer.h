@@ -18,11 +18,13 @@ public:
 	inline Type get(std::string key) const {
 		if (mItems.count(key))
 			return this->mItems.at(key);
-		else
-			throw std::out_of_range(key);
+		throw std::out_of_range(key);
 	};
 	inline bool contains(std::string key) const {
 		return this->mItems.count(key) != 0;
+	}
+	inline int count() const {
+		return this->mItems.size();
 	}
 	virtual void clear() = 0;
 	virtual void remove(std::string key) = 0;

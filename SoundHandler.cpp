@@ -35,6 +35,10 @@ void SoundHandler::update() {
 		alListenerfv(AL_VELOCITY, glm::value_ptr(sListener->getVelocity()));
 		float* orientation = sListener->getOrientationVectors();
 		alListenerfv(AL_ORIENTATION, orientation);
-		delete orientation;
+		delete[] orientation;
 	}
+}
+
+void SoundHandler::setVolume(float volume) {
+	alListenerf(AL_GAIN, volume);
 }

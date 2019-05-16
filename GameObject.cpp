@@ -6,14 +6,11 @@
 #include "State.h"
 #include "Texture.h"
 
-GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics, Texture* texture) {
+GameObject::GameObject(Geometry* geometry, Program* display, PhysicsComponent* physics) {
 	mGeometryComponent = geometry;
 	if (mGeometryComponent) mGeometryComponent->transfer();
 	mDisplayComponent = display;
 	mPhysicsComponent = physics;
-	mState = NULL;
-	mTexture = texture;
-	mAudioComponent = NULL;
 }
 
 void GameObject::setState(State* state) {
@@ -37,7 +34,7 @@ void GameObject::update(float dt) {
 	mHasMouseOver = false;
 	while (!mEventQueue.isEmpty()) {
 		Event e = mEventQueue.pop();
-		Sound* s = NULL;
+		Sound* s = nullptr;
 		if (e.mType == EventType::PLAY_SOUND_REQUEST && (s = mSounds.get(e.mData.sound.name))) {
 			mAudioComponent->setVolume(e.mData.sound.gain);
 			mAudioComponent->playSound(s);
@@ -71,10 +68,11 @@ void GameObject::registerSound(std::string name, Sound* sound) {
 void GameObject::render(GameObject* camera) {
 	if (mDisplayComponent) {
 		mDisplayComponent->use();
-		mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
+		if (mPhysicsComponent) mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getWorldTransform()));
 		mDisplayComponent->sendUniform("uVP", glm::value_ptr(camera->getCameraComponent()->getViewProjectionMatrix()));	// If things are sorted by Program for rendering, then all the references to Camera here can be removed!
 		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(camera->getPosition()));
 		if (mTexture) mTexture->activate(0);	// This will make a lot more sense when DisplayComponent becomes an actual Component
+		if (mHasColor) mDisplayComponent->sendUniform("uColor", 3, 1, glm::value_ptr(mColor));
 	}
 	if (mGeometryComponent)
 		if (mDisplayComponent && mDisplayComponent->isTesselated())
@@ -84,7 +82,7 @@ void GameObject::render(GameObject* camera) {
 }
 
 void GameObject::render(Program* p) {
-	p->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getModelMatrix()));
+	if (mPhysicsComponent) p->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getWorldTransform()));
 	if (mGeometryComponent) mGeometryComponent->render();
 }
 
@@ -99,11 +97,24 @@ void GameObject::handle(const Event e) {
 
 GameObject* GameObject::copy() const {
 	GameObject* result = new GameObject(mGeometryComponent, mDisplayComponent, mPhysicsComponent);
-	if (mPhysicsComponent) result->mPhysicsComponent = mPhysicsComponent->copy();
-	if (mTexture) result->mTexture = mTexture;
-	if (mAudioComponent) result->mAudioComponent = mAudioComponent->copy(result->mPhysicsComponent);
-	result->mSounds = mSounds;
-	if (mState) result->setState(mState->getEntry(result));
-	if (mCameraComponent) result->mCameraComponent = mCameraComponent->copy();
+	if (mGeometryComponent) mGeometryComponent->transfer();
+	copy(result);
 	return result;
+}
+
+void GameObject::copy(GameObject* target) const {
+	target->mGeometryComponent = mGeometryComponent;
+	target->mDisplayComponent = mDisplayComponent;
+	target->mPhysicsComponent = mPhysicsComponent;
+	if (mPhysicsComponent) target->mPhysicsComponent = mPhysicsComponent->copy();
+	target->mTexture = mTexture;
+	if (mHasColor) {
+		target->mHasColor = true;
+		target->mColor = mColor;
+	}
+	if (mAudioComponent) target->mAudioComponent = mAudioComponent->copy(target->mPhysicsComponent);
+	target->mSounds = mSounds;
+	if (mState) target->setState(mState->getEntry(target));
+	if (mCameraComponent) target->mCameraComponent = mCameraComponent->copy();
+
 }

@@ -5,31 +5,41 @@
 #include "Source.h"
 #include "State.h"
 #include "glm/gtx/transform.hpp"
+#include <xtree>
 
 Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries ownLibraries) :mSharedLibraries(sharedLibraries), mOwnLibraries(ownLibraries) {
 	FileService file(filepath);
 	char* objectName;
 	while (file.good()) {
-		if (file.extract("//`S`L", NULL));
-		else if (file.extract("Object \"`S\"", &objectName)) {
-			if (mSceneObjects.count(objectName)) {
+		if (file.extract("//`S`L"));
+		else if (file.extract("`?WObject \"`S\"", &objectName)) {
+			if (mSceneGraph.contains(objectName)) {
 				ServiceLocator::getLoggingService().error("Attempted redefinition of object", objectName);
 				delete[] objectName;
-				file.extract("`S`L", NULL);
+				file.extract("`S`L");
 				continue;
 			}
 			// Set up variables and structs to read into
-			char* geomName, *progName, *texName, *inputName = NULL, *soundName, *boundsName = NULL, *err;	// Not sure why it only cares about inputName
+			char* parentName = nullptr, *geomName, *progName, *texName, *inputName = nullptr, *soundName, *boundsName = nullptr, *err;	// Not sure why it only cares about inputName
 			struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f }, col{ 0.0f,0.0f,0.0f };
 			float ang = 0.0f, mom = 0.0f;
-			Geometry* geom = NULL;
-			Program* program = NULL;
-			Bounds* bounds = NULL;
-			Texture* texture = NULL;
+			Geometry* geom = nullptr;
+			Program* program = nullptr;
+			Bounds* bounds = nullptr;
+			Texture* texture = nullptr;
 			std::vector<std::string> sounds;
 			bool valid = true, hasCol = false;
-			while (!file.extract("`L", NULL)) {
-				if (file.extract(" bounds:\"`S\"", &boundsName));
+			while (!file.extract("`L")) {
+				if (file.extract(" parent:\"`S\"", &parentName)) {
+					if (!mSceneGraph.contains(parentName)) {
+						ServiceLocator::getLoggingService().error("Parent object not found", parentName);
+						valid = false;
+						delete[] parentName;
+						file.extract("`?S`L");
+						break;
+					}
+				}
+				else if (file.extract(" bounds:\"`S\"", &boundsName));
 				else if (file.extract(" geom:\"`S\"", &geomName)) {
 					// Check if the geometry exists in the geometry library
 					// If so, save a reference to it to pass to the GameObject constructor
@@ -48,7 +58,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						ServiceLocator::getLoggingService().error("Geometry not found", e.what());
 						delete[] geomName;
 						valid = false;
-						file.extract("`?S`L", NULL);
+						file.extract("`?S`L");
 						break;
 					}
 				}
@@ -66,7 +76,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						ServiceLocator::getLoggingService().error("Program not found", e.what());
 						delete[] progName;
 						valid = false;
-						file.extract("`?S`L", NULL);
+						file.extract("`?S`L");
 						break;
 					}
 				}
@@ -84,18 +94,18 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						ServiceLocator::getLoggingService().error("Texture not found", e.what());
 						delete[] texName;
 						valid = false;
-						file.extract("`?S`L", NULL);
+						file.extract("`?S`L");
 						break;
 					}
 				}
 				else if (file.extract(" col:(`F,`F,`F)", &col)) { hasCol = true; }
-				else if (file.extract(" sounds:(", NULL)) {
+				else if (file.extract(" sounds:(")) {
 					while (file.extract("\"`S\"", &soundName)) {
 						sounds.push_back(soundName);
 						delete[] soundName;
-						file.extract(",", NULL);	// No checking to make sure it's properly formatted
+						file.extract(",");	// No checking to make sure it's properly formatted
 					}
-					file.extract(")", NULL);
+					file.extract(")");
 				}
 				else if (file.extract(" pos:(`F,`F,`F)", &pos));
 				else if (file.extract(" vel:(`F,`F,`F)", &vel));
@@ -148,10 +158,11 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				physics->scale({ scl.x,scl.y,scl.z });
 				physics->rotate({ rot.x,rot.y,rot.z }, ang);
 				physics->translate({ pos.x,pos.y,pos.z });
-				glm::vec3* color = NULL;
-				if (hasCol) color = new glm::vec3(col.x, col.y, col.z);
 				// Also store velocity
-				GameObject* object = new GameObject(geom, program, physics, texture);
+				//if (parentName) physics->setParent(parent->getPhysicsComponent());
+				GameObject* object = new GameObject(geom, program, physics);
+				if (texture) object->setTexture(texture);
+				if (hasCol) object->setColor({ col.x,col.y,col.z });
 				if (inputName) try {
 					State* state = State::getNewEntryState(inputName, object);
 					object->setState(state);
@@ -174,10 +185,12 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 					else
 						ServiceLocator::getLoggingService().error("Sound not found", sound);
 				}
-				mSceneObjects[objectName] = object;
+				if (parentName) mSceneGraph.add(objectName, parentName, object);
+				else mSceneGraph.add(objectName, object);
 			}
 			// Cleanup
 			delete[] objectName;
+			if (parentName) delete[] parentName;
 		}
 		else if (file.extract("Camera \"`S\"", &objectName)) {
 			if (mSceneCameras.count(objectName)) {
@@ -214,7 +227,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			PhysicsComponent* phys = new PhysicsComponent({ pos.x,pos.y,pos.z }, { at.x,at.y,at.z });
 			PerspCamera* camera = new PerspCamera(800, 600, fov);	// How do I get these values in here?
 			camera->update(phys);
-			GameObject* camera_object = new GameObject(NULL, NULL, phys, NULL);
+			GameObject* camera_object = new GameObject(nullptr, nullptr, phys);
 			camera_object->setCameraComponent(camera);
 			try {
 				State* state = State::getNewEntryState("camera", camera_object);
@@ -267,9 +280,6 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 }
 
 Level::~Level() {
-	for (auto object : mSceneObjects)
-		delete object.second;
-	mSceneObjects.clear();
 	for (auto camera : mSceneCameras)
 		delete camera.second;
 	mSceneCameras.clear();
@@ -279,6 +289,17 @@ Level::~Level() {
 	mOwnLibraries.textures.clear();
 	mOwnLibraries.sounds.clear();
 	if (mSceneAudio) delete mSceneAudio;
+}
+
+GameObject* Level::getWorkingSet() {
+	GameObject* queue = new GameObject[mSceneGraph.count()];
+	std::vector<std::string> objectNames = mSceneGraph.breadthFirstTraversal();
+	int i = 0;
+	for (std::string name : objectNames) {
+		mSceneGraph.get(name)->copy(queue + i);
+		i++;
+	}
+	return queue;
 }
 
 void Level::setBackgroundMusicVolume(float volume) {

@@ -49,7 +49,8 @@ private:
 		} post;
 	} mCommonLibraries;
 	// Working set of Level data
-	std::vector<GameObject*> mWorkingObjectList;
+	GameObject* mWorkingObjectList = nullptr;
+	unsigned int mWorkingListSize = 0;
 	GameObject* mWorkingActiveCamera;
 	// Actual game information
 	Window* mWindow;
@@ -63,6 +64,7 @@ private:
 	const std::string mIndexFilename = "index.txt";
 	DebugMode mDebugMode = DEBUG_NONE;
 	bool mPaused = false;
+	float mMasterVolume = 1.0f;
 	Level* loadLevel(std::string path);
 	void parseGeometryIndex(std::string path, NamedContainer<Geometry*> &geomLibrary);
 	void parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary);

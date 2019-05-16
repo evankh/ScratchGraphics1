@@ -70,6 +70,7 @@ void Framebuffer::attach(AttachmentType type) {
 }
 
 void Framebuffer::validate() const {
+	glBindFramebuffer(GL_FRAMEBUFFER, mHandle);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		switch (glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
@@ -89,9 +90,11 @@ void Framebuffer::validate() const {
 			throw std::invalid_argument(std::to_string((int)glCheckFramebufferStatus(GL_FRAMEBUFFER)));
 			break;
 		}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);	// Necessary or not?
 }
 
 void Framebuffer::resize(unsigned int width, unsigned int height) {
+	//glBindFramebuffer(GL_FRAMEBUFFER, mHandle);	// Don't need to do anything with the framebuffer in order to change the sizes of the textures
 	mWidth = (unsigned int)(width * mRelativeScale);
 	mHeight = (unsigned int)(height * mRelativeScale);
 	for (unsigned int i = 0; i < mAttachments.size(); i++) {
@@ -103,6 +106,7 @@ void Framebuffer::resize(unsigned int width, unsigned int height) {
 	glBindTexture(GL_TEXTURE_2D, mDepthAttachment);
 	glTexImage2D(GL_TEXTURE_2D, 0, attachmentSizes[ATTACHMENT_DEPTH], mWidth, mHeight, 0, attachmentFormats[ATTACHMENT_DEPTH], attachmentTypes[ATTACHMENT_DEPTH], NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Framebuffer::setAsDrawingTarget() const {
@@ -125,9 +129,10 @@ void Framebuffer::setAsTextureSource(int start) const {
 }
 
 void Framebuffer::getPixel(unsigned int x, unsigned int y, unsigned int attachment, void* result) {
-	assert(x < mWidth);
-	assert(y < mWidth);
-	assert(attachment < mAttachments.size());
+	// Still feels like a bit of a clumsy way to validate arguments but there's really only so much I can do
+	if (x >= mWidth) throw std::invalid_argument("x too large");
+	if (y >= mHeight) throw std::invalid_argument("y too large");
+	if (attachment >= mAttachments.size()) throw std::invalid_argument("Not a valid attachment");
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, mHandle);
 	glReadBuffer(attachments[attachment]);
 	glReadPixels(x, y, 1, 1, attachmentFormats[mTypes[attachment]], attachmentTypes[mTypes[attachment]], result);

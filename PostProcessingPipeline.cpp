@@ -46,6 +46,10 @@ void PostprocessingPipeline::attach(StageData &data, bool isCompositingInput) {
 }
 
 void PostprocessingPipeline::attachCompositor(Program* compositor) {
+	if (mCompositor) {
+		delete mCompositor->output;
+		delete mCompositor;
+	}
 	mCompositor = new StageData;
 	mCompositor->filter = compositor;
 	mCompositor->scale = 1.0f;

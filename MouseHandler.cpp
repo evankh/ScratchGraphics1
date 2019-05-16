@@ -79,7 +79,7 @@ void MouseHandler::resize(unsigned int width, unsigned int height) {
 
 void MouseHandler::dispatchAll() {
 	Handler::dispatchAll();
-	if (mFramebuffer) {
+	if (mFramebuffer && (0 <= mMousePosition[0] && mMousePosition[0] < mWindowWidth) && (0 < mMousePosition[1] && mMousePosition[1] <= mWindowHeight)) {
 		mFramebuffer->validate();
 		// Find the moused-over object
 		// Dispatch an event to that object

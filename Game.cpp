@@ -21,7 +21,7 @@ Game::Game() {
 	// ?
 	// I guess this would be the spot for the initialization of everything: Loading assets, starting services, initializing rendering, etc.
 //	mWindow = new Window(800, 600, "Game owns this window");
-	KeyboardHandler::getInstance().registerReceiver("rRbp+", this);
+	KeyboardHandler::getInstance().registerReceiver("rRbp+m", this);
 	KeyboardHandler::getInstance().registerReceiver(27, this);
 }
 
@@ -151,22 +151,24 @@ void Game::load() {
 
 void Game::softReload() {
 	ServiceLocator::getLoggingService().log("===== LEVEL RESET =====");
-	// Empty everything out
-	if (mWorkingActiveCamera) delete mWorkingActiveCamera;
-	mWorkingActiveCamera = NULL;
-	for (unsigned int i = 0; i < mWorkingObjectList.size(); i++) delete mWorkingObjectList[i];
-	mWorkingObjectList.clear();
-	// Fill the working list of objects
-	auto objectMap = mCurrentLevel->getObjectList();
-	for (auto i : objectMap)
-		mWorkingObjectList.push_back(i.second->copy());	// Possibly a good opportunity to create an array of actual GameObjects instead of their pointers
-	mWorkingActiveCamera = mCurrentLevel->getCurrentCamera()->copy();
+	// Empty everything out: already done by cleanup
+	mWorkingListSize = mCurrentLevel->getNumObjects();
+	mWorkingObjectList = mCurrentLevel->getWorkingSet();
+	mWorkingActiveCamera = mCurrentLevel->getCurrentCamera()->copy();	// I guess this is fine since it's not tied to any actual normal GameObject
+	mSoundSystem.registerListener(mWorkingActiveCamera->getPhysicsComponent());
 }
 
 void Game::cleanup() {
 	delete mCurrentLevel;
 	mCurrentLevel = nullptr;
 	mLevelDirectory.clear();
+
+	delete[] mWorkingObjectList;
+	mWorkingListSize = 0;
+	if (mWorkingActiveCamera) {
+		delete mWorkingActiveCamera;
+		mWorkingActiveCamera = nullptr;
+	}
 
 	while (mCurrentMenu) {
 		auto top = mCurrentMenu;
@@ -201,23 +203,22 @@ Game& Game::getInstance() {
 }
 
 void Game::update(float dt) {
-	mSoundSystem.update();
 	// Collision detection
 	// Yo, I just really want to do this in the least efficient way possible
 	if (mCurrentLevel) {
 		// A compelling reason to separate out PhysicsComponents, and possibly Bounds
-		for (unsigned int i = 0; i < mWorkingObjectList.size(); i++) {
-			auto I = mWorkingObjectList[i];
-			if (I->getBounds()) {
-				for (unsigned int j = i + 1; j < mWorkingObjectList.size(); j++) {
-					auto J = mWorkingObjectList[j];
-					if (J->getBounds()) {
-						if (collides(I->getBounds(), J->getBounds())) {
+		for (unsigned int i = 0; i < mWorkingListSize; i++) {
+			GameObject& I = mWorkingObjectList[i];
+			if (I.getBounds()) {
+				for (unsigned int j = i + 1; j < mWorkingListSize; j++) {
+					GameObject& J = mWorkingObjectList[j];
+					if (J.getBounds()) {
+						if (collides(I.getBounds(), J.getBounds())) {
 							CollisionData collision;
-							collision.first = I->getPhysicsComponent();
-							collision.second = J->getPhysicsComponent();
-							I->handle(Event(collision));
-							J->handle(Event(collision));
+							collision.first = I.getPhysicsComponent();
+							collision.second = J.getPhysicsComponent();
+							I.handle(Event(collision));
+							J.handle(Event(collision));
 						}
 					}
 				}
@@ -231,10 +232,11 @@ void Game::update(float dt) {
 		mWorkingActiveCamera->update(dt);	// Hmm
 		if (!mPaused) {
 			// Object updates
-			for (auto object : mWorkingObjectList) {
-				object->update(dt);	// A compelling reason to separate further into Components which can be updated individually
+			for (unsigned int i = 0; i < mWorkingListSize; i++) {
+				mWorkingObjectList[i].update(dt);	// A compelling reason to separate further into Components which can be updated individually
 			}
 		}
+		mSoundSystem.update();
 	}
 }
 
@@ -261,8 +263,8 @@ void Game::render(float dt) {
 
 	if (mWorkingActiveCamera) {
 		// Draw each object in the scene
-		for (auto object : mWorkingObjectList)
-			object->render(mWorkingActiveCamera);
+		for (unsigned int i = 0; i < mWorkingListSize; i++)
+			mWorkingObjectList[i].render(mWorkingActiveCamera);
 		// Draw any debug information
 		if (mDebugMode != DEBUG_NONE) {
 			// Draw object axes
@@ -271,8 +273,8 @@ void Game::render(float dt) {
 			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
 			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
 			Geometry::drawAxes();
-			for (auto object : mWorkingObjectList) {
-				program->sendUniform("uM", glm::value_ptr(object->getPhysicsComponent()->getModelMatrix()));
+			for (unsigned int i = 0; i < mWorkingListSize; i++) {
+				program->sendUniform("uM", glm::value_ptr(mWorkingObjectList[i].getPhysicsComponent()->getWorldTransform()));
 				Geometry::drawAxes();
 			}
 			// Draw a debug value with solid colors
@@ -281,23 +283,23 @@ void Game::render(float dt) {
 			program->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
 			switch (mDebugMode) {
 			case DEBUG_COLLISION:
-				for (auto object : mWorkingObjectList) {
-					if (object->hasCollision())
+				for (unsigned int i = 0; i < mWorkingListSize; i++) {
+					if (mWorkingObjectList[i].hasCollision())
 						program->sendUniform("uDebugColor", 4, 1, debug_true);
 					else
 						program->sendUniform("uDebugColor", 4, 1, debug_false);
 					program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));	// AABB's and spheres, at least, will be tracking their world coordinates
-					object->debugDraw();
+					mWorkingObjectList[i].debugDraw();
 				}
 				break;
 			case DEBUG_MOUSE:
-				for (auto object : mWorkingObjectList) {
-					if (object->hasMouseOver())
+				for (unsigned int i = 0; i < mWorkingListSize; i++) {
+					if (mWorkingObjectList[i].hasMouseOver())
 						program->sendUniform("uDebugColor", 4, 1, debug_true);
 					else
 						program->sendUniform("uDebugColor", 4, 1, debug_false);
 					program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
-					object->debugDraw();
+					mWorkingObjectList[i].debugDraw();
 				}
 				break;
 			}
@@ -331,9 +333,9 @@ void Game::render(float dt) {
 	if (mWorkingActiveCamera) {
 		prog->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
 		prog->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getPosition()));
-		for (auto object : mWorkingObjectList) {
-			prog->sendUniform("uObjectID", object->getIndex());
-			object->render(prog);
+		for (unsigned int i = 0; i < mWorkingListSize; i++) {
+			prog->sendUniform("uObjectID", mWorkingObjectList[i].getIndex());
+			mWorkingObjectList[i].render(prog);
 		}
 	}
 }
@@ -405,6 +407,10 @@ void Game::handle(Event event) {
 		case '+':
 			mDebugStageSelection++;
 			mDebugStageSelection %= 3;
+			break;
+		case 'm':
+			mMasterVolume = 1.0f - mMasterVolume;
+			mSoundSystem.getInstance().setVolume(mMasterVolume);
 			break;
 		case 27:
 			// Pause / unpause
