@@ -10,12 +10,14 @@ private:
 	struct TreeNode {
 		std::string name;
 		std::vector<TreeNode> children;
-		TreeNode(std::string n) {
+		TreeNode(std::string n, TreeNode* parent) {
 			this->name = n;
+			this->parent = parent;
 		}
 		~TreeNode() {
 			this->children.clear();
 		}
+		TreeNode* parent;
 	};
 	NamedContainer<Type> mItems;
 	TreeNode* mRoot;
@@ -35,7 +37,7 @@ private:
 	}
 public:
 	NamedTree() {
-		mRoot = new TreeNode("");
+		mRoot = new TreeNode("", nullptr);
 	}
 	~NamedTree() {
 		delete mRoot;
@@ -46,7 +48,7 @@ public:
 		this->mItems.add(key, data);
 		std::vector<int> lookup;
 		lookup.push_back(this->mRoot->children.size());
-		this->mRoot->children.push_back(TreeNode(key));
+		this->mRoot->children.push_back(TreeNode(key, nullptr));
 		this->mTreeLookup.add(key, lookup);
 	}
 	inline void add(std::string key, std::string parent, Type data) {
@@ -60,7 +62,7 @@ public:
 		for (auto i : lookup)
 			node = &node->children[i];
 		lookup.push_back(node->children.size());
-		node->children.push_back(TreeNode(key));
+		node->children.push_back(TreeNode(key, node));
 		this->mTreeLookup.add(key, lookup);
 	}
 	inline Type get(std::string key) const {
@@ -82,6 +84,19 @@ public:
 			ret.push_back(i.name);
 		return ret;
 	}
+	inline bool hasParent(std::string key) const {
+		if (!this->mItems.contains(key))
+			throw std::out_of_range(key);
+		TreeNode* node = lookup(key);
+		return node->parent != nullptr;
+	}
+	inline std::string getParent(std::string key) const {
+		if (!this->mItems.contains(key))
+			throw std::out_of_range(key);
+		TreeNode* node = lookup(key);
+		if (node->parent) return node->parent->name;
+		return "";
+	}
 	inline bool contains(std::string key) const {
 		return this->mItems.contains(key);
 	}
@@ -91,7 +106,7 @@ public:
 	inline void clear() {
 		this->mItems.clear();
 		delete this->mRoot;
-		this->mRoot = new TreeNode("");
+		this->mRoot = new TreeNode("", nullptr);
 	}
 	inline void remove(std::string key) {
 		if (!this->mItems.contains(key))

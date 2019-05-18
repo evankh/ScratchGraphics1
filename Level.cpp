@@ -292,14 +292,18 @@ Level::~Level() {
 }
 
 GameObject* Level::getWorkingSet() {
-	GameObject* queue = new GameObject[mSceneGraph.count()];
+	GameObject* workingSet = new GameObject[mSceneGraph.count()];
 	std::vector<std::string> objectNames = mSceneGraph.breadthFirstTraversal();
+	std::map<std::string, PhysicsComponent*> clonedPCs;
 	int i = 0;
 	for (std::string name : objectNames) {
-		mSceneGraph.get(name)->copy(queue + i);
+		mSceneGraph.get(name)->copy(workingSet + i);
+		if (mSceneGraph.hasParent(name))
+			workingSet[i].getPhysicsComponent()->setParent(clonedPCs[mSceneGraph.getParent(name)]);
+		clonedPCs[name] = workingSet[i].getPhysicsComponent();
 		i++;
 	}
-	return queue;
+	return workingSet;
 }
 
 void Level::setBackgroundMusicVolume(float volume) {

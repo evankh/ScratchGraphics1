@@ -13,7 +13,7 @@ Object "Analytic sphere" bounds:"Sphere" geom:"debug_cube_2" prog:"ray_sphere" p
 Object "player" bounds:"AABB" geom:"debug_cube_2" prog:"debug_texcoord" pos:(3.0,2.0,0.0) input:"player"
 	Object "hat" parent:"player" geom:"debug_cube" prog:"solid_color" col:(0.0,0.5,1.0) pos:(0.5,0.5,1.0) scl:0.5
 // No need to do any fancy indentation parsing really, can just add a parent:"name" field
-Object "car" geom:"debug_cube" prog:"solid_color" col:(1.0,0.0,0.0) pos:(-2.0,2.0,1.0) scl:(1.0,1.0,0.5)
+Object "car" geom:"debug_cube" prog:"solid_color" col:(1.0,0.0,0.0) pos:(-2.0,2.0,1.0) scl:(1.0,1.0,0.05)
 	Object "tire1" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(1.0,1.0,-1.0)
 	Object "tire2" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(1.0,-1.0,-1.0)
 	Object "tire3" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(-1.0,1.0,-1.0)
