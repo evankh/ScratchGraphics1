@@ -2,7 +2,6 @@
 #define __EKH_SCRATCH_GRAPHICS_1_HANDLER__
 
 #include "Event System\Event.h"
-#include "Event System\EventQueue.h"
 #include "Event System\Receiver.h"
 
 class Handler {

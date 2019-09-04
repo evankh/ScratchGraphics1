@@ -1,6 +1,7 @@
 #include "Handler.h"
 
 void Handler::dispatchAll() {
+	// All these events will be passed along instantly, no need to worry about the timers
 	while (!sEvents.isEmpty()) {
 		Event event = sEvents.pop();
 		ReceiverNode* current = mRegisteredReceivers[getIndexFrom(event)];

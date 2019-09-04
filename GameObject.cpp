@@ -32,30 +32,40 @@ GameObject::~GameObject() {
 void GameObject::update(float dt) {
 	mHasCollision = false;
 	mHasMouseOver = false;
-	while (!mEventQueue.isEmpty()) {
+	int remaining = mEventQueue.size();
+	while (remaining) {
 		Event e = mEventQueue.pop();
-		Sound* s = nullptr;
-		if (e.mType == EventType::PLAY_SOUND_REQUEST && (s = mSounds.get(e.mData.sound.name))) {
-			mAudioComponent->setVolume(e.mData.sound.gain);
-			mAudioComponent->playSound(s);
-		}
-		if (mState) {
-			State* next = mState->handleEvent(e);
-			if (next) {
-				mState->exit();
-				delete mState;
-				mState = next;
-				mState->enter(mPhysicsComponent);
-			}
-		}
-		if (e.mType == EventType::COLLISION)
-			mHasCollision = true;
-		if (e.mType == EventType::MOUSEOVER)
-			mHasMouseOver = true;
+		e.mTimer -= dt;
+		if (e.mTimer <= 0.0f)
+			process(e);
+		else
+			mEventQueue.push(e);
+		remaining--;
 	}
 	if (mState) mState->update(mPhysicsComponent, dt);
 	if (mCameraComponent) mCameraComponent->update(mPhysicsComponent);
 	if (mAudioComponent) mAudioComponent->update();
+}
+
+void GameObject::process(const Event e) {
+	Sound* s = nullptr;
+	if (e.mType == EventType::PLAY_SOUND_REQUEST && (s = mSounds.get(e.mData.sound.name))) {
+		mAudioComponent->setVolume(e.mData.sound.gain);
+		mAudioComponent->playSound(s);
+	}
+	if (mState) {
+		State* next = mState->handleEvent(e);
+		if (next) {
+			mState->exit();
+			delete mState;
+			mState = next;
+			mState->enter(mPhysicsComponent);
+		}
+	}
+	if (e.mType == EventType::COLLISION)
+		mHasCollision = true;
+	if (e.mType == EventType::MOUSEOVER)
+		mHasMouseOver = true;
 }
 
 void GameObject::registerSound(std::string name, Sound* sound) {

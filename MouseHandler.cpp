@@ -32,7 +32,7 @@ void MouseHandler::registerMouseoverReceiver(Receiver* receiver) {
 void MouseHandler::unregisterReceiver(Receiver* receiver) {
 	Handler::unregisterReceiver(receiver);
 	// Remove from mMouseoverReceivers too
-	int i = 0;
+	unsigned int i = 0;
 	for (; i < mMouseoverReceivers.size(); i++)
 		if (mMouseoverReceivers[i] == receiver) break;
 	if (i == mMouseoverReceivers.size()) return;	// Wasn't in the list

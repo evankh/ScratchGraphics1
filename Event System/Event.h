@@ -71,13 +71,32 @@ struct Event {
 		CollisionData collision;
 		CommandData command;
 	} mData;
+	float mTimer = 0.0f;
 	Event() :mType(EventType::NONE) { mData.empty = EmptyData(); };
-	Event(EventType type, KeyboardData data) :mType(type) { mData.keyboard = data; };
-	Event(EventType type, MouseData data) :mType(type) { mData.mouse = data; };
-	Event(MouseoverData data) :mType(EventType::MOUSEOVER) { mData.mouseover = data; };
-	Event(SoundData data) :mType(EventType::PLAY_SOUND_REQUEST) { mData.sound = data; };
-	Event(CollisionData data) :mType(EventType::COLLISION) { mData.collision = data; };
-	Event(CommandData data) :mType(EventType::COMMAND) { mData.command = data; };
+	Event(EventType type, KeyboardData data, float timer = 0.0f) :mType(type), mTimer(timer) { mData.keyboard = data; };
+	Event(EventType type, MouseData data, float timer = 0.0f) :mType(type), mTimer(timer) { mData.mouse = data; };
+	Event(MouseoverData data, float timer = 0.0f) :mType(EventType::MOUSEOVER), mTimer(timer) { mData.mouseover = data; };
+	Event(SoundData data, float timer = 0.0f) :mType(EventType::PLAY_SOUND_REQUEST), mTimer(timer) { mData.sound = data; };
+	Event(CollisionData data, float timer = 0.0f) :mType(EventType::COLLISION), mTimer(timer) { mData.collision = data; };
+	Event(CommandData data, float timer = 0.0f) :mType(EventType::COMMAND), mTimer(timer) { mData.command = data; };
+};
+
+#include <queue>
+
+struct EventQueue {
+	std::queue<Event> mQueue;
+public:
+	bool isEmpty() const { return mQueue.empty(); };
+	int size() const { return mQueue.size(); };
+	void push(const Event e) { mQueue.push(e); };
+	Event pop() {
+		if (!isEmpty()) {
+			Event ret = mQueue.front();
+			mQueue.pop();
+			return ret;
+		}
+		return Event();
+	};
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_EVENT__

@@ -1,7 +1,6 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__
 #define __EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__
 
-#include "Event System/EventQueue.h"
 #include "Event System/Receiver.h"
 #include "Bounds.h"
 class Geometry;
@@ -42,6 +41,7 @@ public:
 	void render(Program* p);
 	void debugDraw();
 	virtual void handle(const Event e);
+	void process(const Event e);
 	void setState(State* state);	// Probably should be private or something, could completely change the type of the object if given the wrong type of State
 	GameObject* copy() const;
 	void copy(GameObject* target) const;
