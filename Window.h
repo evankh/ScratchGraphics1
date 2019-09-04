@@ -18,6 +18,7 @@ public:
 	unsigned int getHeight() const { return mHeight; };
 	void printGLVersion() const;
 	int getGLVersion() const;
+	void update() const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_WINDOW__

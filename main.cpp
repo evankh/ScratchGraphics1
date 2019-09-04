@@ -2,6 +2,7 @@
 #include "ServiceLocator.h"
 
 int main(int argc, char* argv[]) {
+	ServiceLocator::provideLoggingService(new ConsoleLoggingService);
 	Game::getInstance().init(argc, argv);
 	Game::getInstance().load();
 	Game::getInstance().run();

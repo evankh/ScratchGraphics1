@@ -58,3 +58,7 @@ int Window::getGLVersion() const {
 	glGetIntegerv(GL_MINOR_VERSION, version + 1);
 	return 100 * version[0] + 10 * version[1];
 }
+
+void Window::update() const {
+	glutSwapBuffers();
+}

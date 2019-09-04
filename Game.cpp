@@ -195,6 +195,8 @@ void Game::render(float dt) {
 		mCurrentMenu->draw();
 	}
 
+	mWindow->update();
+
 	// Mouse picking stuff
 	MouseHandler::getInstance().setAsDrawingTarget();
 	Program* prog = mCommonLibraries.standard.programs.get("mouse_selection");
