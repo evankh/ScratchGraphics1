@@ -86,6 +86,10 @@ FileSound::FileSound(std::string filename) :Sound(filename) {
 	}
 }
 
+FileSound::~FileSound() {
+	delete[] mShortData;
+}
+
 bool ProceduralSound::sHaveGeneratedNoteTable = false;
 std::map<std::string, float>* ProceduralSound::sNoteTable = new std::map<std::string, float>[10];
 std::vector<std::string> ProceduralSound::sNoteNames = { "A","A#","B","C","C#","D","D#","E","F","F#","G","G#" };
@@ -110,20 +114,16 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 	if (file.good()) {
 		Envelope envelope;
 		while (file.good()) {
-			char* err;
+			auto_cstr err;
 			Point fpoint;
 			struct { float time; char note, sharp; int octave; float gain = 1.0f; } npoint;
-			struct { char* interp; char* waveform; int p1, p2; } sweep;
-			if (file.extract("//`S`L", NULL));
+			struct { auto_cstr interp, waveform; int p1, p2; } sweep;
+			if (file.extract("//`S`L"));
 			else if (file.extract("Point time:`F freq:`F", &fpoint)) {
 				if (file.extract(" gain:`F", &fpoint.gain));
 				mPoints.push_back(fpoint);
-				if (file.extract("`?S`L", &err)) {
-					if (err) {
-						ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
-						delete err;
-					}
-				}
+				if (file.extract("`?S`L", &err))
+					if (err) ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
 			}
 			else if (file.extract("Point time:`F note:`C`C", &npoint)) {	// How do I use extract to get either one or two characters, bounded by an int?
 				if (npoint.sharp != '#' && npoint.sharp != 'b') {
@@ -143,12 +143,8 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 				}
 				else
 					ServiceLocator::getLoggingService().error("Malformed note string", note);
-				if (file.extract("`?S`L", &err)) {
-					if (err) {
-						ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
-						delete err;
-					}
-				}
+				if (file.extract("`?S`L", &err))
+					if (err) ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
 			}
 			else if (file.extract("Sweep `S `S `I `I`L", &sweep)) {
 				Sweep s;
@@ -182,10 +178,8 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 				mSweeps.push_back(s);
 			}
 			else if (file.extract("Envelope `F:`F `F:`F `F:`F `F:`F`L", &envelope));	// Will continue to use the envelope until another one is specified
-			else if (file.extract("`S`L", &err)) {
+			else if (file.extract("`S`L", &err))
 				ServiceLocator::getLoggingService().error("Unexpected line in sound file", err);
-				delete err;
-			}
 		}
 		build();
 		transfer();

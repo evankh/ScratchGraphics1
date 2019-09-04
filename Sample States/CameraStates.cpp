@@ -56,15 +56,11 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 	if (mLeftDrag) {
 		dx = current_x - mLeftDragStartPos[0];
 		dy = current_y - mLeftDragStartPos[1];
-		// 2 problems: 
-		// Should be based on orientation at start of drag, not current orientation
-		// And should be controlled by a movement speed variable
-		// And could probably be a lot better of a control scheme generally
 		glm::vec3 pos = mDragStart->getPosition();
 		physics->set(mDragStart);
 		physics->translate(-pos);
-		physics->rotate({ 1.0f,0.0f,0.0f }, -dy * mSpeed);
-		physics->rotate({ 0.0f,1.0f,0.0f }, dx * mSpeed);
+		physics->rotateLocalX(mSpeed * dy);
+		physics->rotateGlobalZ(mSpeed * dx);
 		physics->translate(pos);
 	}
 	if (mRightDrag) {
@@ -72,8 +68,8 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 		dy = current_y - mRightDragStartPos[1];
 		physics->set(mDragStart);
 		physics->translate(-mOrbitCenter);
-		physics->rotate({ 1.0f,0.0f,0.0f }, -dy * mSpeed);
-		physics->rotate({ 0.0f,1.0f,0.0f }, dx * mSpeed);
+		physics->rotateGlobalZ(mSpeed * dx);
+		physics->rotateLocalX(mSpeed * dy);
 		physics->translate(mOrbitCenter);
 	}
 }

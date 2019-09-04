@@ -1,18 +1,10 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_GAME__
 #define __EKH_SCRATCH_GRAPHICS_1_GAME__
 
-#include "Camera.h"
-class GameObject;
-class Geometry;
-#include "KernelManager.h"
 #include "Level.h"
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
-#include "Program.h"
-#include "ShaderManager.h"
-#include "SoundLibrary.h"
 #include "SoundHandler.h"
-class Texture;
 #include "UI/Menu.h"
 #include "UI/UIElement.h"
 #include "Event System/Receiver.h"
@@ -56,8 +48,8 @@ private:
 	Window* mWindow;
 	Level* mCurrentLevel;
 	PostprocessingPipeline* mCurrentPostProcessing;
-	Menu* mCurrentMenu = NULL;
-	Menu* mHUD = NULL;
+	Menu* mCurrentMenu = nullptr;
+	Menu* mHUD = nullptr;
 	PostprocessingPipeline* mCurrentMenuPost;
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
 	const std::string mAssetBasePath = "assets2/";
@@ -77,9 +69,10 @@ private:
 	int mDebugStageSelection = 0;
 public:
 	static Game& getInstance();
-	void init();
+	void init(int argc, char* argv[]);
 	void load();
 	void softReload();
+	void run();
 	void cleanup();
 	void update(float dt);
 	void render(float dt);

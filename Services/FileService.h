@@ -35,4 +35,31 @@ public:
 	void reverseEndian();
 };
 
+class auto_cstr {
+	char* mData = nullptr;
+	friend std::string operator+(std::string, auto_cstr);
+public:
+	auto_cstr(char* a = nullptr) {
+		mData = a;
+	};
+	auto_cstr(const auto_cstr& other) {
+		int len = strlen(other.mData);
+		mData = new char[len + 1];
+		memcpy(mData, other.mData, len + 1);
+	};
+	auto_cstr(auto_cstr&& other) {
+		mData = other.mData;
+		other.mData = nullptr;
+	};
+	~auto_cstr() {
+		if (mData) delete[] mData;
+	};
+	operator std::string() const {
+		return std::string(mData);
+	};
+	operator char*() const {
+		return mData;
+	};
+};
+
 #endif//__EKH_SCRATCH_GRAPHICS_1_FILE_SERVICE__

@@ -1,7 +1,7 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_LEVEL__
 #define __EKH_SCRATCH_GRAPHICS_1_LEVEL__
 
-class GameObject;
+#include "GameObject.h"
 #include "Geometry.h"
 #include "NamedContainer.h"
 #include "NamedTree.h"
@@ -33,7 +33,7 @@ private:
 	StandardLibraries& mSharedLibraries;
 	StandardLibraries mOwnLibraries;
 public:
-	Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries ownLibraries);
+	Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries& ownLibraries);
 	~Level();
 	std::map<std::string, GameObject*>& getCameraList() { return mSceneCameras; };
 	unsigned int getNumObjects() const { return mSceneGraph.count(); };

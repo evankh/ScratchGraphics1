@@ -8,7 +8,7 @@ void SoundLibrary::add(std::string name, Sound* sound) {
 Sound* SoundLibrary::get(std::string name) const {
 	if (mSounds.count(name))
 		return mSounds.at(name);
-	return NULL;
+	return nullptr;
 }
 
 void SoundLibrary::clear() {

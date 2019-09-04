@@ -3,8 +3,8 @@
 
 #include "Event System/EventQueue.h"
 #include "Event System/Receiver.h"
-#include "Geometry.h"
 #include "Bounds.h"
+class Geometry;
 class Program;
 #include "PhysicsComponent.h"
 class Camera;

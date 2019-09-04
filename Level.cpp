@@ -7,7 +7,7 @@
 #include "glm/gtx/transform.hpp"
 #include <xtree>
 
-Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries ownLibraries) :mSharedLibraries(sharedLibraries), mOwnLibraries(ownLibraries) {
+Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries& ownLibraries) :mSharedLibraries(sharedLibraries), mOwnLibraries(ownLibraries) {
 	FileService file(filepath);
 	char* objectName;
 	while (file.good()) {
@@ -283,6 +283,7 @@ Level::~Level() {
 	for (auto camera : mSceneCameras)
 		delete camera.second;
 	mSceneCameras.clear();
+	mSceneGraph.clear();
 	mOwnLibraries.geometries.clear();
 	mOwnLibraries.shaders.clear();
 	mOwnLibraries.programs.clear();

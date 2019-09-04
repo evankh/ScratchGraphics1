@@ -16,6 +16,8 @@ public:
 	void rename(const char* title);
 	unsigned int getWidth() const { return mWidth; };
 	unsigned int getHeight() const { return mHeight; };
+	void printGLVersion() const;
+	int getGLVersion() const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_WINDOW__

@@ -232,6 +232,7 @@ bool FileService::extract(const char* pattern, void* target) {
 					char* string = new char[(int)length + 1];
 					in.get(string, (int)length + 1);
 					if (target) *(char**)((char*)target + offset) = string;
+					else delete[] string;
 					offset += sizeof(char*);
 				}
 				else {
@@ -240,7 +241,7 @@ bool FileService::extract(const char* pattern, void* target) {
 						return false;
 					}
 					else {
-						if (target) *(char**)((char*)target + offset) = NULL;
+						if (target) *(char**)((char*)target + offset) = nullptr;
 						offset += sizeof(char*);
 					}
 				}
@@ -328,4 +329,8 @@ void FileService::jumpToOffset(int offset) {
 
 void FileService::reverseEndian() {
 	mBackwards = !mBackwards;
+}
+
+std::string operator+ (std::string a, auto_cstr b) {
+	return a + b.mData;
 }

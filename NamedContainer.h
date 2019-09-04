@@ -36,6 +36,7 @@ template<class Type>
 class NamedContainer :public NamedContainerBase<Type> {
 public:
 	inline NamedContainer() :NamedContainerBase() {};
+	~NamedContainer() { this->clear(); };
 	inline void clear() {
 		this->mItems.clear();
 	};
@@ -49,6 +50,7 @@ template<class Type>
 class NamedContainer<Type*> :public NamedContainerBase<Type*> {
 public:
 	inline NamedContainer() :NamedContainerBase() {};
+	~NamedContainer() { this->clear(); };
 	inline void clear() {
 		for (auto item : this->mItems)
 			delete item.second;
@@ -67,6 +69,7 @@ template<typename Ret, typename... Args>
 class NamedContainer<Ret(*)(Args...)> :public NamedContainerBase<Ret(*)(Args...)> {
 public:
 	inline NamedContainer() :NamedContainerBase() {};
+	~NamedContainer() { this->clear(); };
 	inline void clear() {
 		this->mItems.clear();
 	};

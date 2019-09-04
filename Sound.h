@@ -67,6 +67,7 @@ private:
 	void build();
 public:
 	ProceduralSound(std::string filename);
+	~ProceduralSound();
 };
 
 class FileSound :public Sound {
@@ -76,6 +77,7 @@ private:
 	int mSampleRate;
 public:
 	FileSound(std::string filename);
+	~FileSound();
 	virtual void transfer();
 };
 

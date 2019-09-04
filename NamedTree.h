@@ -40,6 +40,7 @@ public:
 		mRoot = new TreeNode("", nullptr);
 	}
 	~NamedTree() {
+		clear();
 		delete mRoot;
 	}
 	inline void add(std::string key, Type data) {

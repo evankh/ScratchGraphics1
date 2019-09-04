@@ -19,11 +19,13 @@ private:
 	struct Keyframe {
 		float time, duration;
 		T data;
+		float normalized() const { return time / duration; };
 	};
 	std::vector<Keyframe> mKeyframes;
 	int mCurrentKeyframe;
 	Keyframe& current() { return mKeyframes[mCurrentKeyframe]; };
 	Keyframe& next() { return mKeyframes[(mCurrentKeyframe + 1) % mKeyframes.size()]; };
+	Keyframe& previous() { return mKeyframes[(mCurrentKeyframe - 1) % mKeyframes.size()]; };
 public:
 	void add(const T& datum, float duration) {
 		Keyframe kf;
@@ -33,10 +35,15 @@ public:
 		mKeyframes.push_back(kf);
 	}
 	void update(float dt) {
+		// Negative dt will make it play backwards
 		current().time += dt;
 		while (current().time >= current().duration) {
 			next().time = current().time - current().duration;
-			mCurrentKeyframe = (mCurrentKeyframe + 1) % mKeyframes.size();
+			mCurrentKeyframe = next();
+		}
+		while (current().time < 0.0f) {
+			previous().time() = current().time + current().duration;
+			mCurrentKeyframe = previous();
 		}
 	}
 	T getCurrent() {

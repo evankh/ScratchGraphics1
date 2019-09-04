@@ -9,7 +9,7 @@ PhysicsComponent::PhysicsComponent() {
 	mAcceleration = glm::vec3(0.0f);
 	mRotation = glm::mat4(1.0f);
 	mAxis = glm::vec3(0.0f, 0.0f, 1.0f);
-	mAngularVelocity = 0.0f;
+	mAngle = mAngularVelocity = mAngularAcceleration = 0.0f;
 	mBounds = new Collisionless();
 }
 
@@ -42,14 +42,44 @@ PhysicsComponent::~PhysicsComponent() {
 void PhysicsComponent::update(float dt) {
 	mVelocity += mAcceleration * dt;
 	mPosition += mVelocity * dt;
-	rotate(mAxis, mAngularVelocity * dt);
+	mAngularVelocity += mAngularAcceleration * dt;
+	mAngle += mAngularVelocity * dt;
+	mAngle = fmodf(mAngle, glm::pi<float>());
 	if (mBounds) mBounds->translate(mVelocity * dt);
-	if (mBounds) mBounds->rotate(mAxis, mAngularVelocity*dt);
+	if (mBounds) mBounds->rotate(mAxis, mAngularVelocity * dt);
 }
 
 void PhysicsComponent::translate(glm::vec3 dxyz) {
 	mPosition += dxyz;
 	if (mBounds) mBounds->translate(dxyz);
+}
+
+void PhysicsComponent::rotate(glm::vec3 axis, float degrees) {
+	mRotation = glm::rotate(mRotation, glm::radians(degrees), axis);
+	if (mBounds) mBounds->rotate(axis, degrees);
+}
+
+void PhysicsComponent::rotateGlobalX(float degrees) {
+	glm::vec4 axis = { 1.0f, 0.0f, 0.0f, 1.0f };
+	axis = mRotation * axis;
+	rotate({ axis.x,axis.y,axis.z }, degrees);
+}
+
+void PhysicsComponent::rotateGlobalY(float degrees) {
+	glm::vec4 axis = { 0.0f, 1.0f, 0.0f, 1.0f };
+	axis = mRotation * axis;
+	rotate({ axis.x,axis.y,axis.z }, degrees);
+}
+
+void PhysicsComponent::rotateGlobalZ(float degrees) {
+	glm::vec4 axis = { 0.0f, 0.0f, 1.0f, 1.0f };
+	axis = mRotation * axis;
+	rotate({ axis.x,axis.y,axis.z }, degrees);
+}
+
+void PhysicsComponent::scale(glm::vec3 scale) {
+	mScale *= scale;
+	if (mBounds) mBounds->scale(scale);
 }
 
 void PhysicsComponent::set(const PhysicsComponent* other) {
@@ -63,16 +93,6 @@ void PhysicsComponent::set(const PhysicsComponent* other) {
 	if (mBounds) delete mBounds;
 	if (other->mBounds) mBounds = other->mBounds->copy();
 	else mBounds = nullptr;
-}
-
-void PhysicsComponent::rotate(glm::vec3 axis, float degrees) {
-	mRotation = glm::rotate(mRotation, glm::radians(degrees), axis);
-	if (mBounds) mBounds->rotate(axis, degrees);
-}
-
-void PhysicsComponent::scale(glm::vec3 scale) {
-	mScale *= scale;
-	if (mBounds) mBounds->scale(scale);
 }
 
 glm::mat4 PhysicsComponent::getWorldTransform() {

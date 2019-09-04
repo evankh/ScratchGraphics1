@@ -14,7 +14,7 @@ private:
 	glm::vec3 mAcceleration;
 	glm::mat4 mRotation;
 	glm::vec3 mAxis;
-	float mAngularVelocity;
+	float mAngle, mAngularVelocity, mAngularAcceleration;
 	Bounds* mBounds = nullptr;
 	PhysicsComponent* mParent = nullptr;
 public:
@@ -26,13 +26,19 @@ public:
 	void setParent(PhysicsComponent* parent) { mParent = parent; };
 	void update(float dt);
 	void translate(glm::vec3 dxyz);
+	void rotate(glm::vec3 axis, float degrees);
+	void rotateGlobalX(float degrees);
+	void rotateGlobalY(float degrees);
+	void rotateGlobalZ(float degrees);
+	void rotateLocalX(float degrees) { rotate({ 1.0f,0.0f,0.0f }, degrees); };
+	void rotateLocalY(float degrees) { rotate({ 0.0f,1.0f,0.0f }, degrees); };
+	void rotateLocalZ(float degrees) { rotate({ 0.0f,0.0f,1.0f }, degrees); };
+	void scale(glm::vec3 scale);
 	void setPosition(glm::vec3 pos) { mPosition = pos; };
 	void setVelocity(glm::vec3 vel) { mVelocity = vel; };
 	void setAcceleration(glm::vec3 acc) { mAcceleration = acc; };
-	void setRotation(glm::vec3 axis, float mom) { mAxis = axis; mAngularVelocity = mom; };
-	void set(const PhysicsComponent* other);
-	void rotate(glm::vec3 axis, float degrees);
-	void scale(glm::vec3 scale);
+	void setRotation(glm::vec3 axis, float degrees) { mAxis = axis; mAngle = degrees; };
+	void setAngularMomentum(glm::vec3 axis, float mom) { mAxis = axis; mAngularVelocity = mom; };
 	glm::mat4 getWorldTransform();
 	glm::mat4 getInverseWorldTransform();
 	glm::vec3 getPosition() const { return mPosition; };
@@ -40,6 +46,7 @@ public:
 	Bounds* getBounds() const { return mBounds; };
 	float* getOrientationVectors() const;
 	PhysicsComponent* copy() const;
+	void set(const PhysicsComponent* other);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_PHYSICS_COMPONENT__
