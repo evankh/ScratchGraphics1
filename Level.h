@@ -22,7 +22,6 @@ struct StandardLibraries {
 	NamedContainer<Texture*> textures;
 	SoundLibrary sounds;
 };
-
 class Level {
 private:
 	std::map<std::string, GameObject*> mSceneCameras;	// Stays separate for now, will be merged in later when I figure out the exact relationship bewteen GameObject and Camera

@@ -9,37 +9,38 @@
 
 Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries& ownLibraries) :mSharedLibraries(sharedLibraries), mOwnLibraries(ownLibraries) {
 	FileService file(filepath);
-	char* objectName;
 	while (file.good()) {
+		auto_cstr objectName;
 		if (file.extract("//`S`L"));
 		else if (file.extract("`?WObject \"`S\"", &objectName)) {
 			if (mSceneGraph.contains(objectName)) {
 				ServiceLocator::getLoggingService().error("Attempted redefinition of object", objectName);
-				delete[] objectName;
 				file.extract("`S`L");
 				continue;
 			}
 			// Set up variables and structs to read into
-			char* parentName = nullptr, *geomName, *progName, *texName, *inputName = nullptr, *soundName, *boundsName = nullptr, *err;	// Not sure why it only cares about inputName
 			struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, vel{ 0.0f,0.0f,0.0f }, acc{ 0.0f,0.0f,0.0f }, rot{ 0.0f,0.0f,1.0f }, scl{ 1.0f,1.0f,1.0f }, axis{ 0.0f,0.0f,1.0f }, col{ 0.0f,0.0f,0.0f };
 			float ang = 0.0f, mom = 0.0f;
 			Geometry* geom = nullptr;
 			Program* program = nullptr;
-			Bounds* bounds = nullptr;
 			Texture* texture = nullptr;
 			std::vector<std::string> sounds;
 			bool valid = true, hasCol = false;
+			std::string parent, input, bound;
 			while (!file.extract("`L")) {
+				auto_cstr parentName, geomName, progName, texName, inputName, soundName, boundsName, err;
 				if (file.extract(" parent:\"`S\"", &parentName)) {
 					if (!mSceneGraph.contains(parentName)) {
 						ServiceLocator::getLoggingService().error("Parent object not found", parentName);
 						valid = false;
-						delete[] parentName;
 						file.extract("`?S`L");
 						break;
 					}
+					else {
+						parent = (char*)parentName;
+					}
 				}
-				else if (file.extract(" bounds:\"`S\"", &boundsName));
+				else if (file.extract(" bounds:\"`S\"", &boundsName)) { bound = (char*)boundsName; }
 				else if (file.extract(" geom:\"`S\"", &geomName)) {
 					// Check if the geometry exists in the geometry library
 					// If so, save a reference to it to pass to the GameObject constructor
@@ -52,11 +53,9 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						catch (std::out_of_range) {
 							geom = mSharedLibraries.geometries.get(geomName);
 						}
-						delete[] geomName;
 					}
 					catch (std::out_of_range e) {
 						ServiceLocator::getLoggingService().error("Geometry not found", e.what());
-						delete[] geomName;
 						valid = false;
 						file.extract("`?S`L");
 						break;
@@ -70,11 +69,9 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						catch (std::out_of_range) {
 							program = mSharedLibraries.programs.get(progName);
 						}
-						delete[] progName;
 					}
 					catch (std::out_of_range e) {
 						ServiceLocator::getLoggingService().error("Program not found", e.what());
-						delete[] progName;
 						valid = false;
 						file.extract("`?S`L");
 						break;
@@ -88,11 +85,9 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						catch (std::out_of_range) {
 							texture = mSharedLibraries.textures.get(texName);
 						}
-						delete[] texName;
 					}
 					catch (std::out_of_range e) {
 						ServiceLocator::getLoggingService().error("Texture not found", e.what());
-						delete[] texName;
 						valid = false;
 						file.extract("`?S`L");
 						break;
@@ -100,12 +95,12 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				}
 				else if (file.extract(" col:(`F,`F,`F)", &col)) { hasCol = true; }
 				else if (file.extract(" sounds:(")) {
-					while (file.extract("\"`S\"", &soundName)) {
+					while (!file.extract(")")){
+						auto_cstr soundName;
+						file.extract("\"`S\"", &soundName);
 						sounds.push_back(soundName);
-						delete[] soundName;
 						file.extract(",");	// No checking to make sure it's properly formatted
 					}
-					file.extract(")");
 				}
 				else if (file.extract(" pos:(`F,`F,`F)", &pos));
 				else if (file.extract(" vel:(`F,`F,`F)", &vel));
@@ -114,25 +109,20 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				else if (file.extract(" ang:`F", &ang));
 				else if (file.extract(" axis:(`F,`F,`F)", &axis));
 				else if (file.extract(" mom:`F", &mom));
-				else if (file.extract(" scl:`F", &scl.x)) {
-					scl.z = scl.y = scl.x;
-				}
+				else if (file.extract(" scl:`F", &scl.x)) { scl.z = scl.y = scl.x; }
 				else if (file.extract(" scl:(`F,`F,`F)", &scl));
-				else if (file.extract(" input:\"`S\"", &inputName));
+				else if (file.extract(" input:\"`S\"", &inputName)) { input = (char*)inputName; }
 				else if (file.extract("`S:", &err)) {
 					ServiceLocator::getLoggingService().error("Unexpected keyword in line", err);
-					delete[] err;
-					if (file.extract("`S ", &err)) {
-						ServiceLocator::getLoggingService().error("Skipping parameter", err);
-						delete[] err;
+					auto_cstr err2;
+					if (file.extract("`S ", &err2)) {
+						ServiceLocator::getLoggingService().error("Skipping parameter", err2);
 						file.putBack(" ");	// To continue with proper parsing
 					}
 				}
 				else if (file.extract("`?S`L", &err)) {
-					if (err) {
+					if (err)
 						ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line (skipping line)", err);
-						delete[] err;
-					}
 					file.putBack("\n");	// Not really sure how I should handle this with the new `L, but this works fine for now
 					valid = false;
 					break;
@@ -140,38 +130,38 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			}
 			if (valid) {
 				// Construction of the actual object
-				// It actually looks safe for any of the components to be NULL so the validity checking may not be necessary
-				if (boundsName) {
-					if (strcmp(boundsName, "Sphere") == 0)
+				Bounds* bounds = nullptr;
+				if (!bound.empty()) {
+					if (bound == "Sphere")
 						bounds = new BoundingSphere({ 0.0f,0.0f,0.0f }, 1.0f);
-					else if (strcmp(boundsName, "AABB") == 0)
+					else if (bound == "AABB")
 						bounds = geom->getBoundingBox()->copy();
-					else if (strcmp(boundsName, "Plane") == 0) {
+					else if (bound == "Plane") {
 						glm::mat4 rotation = glm::rotate(ang, glm::vec3(rot.x, rot.y, rot.z));
 						auto n = rotation * glm::vec4(0.0, 0.0, 1.0, 0.0);
 						bounds = new CollisionPlane(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(n.x, n.y, n.z));
 					}
 					else
-						ServiceLocator::getLoggingService().error("Unknown bounding box type", boundsName);
+						ServiceLocator::getLoggingService().error("Unknown bounding box type", bound);
 				}
 				PhysicsComponent* physics = new PhysicsComponent(bounds, { vel.x,vel.y,vel.z }, { acc.x,acc.y,acc.z }, { axis.x, axis.y, axis.z }, mom);
 				physics->scale({ scl.x,scl.y,scl.z });
 				physics->rotate({ rot.x,rot.y,rot.z }, ang);
 				physics->translate({ pos.x,pos.y,pos.z });
-				// Also store velocity
-				//if (parentName) physics->setParent(parent->getPhysicsComponent());
 				GameObject* object = new GameObject(geom, program, physics);
 				if (texture) object->setTexture(texture);
 				if (hasCol) object->setColor({ col.x,col.y,col.z });
-				if (inputName) try {
-					State* state = State::getNewEntryState(inputName, object);
-					object->setState(state);
-				}
-				catch (std::out_of_range e) {
-					ServiceLocator::getLoggingService().error("Cannot find AI state", inputName);
-					// Cleanup
-					delete object;
-					continue;
+				if (!input.empty()) {
+					try {
+						State* state = State::getNewEntryState(input, object);
+						object->setState(state);
+					}
+					catch (std::out_of_range e) {
+						ServiceLocator::getLoggingService().error("Cannot find AI state", input);
+						// Cleanup
+						delete object;
+						continue;
+					}
 				}
 				else {
 					State* state = State::getNewEntryState("passthru", object);	// Could probably move this into State.h actually, so there's always one valid one just in case
@@ -185,41 +175,33 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 					else
 						ServiceLocator::getLoggingService().error("Sound not found", sound);
 				}
-				if (parentName) mSceneGraph.add(objectName, parentName, object);
+				if (!parent.empty()) mSceneGraph.add(objectName, parent, object);
 				else mSceneGraph.add(objectName, object);
 			}
-			// Cleanup
-			delete[] objectName;
-			if (parentName) delete[] parentName;
 		}
 		else if (file.extract("Camera \"`S\"", &objectName)) {
 			if (mSceneCameras.count(objectName)) {
 				ServiceLocator::getLoggingService().error("Attempted redefinition of camera", objectName);
-				delete[] objectName;
-				file.extract("`S`L", NULL);
+				file.extract("`S`L");
 				continue;
 			}
 			struct { float x, y, z; } pos{ 0.0f,0.0f,0.0f }, at{ 0.0f,1.0f,0.0f };
 			float fov = 75.0;
-			char* err;
-			while (!file.extract("`L", NULL)) {
+			while (!file.extract("`L")) {
+				auto_cstr err, err2;
 				if (file.extract(" pos:(`F,`F,`F)", &pos));
 				else if (file.extract(" at:(`F,`F,`F)", &at));
 				else if (file.extract(" fov:`F", &fov));
 				else if (file.extract("`S:", &err)) {
 					ServiceLocator::getLoggingService().warning("Unexpected keyword in line", err);
-					delete[] err;
-					if (file.extract("`S ", &err)) {
-						ServiceLocator::getLoggingService().warning("Skipping parameter", err);
-						delete[] err;
+					if (file.extract("`S ", &err2)) {
+						ServiceLocator::getLoggingService().warning("Skipping parameter", err2);
 						file.putBack(" ");	// To continue with proper parsing
 					}
 				}
 				else if (file.extract("`?S`L", &err)) {
-					if (err) {
+					if (err)
 						ServiceLocator::getLoggingService().error("Malformed keyword or extra data in line", err);
-						delete[] err;
-					}
 					file.putBack("\n");
 					break;
 				}
@@ -238,11 +220,9 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				delete camera_object;
 				delete camera;
 				// Does GameObject take care of its PhysicsComponent? Does Camera? Uh oh
-				delete[] objectName;
 				continue;
 			}
 			mSceneCameras[objectName] = camera_object;
-			delete[] objectName;
 		}
 		else if (file.extract("Music \"`S\"", &objectName)) {
 			if (mBackgroundMusic) {
@@ -259,13 +239,10 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			catch (std::out_of_range &e) {
 				ServiceLocator::getLoggingService().error("Background music not found", e.what());
 			}
-			delete[] objectName;
 		}
 		else if (file.extract("`?S`L", &objectName)) {
-			if (objectName) {
+			if (objectName)
 				ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
-				delete[] objectName;
-			}
 		}
 	}
 	if (mSceneCameras.count("main"))

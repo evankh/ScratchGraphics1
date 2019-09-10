@@ -2,7 +2,7 @@
 #include "../GameObject.h"
 #include "../MouseHandler.h"
 
-bool MouseoverState::sRegistered = State::setBaseState("mouseover", new MouseoverState(NULL));
+bool MouseoverState::sRegistered = State::setBaseState("mouseover", new MouseoverState(nullptr));
 
 MouseoverState* MouseoverState::getEntry(GameObject* owner) {
 	MouseHandler::getInstance().registerMouseoverReceiver(owner);

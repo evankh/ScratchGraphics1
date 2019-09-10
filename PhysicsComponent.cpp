@@ -44,7 +44,8 @@ void PhysicsComponent::update(float dt) {
 	mPosition += mVelocity * dt;
 	mAngularVelocity += mAngularAcceleration * dt;
 	mAngle += mAngularVelocity * dt;
-	mAngle = fmodf(mAngle, glm::pi<float>());
+	//mAngle = fmodf(mAngle, glm::pi<float>());
+	mAngle = fmodf(mAngle, 360.0f);
 	if (mBounds) mBounds->translate(mVelocity * dt);
 	if (mBounds) mBounds->rotate(mAxis, mAngularVelocity * dt);
 }
