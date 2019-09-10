@@ -1,7 +1,7 @@
 Camera "main" pos:(5.0,5.0,3.0) at:(0.0,0.0,0.0) fov:75.0
 Music "debug_background"
 // Woops, that doesn't give any sort of error message if it doesn't find it
-Object "center_cube" bounds:"AABB" geom:"debug_cube_2" prog:"debug_normal" tex:"debug" pos:(0.0,0.0,0.0) rot:(0.0,0.0,1.0) ang:180.0 axis:(0.0,0.0,1.0) mom:45.0 input:"mouseover"
+Object "center_cube" bounds:"AABB" geom:"debug_cube_2" prog:"debug_normal" tex:"debug" pos:(0.0,0.0,0.0) rot:(0.0,0.0,1.0) axis:(0.0,0.0,1.0) mom:45.0 input:"mouseover"
 Object "gravity_cube" bounds:"AABB" geom:"debug_cube" prog:"debug_texcoord" pos:(0.5,0.0,1.0) vel:(0.0,-1.0,5.0) acc:(0.0,0.0,-5.0) scl:0.5 rot:(0.0,1.0,0.0) ang:45.0
 Object "spaceship" bounds:"Sphere" geom:"spaceship" prog:"debug_position" pos:(0.0,0.0,2.05) axis:(0.0,0.0,1.0) mom:45.0 input:"mouseover"
 Object "player1" bounds:"Sphere" geom:"spaceship" prog:"debug_normal" col:(1.0,0.0,0.0) pos:(2.0,0.0,0.0) scl:0.3 rot:(0.0,0.0,1.0) ang:-90.0 input:"mouseover"
@@ -10,10 +10,10 @@ Object "moving_spaceship" bounds:"Sphere" geom:"spaceship" prog:"metal" pos:(0.0
 Object "Suzanne" bounds:"AABB" geom:"suzanne_lores" prog:"phong" pos:(3.0,-2.0,0.5) input:"mouseover"
 Object "ground" bounds:"Plane" geom:"plane" prog:"texture" pos:(-5.0,-5.0,0.0) scl:(10.0,10.0,1.0) input:"mouseover"
 Object "Analytic sphere" bounds:"Sphere" geom:"debug_cube_2" prog:"ray_sphere" pos:(-0.5,1.5,0.0) scl:(1.0,1.0,0.5) input:"mouseover"
-Object "player" bounds:"AABB" geom:"debug_cube_2" prog:"debug_texcoord" pos:(3.0,2.0,0.0) input:"player"
-	Object "hat" parent:"player" geom:"debug_cube" prog:"solid_color" col:(0.0,0.5,1.0) pos:(0.5,0.5,1.0) scl:0.5
 // No need to do any fancy indentation parsing really, can just add a parent:"name" field
-Object "car" geom:"debug_cube" prog:"solid_color" col:(1.0,0.0,0.0) pos:(-2.0,2.0,1.0) scl:(1.0,1.0,0.05)
+Object "player" bounds:"AABB" geom:"debug_cube_2" prog:"debug_texcoord" pos:(3.0,2.0,0.0) input:"player"
+	Object "hat" parent:"player" geom:"debug_cube" prog:"solid_color" col:(0.0,0.5,1.0) pos:(0.25,0.25,1.5) scl:0.5
+Object "car" geom:"debug_cube" prog:"solid_color" col:(1.0,0.0,0.0) pos:(-2.0,2.0,1.0) scl:(1.0,1.0,1.0)
 	Object "tire1" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(1.0,1.0,-1.0)
 	Object "tire2" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(1.0,-1.0,-1.0)
 	Object "tire3" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(-1.0,1.0,-1.0)

@@ -3,7 +3,7 @@
 MouseHandler& MouseHandler::getInstance() {
 	static MouseHandler* sInstance = new MouseHandler;
 	if (!sInstance->mRegisteredReceivers) {
-		sInstance->mRegisteredReceivers = new ReceiverNode*[EKH_MOUSE_NUM_BUTTONS] {NULL};
+		sInstance->mRegisteredReceivers = new ReceiverNode*[EKH_MOUSE_NUM_BUTTONS] { nullptr };
 		sInstance->mMouseoverReceivers.push_back(nullptr);
 	}
 	return *sInstance;
@@ -47,15 +47,15 @@ void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int m
 	mButtonStatus[button] = (edge == 0);
 	if (edge == 0) {
 		mDragStartPosition[button][0] = mouse_x;
-		mDragStartPosition[button][1] = mouse_y;
+		mDragStartPosition[button][1] = mWindowHeight - mouse_y;
 	}
-	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, MouseData{ button,edge,mouse_x,mouse_y }));
+	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, MouseData{ button,edge,mouse_x,(int)mWindowHeight - mouse_y }));
 	sEvents.push(Event(CommandData{ mButtonBindings[button], 0.0f }));
 }
 
 void MouseHandler::handleMove(int mouse_x, int mouse_y) {
 	mMousePosition[0] = mouse_x;
-	mMousePosition[1] = mouse_y;
+	mMousePosition[1] = mWindowHeight - mouse_y;
 }
 
 const int* MouseHandler::getDragStartPosition(MouseButton button) const {
@@ -86,12 +86,12 @@ void MouseHandler::dispatchAll() {
 		unsigned int index = 0u;
 		float worldPos[4] = { 0.1f, 0.1f, 0.1f, 0.1f };
 		float localPos[4] = { 0.8f, 0.8f, 0.8f, 0.8f };
-		mFramebuffer->getPixel(mMousePosition[0], mWindowHeight - mMousePosition[1], 0, &index);
-		mFramebuffer->getPixel(mMousePosition[0], mWindowHeight - mMousePosition[1], 1, worldPos);
-		mFramebuffer->getPixel(mMousePosition[0], mWindowHeight - mMousePosition[1], 2, localPos);
+		mFramebuffer->getPixel(mMousePosition[0], mMousePosition[1], 0, &index);
+		mFramebuffer->getPixel(mMousePosition[0], mMousePosition[1], 1, worldPos);
+		mFramebuffer->getPixel(mMousePosition[0], mMousePosition[1], 2, localPos);
 		MouseoverData data;
 		data.mouse_x = mMousePosition[0];
-		data.mouse_y = mWindowWidth - mMousePosition[1];
+		data.mouse_y = mMousePosition[1];
 		for (int i = 0; i < 3; i++) {
 			data.world_pos[i] = worldPos[i];
 			data.local_pos[i] = localPos[i];

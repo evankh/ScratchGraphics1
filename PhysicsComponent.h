@@ -13,8 +13,11 @@ private:
 	glm::vec3 mVelocity;
 	glm::vec3 mAcceleration;
 	glm::mat4 mRotation;
-	glm::vec3 mAxis;
-	float mAngle, mAngularVelocity, mAngularAcceleration;
+	/*glm::vec3 mAxis;
+	float mAngle, mAngularVelocity, mAngularAcceleration;*/
+	// Euler Angles
+	glm::vec3 mAngles, mAngularVelocities, mAngularAccelerations;
+	// This thing reeeaaally needs quaternions or something
 	Bounds* mBounds = nullptr;
 	PhysicsComponent* mParent = nullptr;
 public:
@@ -37,8 +40,8 @@ public:
 	void setPosition(glm::vec3 pos) { mPosition = pos; };
 	void setVelocity(glm::vec3 vel) { mVelocity = vel; };
 	void setAcceleration(glm::vec3 acc) { mAcceleration = acc; };
-	void setRotation(glm::vec3 axis, float degrees) { mAxis = axis; mAngle = degrees; };
-	void setAngularMomentum(glm::vec3 axis, float mom) { mAxis = axis; mAngularVelocity = mom; };
+	/*void setRotation(glm::vec3 axis, float degrees) { mAxis = axis; mAngle = degrees; };
+	void setAngularMomentum(glm::vec3 axis, float mom) { mAxis = axis; mAngularVelocity = mom; };*/
 	glm::mat4 getWorldTransform();
 	glm::mat4 getInverseWorldTransform();
 	glm::vec3 getPosition() const { return mPosition; };

@@ -201,17 +201,21 @@ float interpLogarithmic(float v1, float v2, float fac) {
 	return expf(interpLinear(logf(v1), logf(v2), fac));
 }
 
+#ifndef PI
+#define PI 3.14159f
+#endif
+
 float waveSine(float x) {
-	return sinf(x);
+	return sinf(x * 2 * PI);
 }
 
 float waveSquare(float x) {
-	return (fmodf(x, 2 * PI) < PI) ? -1.0f : 1.0f;
+	return (fmodf(x, 1.0f) < 1.0f) ? -1.0f : 1.0f;
 }
 
 float waveSawtooth(float x) {
-	x = fmodf(x, 2 * PI);
-	return x / PI - 1.0f;
+	x = fmodf(x, 1.0f) * 2.0f;
+	return x - 1.0f;
 }
 
 float waveNoise(float x) {
@@ -257,7 +261,7 @@ void ProceduralSound::build() {
 			float time = (endTime - sweep.p1->time) * (float)(i - startIndex) / (endIndex - startIndex);
 			float fac = (time - startTime) / (sweep.p2->time - startTime);
 			fac = fmax(fmin(fac, 1.0f), 0.0f);	// Clamp to [0,1]
-			mData[i] += ADSR(sweep.adsr, time, duration) * sweep.gain(sweep.p1->gain, sweep.p2->gain, fac) * sweep.wave(sweep.freq(sweep.p1->freq, sweep.p2->freq, fac) * (time+startTime) * 2 * PI + sweep.p1->phase);
+			mData[i] += ADSR(sweep.adsr, time, duration) * sweep.gain(sweep.p1->gain, sweep.p2->gain, fac) * sweep.wave(sweep.freq(sweep.p1->freq, sweep.p2->freq, fac) * (time+startTime) + sweep.p1->phase);
 		}
 	}
 	// Analyze samples to find the largest float
@@ -267,4 +271,9 @@ void ProceduralSound::build() {
 	// Use that to normalize all floats to [-1,1]	(or should I require and enforce all points at a given timecode to sum to <= 1? That gets real hard when there's unaligned points in the middle of a sweep)
 	for (int i = 0; i < mNumSamples; i++)
 		mData[i] /= mGain;
+}
+
+ProceduralSound::~ProceduralSound() {
+	mPoints.clear();
+	mSweeps.clear();
 }

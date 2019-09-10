@@ -5,9 +5,6 @@
 #include <math.h>
 #include <string>
 #include <vector>
-#ifndef PI
-#define PI 3.14159f
-#endif
 
 class Sound {
 protected:
@@ -16,7 +13,7 @@ protected:
 	std::string mFilename;
 	unsigned int mHandle = 0;
 	int mNumSamples = 0;
-	float* mData = NULL;
+	float* mData = nullptr;
 	float mGain = 1.0f;
 public:
 	~Sound();

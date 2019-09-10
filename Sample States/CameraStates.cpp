@@ -56,20 +56,21 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 	if (mLeftDrag) {
 		dx = current_x - mLeftDragStartPos[0];
 		dy = current_y - mLeftDragStartPos[1];
-		glm::vec3 pos = mDragStart->getPosition();
 		physics->set(mDragStart);
-		physics->translate(-pos);
-		physics->rotateLocalX(mSpeed * dy);
-		physics->rotateGlobalZ(mSpeed * dx);
-		physics->translate(pos);
+		physics->rotateGlobalX(mSpeed * dx);
+		physics->rotateGlobalY(mSpeed * dy);
 	}
 	if (mRightDrag) {
 		dx = current_x - mRightDragStartPos[0];
 		dy = current_y - mRightDragStartPos[1];
 		physics->set(mDragStart);
-		physics->translate(-mOrbitCenter);
-		physics->rotateGlobalZ(mSpeed * dx);
-		physics->rotateLocalX(mSpeed * dy);
-		physics->translate(mOrbitCenter);
+		glm::vec3 diff = physics->getPosition() - mOrbitCenter;
+		physics->translate(-diff);
+		diff.x *= cosf(mSpeed * dx) - sinf(mSpeed * dx);
+		diff.y *= -sinf(mSpeed * dx) + cosf(mSpeed * dx);
+		diff.z *= sinf(mSpeed * dy);
+		physics->translate(diff);
+		physics->rotateGlobalX(mSpeed * dx);
+		physics->rotateGlobalY(mSpeed * dy);
 	}
 }
