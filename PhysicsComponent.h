@@ -30,12 +30,9 @@ public:
 	void update(float dt);
 	void translate(glm::vec3 dxyz);
 	void rotate(glm::vec3 axis, float degrees);
-	void rotateGlobalX(float degrees);
-	void rotateGlobalY(float degrees);
-	void rotateGlobalZ(float degrees);
-	void rotateLocalX(float degrees) { rotate({ 1.0f,0.0f,0.0f }, degrees); };
-	void rotateLocalY(float degrees) { rotate({ 0.0f,1.0f,0.0f }, degrees); };
-	void rotateLocalZ(float degrees) { rotate({ 0.0f,0.0f,1.0f }, degrees); };
+	void rotateAzimuth(float degrees);
+	void rotateAltitude(float degrees);
+	void rotateOrientation(float degrees);
 	void scale(glm::vec3 scale);
 	void setPosition(glm::vec3 pos) { mPosition = pos; };
 	void setVelocity(glm::vec3 vel) { mVelocity = vel; };

@@ -18,7 +18,7 @@ PhysicsComponent::PhysicsComponent(glm::vec3 pos, glm::vec3 towards) :PhysicsCom
 	// That's not the rotation at all, it's the inverse model matrix
 	//mRotation = glm::inverse(glm::lookAt(glm::vec3(0.0), towards - pos, glm::vec3(0.0f, 0.0f, 1.0f)));
 	mAngles.x = glm::degrees(glm::atan((towards.y - pos.y) / (towards.x - pos.x)));
-	mAngles.y = glm::degrees(glm::atan((towards.z - pos.z) / glm::length(glm::vec2(towards.x - pos.x, towards.y - pos.y))));
+	mAngles.y = glm::degrees(glm::asin((towards.z - pos.z) / glm::length(towards - pos)));
 	mAngles.z = 90.0f;
 }
 
@@ -74,25 +74,16 @@ void PhysicsComponent::rotate(glm::vec3 axis, float degrees) {
 	if (mBounds) mBounds->rotate(axis, degrees);
 }
 
-void PhysicsComponent::rotateGlobalX(float degrees) {
-	/*glm::vec4 axis = { 1.0f, 0.0f, 0.0f, 1.0f };
-	axis = mRotation * axis;
-	rotate({ axis.x,axis.y,axis.z }, degrees);*/
+void PhysicsComponent::rotateAzimuth(float degrees) {
 	mAngles.x += degrees;
 }
 
-void PhysicsComponent::rotateGlobalY(float degrees) {
-	/*glm::vec4 axis = { 0.0f, 1.0f, 0.0f, 1.0f };
-	axis = mRotation * axis;
-	rotate({ axis.x,axis.y,axis.z }, degrees);*/
+void PhysicsComponent::rotateAltitude(float degrees) {
 	mAngles.y += degrees;
 	mAngles.y = clamp(mAngles.y, -90.0f, 90.0f);
 }
 
-void PhysicsComponent::rotateGlobalZ(float degrees) {
-	/*glm::vec4 axis = { 0.0f, 0.0f, 1.0f, 1.0f };
-	axis = mRotation * axis;
-	rotate({ axis.x,axis.y,axis.z }, degrees); */
+void PhysicsComponent::rotateOrientation(float degrees) {
 	mAngles.z += degrees;
 }
 

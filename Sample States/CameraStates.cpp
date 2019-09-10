@@ -49,6 +49,8 @@ CameraState* CameraState::handleEvent(Event event) {
 	return nullptr;
 }
 
+#include "glm/trigonometric.hpp"
+
 void CameraState::update(PhysicsComponent* physics, float dt) {
 	float dx, dy;
 	int current_x = MouseHandler::getInstance().getMouseX();
@@ -57,8 +59,8 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 		dx = current_x - mLeftDragStartPos[0];
 		dy = current_y - mLeftDragStartPos[1];
 		physics->set(mDragStart);
-		physics->rotateGlobalX(mSpeed * dx);
-		physics->rotateGlobalY(mSpeed * dy);
+		physics->rotateAzimuth(mSpeed * dx);
+		physics->rotateAltitude(mSpeed * dy);
 	}
 	if (mRightDrag) {
 		dx = current_x - mRightDragStartPos[0];
@@ -66,11 +68,16 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 		physics->set(mDragStart);
 		glm::vec3 diff = physics->getPosition() - mOrbitCenter;
 		physics->translate(-diff);
-		diff.x *= cosf(mSpeed * dx) - sinf(mSpeed * dx);
-		diff.y *= -sinf(mSpeed * dx) + cosf(mSpeed * dx);
-		diff.z *= sinf(mSpeed * dy);
+		float theta, phi, r = glm::length(diff);
+		theta = atanf(diff.y / diff.x);
+		phi = asinf(diff.z / r);
+		theta -= glm::radians(mSpeed * dx);
+		phi -= glm::radians(mSpeed * dy);
+		diff.x = r * cosf(theta) * cosf(phi);
+		diff.y = r * sinf(theta) * cosf(phi);
+		diff.z = r * sinf(phi);
 		physics->translate(diff);
-		physics->rotateGlobalX(mSpeed * dx);
-		physics->rotateGlobalY(mSpeed * dy);
+		physics->rotateAzimuth(-mSpeed * dx);
+		physics->rotateAltitude(mSpeed * dy);
 	}
 }

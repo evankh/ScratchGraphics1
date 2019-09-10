@@ -49,7 +49,19 @@ void MouseHandler::handleButton(MouseButton button, int edge, int mouse_x, int m
 		mDragStartPosition[button][0] = mouse_x;
 		mDragStartPosition[button][1] = mWindowHeight - mouse_y;
 	}
-	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, MouseData{ button,edge,mouse_x,(int)mWindowHeight - mouse_y }));
+	MouseData data;
+	data.button = button;
+	data.edge = edge;
+	data.mouse_x = mDragStartPosition[button][0];
+	data.mouse_y = mDragStartPosition[button][1];
+	for (int i = 0; i < 3; i++) data.world_pos[i] = 0.0f;
+	if (0 <= data.mouse_x && data.mouse_x < mWindowWidth && 0 <= data.mouse_y && data.mouse_y < mWindowHeight) {
+		float worldPos[4];
+		mFramebuffer->validate();
+		mFramebuffer->getPixel(data.mouse_x, data.mouse_y, 1, worldPos);
+		for (int i = 0; i < 3; i++) data.world_pos[i] = worldPos[i];
+	}
+	sEvents.push(Event(mButtonStatus[button] ? EventType::BUTTON_PRESSED : EventType::BUTTON_RELEASED, data));
 	sEvents.push(Event(CommandData{ mButtonBindings[button], 0.0f }));
 }
 
@@ -79,19 +91,19 @@ void MouseHandler::resize(unsigned int width, unsigned int height) {
 
 void MouseHandler::dispatchAll() {
 	Handler::dispatchAll();
-	if (mFramebuffer && (0 <= mMousePosition[0] && mMousePosition[0] < mWindowWidth) && (0 < mMousePosition[1] && mMousePosition[1] <= mWindowHeight)) {
+	if (mFramebuffer && (0 <= mMousePosition[0] && mMousePosition[0] < mWindowWidth) && (0 <= mMousePosition[1] && mMousePosition[1] < mWindowHeight)) {
 		mFramebuffer->validate();
 		// Find the moused-over object
 		// Dispatch an event to that object
+		MouseoverData data;
+		data.mouse_x = mMousePosition[0];
+		data.mouse_y = mMousePosition[1];
 		unsigned int index = 0u;
 		float worldPos[4] = { 0.1f, 0.1f, 0.1f, 0.1f };
 		float localPos[4] = { 0.8f, 0.8f, 0.8f, 0.8f };
 		mFramebuffer->getPixel(mMousePosition[0], mMousePosition[1], 0, &index);
 		mFramebuffer->getPixel(mMousePosition[0], mMousePosition[1], 1, worldPos);
 		mFramebuffer->getPixel(mMousePosition[0], mMousePosition[1], 2, localPos);
-		MouseoverData data;
-		data.mouse_x = mMousePosition[0];
-		data.mouse_y = mMousePosition[1];
 		for (int i = 0; i < 3; i++) {
 			data.world_pos[i] = worldPos[i];
 			data.local_pos[i] = localPos[i];
