@@ -289,6 +289,7 @@ Level::~Level() {
 	mOwnLibraries.programs.clear();
 	mOwnLibraries.textures.clear();
 	mOwnLibraries.sounds.clear();
+	delete &mOwnLibraries;	// Haha that's super dangerous
 	if (mSceneAudio) delete mSceneAudio;
 }
 

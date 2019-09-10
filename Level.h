@@ -31,7 +31,7 @@ private:
 	Source* mSceneAudio;	// And then each menu or HUD could have its own Source just like this, because presumably each will only be playing one sound at a time
 	Sound* mBackgroundMusic;
 	StandardLibraries& mSharedLibraries;
-	StandardLibraries mOwnLibraries;
+	StandardLibraries& mOwnLibraries;
 public:
 	Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries& ownLibraries);
 	~Level();

@@ -105,7 +105,7 @@ void Game::load() {
 }
 
 Level* Game::loadLevel(std::string path) {
-	StandardLibraries levelLibraries;
+	StandardLibraries* levelLibraries = new StandardLibraries();
 	FileService index(path + mIndexFilename);
 	// Load any additional data into the new libraries
 	// Level index files can add new geometry, shaders, programs, textures, and sounds.
@@ -118,13 +118,13 @@ Level* Game::loadLevel(std::string path) {
 			/*else if (index.extract("menus: \"`S\"`L", &workingDirectory))
 				parseMenuIndex(path + workingDirectory, mCommonLibraries.menus);*/
 			else if (index.extract("obj: \"`S\"`L", &workingDirectory))
-				parseGeometryIndex(path + workingDirectory, levelLibraries.geometries);
+				parseGeometryIndex(path + workingDirectory, levelLibraries->geometries);
 			else if (index.extract("sound: \"`S\"`L", &workingDirectory))
-				parseSoundIndex(path + workingDirectory, levelLibraries.sounds);
+				parseSoundIndex(path + workingDirectory, levelLibraries->sounds);
 			else if (index.extract("tex: \"`S\"`L", &workingDirectory))
-				parseTextureIndex(path + workingDirectory, levelLibraries.textures);
+				parseTextureIndex(path + workingDirectory, levelLibraries->textures);
 			else if (index.extract("glsl: \"`S\"`L", &workingDirectory))
-				parseShaderIndex(path + workingDirectory, levelLibraries.shaders, levelLibraries.programs);
+				parseShaderIndex(path + workingDirectory, levelLibraries->shaders, levelLibraries->programs);
 			/*else if (index.extract("post: \"`S\"`L", &workingDirectory))
 				parsePostprocessingIndex(path + workingDirectory, postShaderLibrary, postFilterLibrary, postKernelLibrary, postPipelineLibrary);*/
 			else if (index.extract("`S`L", &err))
@@ -134,7 +134,7 @@ Level* Game::loadLevel(std::string path) {
 			ServiceLocator::getLoggingService().badFileError(e.what());
 		}
 	}
-	return new Level(path + levelFile, mCommonLibraries.standard, levelLibraries);
+	return new Level(path + levelFile, mCommonLibraries.standard, *levelLibraries);
 }
 
 void Game::parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary) {
