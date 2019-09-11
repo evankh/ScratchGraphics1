@@ -10,7 +10,7 @@ int Sound::sSampleRate = 44100;
 Sound::Sound(std::string filename) :mFilename(filename) {}
 
 Sound::~Sound() {
-	delete mData;
+	if (mData) delete[] mData;
 	alDeleteBuffers(1, &mHandle);
 }
 

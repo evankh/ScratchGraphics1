@@ -143,6 +143,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 						ServiceLocator::getLoggingService().error("Cannot find AI state", input);
 						// Cleanup
 						delete object;
+						delete physics;
 						continue;
 					}
 				}
@@ -160,6 +161,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				}
 				if (!parent.empty()) mSceneGraph.add(objectName, parent, object);
 				else mSceneGraph.add(objectName, object);
+				mPCs.push_back(physics);
 			}
 		}
 		else if (file.extract("`?WCamera \"`S\"", &objectName)) {
@@ -245,7 +247,9 @@ Level::~Level() {
 	mOwnLibraries.textures.clear();
 	mOwnLibraries.sounds.clear();
 	delete &mOwnLibraries;	// Haha that's super dangerous
-	if (mBackgroundMusic) delete mBackgroundMusic;
+	for (auto i : mPCs)
+		delete i;
+	mPCs.clear();
 }
 
 template<class T>
@@ -257,8 +261,8 @@ int index(const std::vector<T>& list, const T& val) {
 
 void Level::getWorkingSet(GameObject** workingSet, PhysicsComponent** workingPCs) {
 	*workingSet = new GameObject[mSceneGraph.count()];
-	std::vector<std::string> objectNames = mSceneGraph.breadthFirstTraversal();
 	*workingPCs = new PhysicsComponent[mSceneGraph.count()];
+	std::vector<std::string> objectNames = mSceneGraph.breadthFirstTraversal();
 	int i = 0;
 	for (std::string name : objectNames) {
 		mSceneGraph.get(name)->copyTo(*workingSet + i);

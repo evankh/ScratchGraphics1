@@ -19,7 +19,7 @@ void GameObject::setState(State* state) {
 }
 
 GameObject::~GameObject() {
-	if (mPhysicsComponent) delete mPhysicsComponent;
+	//if (mPhysicsComponent) delete mPhysicsComponent;	// GameObject is no longer responsible for deleting its own PC... in ~Game. In ~Level, it is.
 	if (mState) {
 		mState->destroy();
 		delete mState;
@@ -116,7 +116,7 @@ void GameObject::copyTo(GameObject* target) const {
 	target->mGeometryComponent = mGeometryComponent;
 	target->mDisplayComponent = mDisplayComponent;
 	target->mPhysicsComponent = mPhysicsComponent;
-	if (mPhysicsComponent) target->mPhysicsComponent = mPhysicsComponent->makeCopy();
+	//if (mPhysicsComponent) target->mPhysicsComponent = mPhysicsComponent->makeCopy();
 	target->mTexture = mTexture;
 	if (mHasColor) {
 		target->mHasColor = true;
@@ -130,6 +130,6 @@ void GameObject::copyTo(GameObject* target) const {
 }
 
 void GameObject::setPhysicsComponent(PhysicsComponent* other) {
-	if (mPhysicsComponent) delete mPhysicsComponent;
+	//if (mPhysicsComponent) delete mPhysicsComponent;	// GameObject is not responsible for managing it's own PC!
 	mPhysicsComponent = other;
 }

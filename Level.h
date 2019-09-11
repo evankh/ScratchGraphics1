@@ -31,6 +31,7 @@ private:
 	Sound* mBackgroundMusic;
 	StandardLibraries& mSharedLibraries;
 	StandardLibraries& mOwnLibraries;
+	std::vector<PhysicsComponent*> mPCs;
 public:
 	Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries& ownLibraries);
 	~Level();

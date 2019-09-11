@@ -32,15 +32,18 @@ void Game::softReload() {
 }
 
 void Game::cleanup() {
+	delete mGlobalAudio;
+
 	delete mCurrentLevel;
 	mCurrentLevel = nullptr;
 	mLevelDirectory.clear();
 
-	delete[] mWorkingObjectList;
 	delete[] mWorkingPCList;
+	mWorkingPCList = nullptr;
+	delete[] mWorkingObjectList;
+	mWorkingObjectList = nullptr;
 	mWorkingListSize = 0;
 	mWorkingActiveCamera = nullptr;
-	delete mGlobalAudio;
 
 	while (mCurrentMenu) {
 		auto top = mCurrentMenu;
