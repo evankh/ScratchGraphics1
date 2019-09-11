@@ -18,7 +18,7 @@ void Element::draw() {
 }
 
 RootElement::RootElement(std::string filename) :Element(NULL) {
-	FileService& file = ServiceLocator::getFileService(filename);
+	FileService file(filename);
 	if (file.good()) {
 		struct StackNode { Element* previous, *current; } workingStack{ NULL,this };
 		while (file.good()) {
@@ -32,16 +32,16 @@ RootElement::RootElement(std::string filename) :Element(NULL) {
 			//     LogError("Unexpected close of block, check that your braces are balanced!");
 			//   else
 			//     workingStack.current->addChild(child);	// Don't delete, that would be counterproductive
+			file.extract("`S`L", NULL);
 		}
 	}
 	else {
-		ServiceLocator::getLoggingService().badFileError(filename);
+		throw std::exception(filename.data());
 	}
-	file.close();
 }
 
 void RootElement::layout(int left, int right, int top, int bottom) {
-	mBounds = Bounds{ top,bottom,left,right, 0 };
+	mBounds = Bounds2D{ top,bottom,left,right, 0 };
 	for (auto e : mChildElements) {
 		// Some type of calculation to get the correct bounding box for each subelement
 		e->layout(left, right, top, bottom);

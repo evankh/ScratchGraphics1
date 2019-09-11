@@ -1,0 +1,9 @@
+title: "Spoo Fleem"
+resolution: [800, 600]
+common: "common/"
+Level "debug_level" "debug_level/"
+Level "level1" "level1/"
+Level "NURBS" "nurbs/"
+//start: Menu "loading_screen"
+start: Level "debug_level"
+ppp: "none"

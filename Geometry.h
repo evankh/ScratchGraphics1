@@ -1,7 +1,13 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_GEOMETRY__
 #define __EKH_SCRATCH_GRAPHICS_1_GEOMETRY__
 
+class AABB;
+
 #include <vector>
+#include <glm/matrix.hpp>
+
+#include <string>
+
 enum ATTRIB_INDEX
 {
 	A_POSITION,		// vertex location, point in space
@@ -28,7 +34,7 @@ class Vertex;
 
 struct GeometryHandles {
 	unsigned int vboHandle, indexHandle, vaoHandle;
-	bool good;
+	bool good = false;
 };
 
 class Geometry {
@@ -43,18 +49,28 @@ private:
 	std::vector<ATTRIB_INDEX> mProperties;
 	unsigned int mVertexSize = 0;
 	mutable GeometryHandles mHandles;	// That's not cheating, is it? It makes sense that external code doesn't care whether the Geometry's been transferred or not, right?
+	AABB* mBoundingBox;
 public:
-	Geometry();
-	Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
-	Geometry(const char* filename);
-	//Geometry(std::vector<Vertex> vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
+	Geometry() [[deprecated("probably")]];
+	Geometry(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) [[deprecated("probably")]];
+	Geometry(std::string filename);
 	~Geometry();
 	void transfer() const;
 	void cleanup();
 	void render() const;
-	//void setDisplay(Program* display);
+	void render_patches() const;
+	AABB* getBoundingBox() const { return mBoundingBox; };
 	static const Geometry* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const Geometry* getUnitQuad() { return &sUnitQuad; };
+	static Geometry* getNewQuad();
+	static void drawUnitQuad();
+	static void drawCenteredQuad();
+	static void drawUnitSphere();
+	static void drawSphere(glm::vec3 center, float radius);
+	static void drawUnitCylinder();
+	static void drawUnitBox();
+	static void drawBox(glm::vec3 min, glm::vec3 max);
+	static void drawAxes();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GEOMETRY__

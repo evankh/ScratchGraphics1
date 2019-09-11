@@ -13,7 +13,7 @@ public:
 	void setWrapX(bool shouldWrap);	// May need to change to an enum
 	void setWrapY(bool shouldWrap);
 	unsigned int getHandle() const { return mHandle; };
-	void activate();
+	void activate(int slot);
 	void deactivate();
 };
 

@@ -1,20 +1,13 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_GAME__
 #define __EKH_SCRATCH_GRAPHICS_1_GAME__
 
-#include "Camera.h"
-class GameObject;
-class Geometry;
-#include "KernelManager.h"
-class Level;
-class Menu;
+#include "Level.h"
 #include "NamedContainer.h"
 #include "PostProcessingPipeline.h"
-class Program;
-#include "ShaderManager.h"
-#include "SoundLibrary.h"
 #include "SoundHandler.h"
-class Texture;
-#include "Event System\Receiver.h"
+#include "UI/Menu.h"
+#include "UI/UIElement.h"
+#include "Event System/Receiver.h"
 class Window;
 
 #include <map>
@@ -25,41 +18,72 @@ enum GameState {
 	EKH_MENU_STATE
 };
 
+enum DebugMode {
+	DEBUG_NONE,
+	DEBUG_COLLISION,
+	DEBUG_MOUSE
+};
+
 class Game :public Receiver {
-	friend class Level;
 private:
 	Game();
 	~Game();
 	// Managers & Libraries
-	ShaderManager mShaders;
-	NamedContainer<Program*> mPrograms = NamedContainer<Program*>(NULL);
-	NamedContainer<Geometry*> mGeometries = NamedContainer<Geometry*>(NULL);
-	NamedContainer<Level*> mLevels = NamedContainer<Level*>(NULL);
-	ShaderManager mPostShaders;	// Do I need a new container type to handle matching sample sizes? Probably.
-	NamedContainer<Program*> mFilters = NamedContainer<Program*>(NULL);
-	KernelManager mKernels;
-	NamedContainer<InputComponent*> mInputs = NamedContainer<InputComponent*>(NULL);
-	NamedContainer<Texture*> mTextures = NamedContainer<Texture*>(NULL);
-	// Actual game information;
+	NamedContainer<std::string> mLevelDirectory;
+	struct {
+		NamedContainer<RootElement*> menus;
+		StandardLibraries standard;
+		struct {
+			ShaderManager shaders;	// Do I need a new container type to handle matching sample sizes? Probably.
+			NamedContainer<Program*> filters;
+			KernelManager kernels;
+			NamedContainer<PostprocessingPipeline*> pipelines;
+		} post;
+	} mCommonLibraries;
+	// Working set of Level data
+	GameObject* mWorkingObjectList = nullptr;
+	PhysicsComponent* mWorkingPCList = nullptr;
+	unsigned int mWorkingListSize = 0;
+	GameObject* mWorkingActiveCamera;
+	// Actual game information
 	Window* mWindow;
 	Level* mCurrentLevel;
-	PostProcessingPipeline mGameObjectsPost;
-	Menu* mCurrentMenu = NULL;
-	PostProcessingPipeline mMenuPost;
-	SoundLibrary mSounds;
+	PostprocessingPipeline* mCurrentPostProcessing;
+	Menu* mCurrentMenu = nullptr;
+	Menu* mHUD = nullptr;
+	PostprocessingPipeline* mCurrentMenuPost;
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
-	const std::string mAssetBasePath = "assets/";
+	Source* mGlobalAudio = nullptr;
+	const std::string mAssetBasePath = "assets2/";
 	const std::string mIndexFilename = "index.txt";
+	DebugMode mDebugMode = DEBUG_NONE;
+	bool mPaused = false;
+	float mMasterVolume = 1.0f;
+	Level* loadLevel(std::string path);
+	void parseGeometryIndex(std::string path, NamedContainer<Geometry*> &geomLibrary);
+	void parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary);
+	//void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostProcessingPipeline*> &pipelineLibrary);
+	void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostprocessingPipeline*> &pipelineLibrary);
+	void parseSoundIndex(std::string path, SoundLibrary &soundLibrary);
+	void parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary);
+	void parseTextureIndex(std::string path, NamedContainer<Texture*> &texLibrary);
+	void setupCallbacks() const;
+
+	int mDebugStageSelection = 0;
 public:
+	static long long getTime();
 	static Game& getInstance();
-	void init();
+	void init(int argc, char* argv[]);
 	void load();
+	void softReload();
+	void run();
 	void cleanup();
 	void update(float dt);
 	void render(float dt);
 	void resize(unsigned int width, unsigned int height);
 	void reloadAll();
-	void setGLVersion(unsigned int GLVersion) { mShaders.setGLVersion(GLVersion); };
+	void setGLVersion(unsigned int GLVersion) { mCommonLibraries.standard.shaders.setGLVersion(GLVersion); };
+	//bool isPlaying() const { return mPaused == false; };
 	virtual void handle(const Event event);
 };
 

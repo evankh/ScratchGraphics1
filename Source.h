@@ -17,6 +17,7 @@ public:
 	void update();
 	void playSound(Sound* sound);
 	void setVolume(float volume);
+	Source* copy(PhysicsComponent*) const;
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_SOURCE__

@@ -1,4 +1,5 @@
 #include "Window.h"
+#include "ServiceLocator.h"
 #include "GL\glew.h"
 #include "GL\freeglut.h"
 
@@ -28,6 +29,7 @@ Window::~Window() {
 
 void Window::enableDrawing() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, mWidth, mHeight);
 }
 
@@ -41,4 +43,22 @@ void Window::resize(unsigned int width, unsigned int height) {
 void Window::rename(const char* title) {
 	mTitle = title;
 	glutSetWindowTitle(mTitle);
+}
+
+void Window::printGLVersion() const {
+	int version[2];
+	glGetIntegerv(GL_MAJOR_VERSION, version);
+	glGetIntegerv(GL_MINOR_VERSION, version + 1);
+	ServiceLocator::getLoggingService().log("Version: " + std::to_string(version[0]) + "." + std::to_string(version[1]));
+}
+
+int Window::getGLVersion() const {
+	int version[2];
+	glGetIntegerv(GL_MAJOR_VERSION, version);
+	glGetIntegerv(GL_MINOR_VERSION, version + 1);
+	return 100 * version[0] + 10 * version[1];
+}
+
+void Window::update() const {
+	glutSwapBuffers();
 }

@@ -10,7 +10,7 @@ int Sound::sSampleRate = 44100;
 Sound::Sound(std::string filename) :mFilename(filename) {}
 
 Sound::~Sound() {
-	delete mData;
+	if (mData) delete[] mData;
 	alDeleteBuffers(1, &mHandle);
 }
 
@@ -42,11 +42,11 @@ void FileSound::transfer() {
 }
 
 FileSound::FileSound(std::string filename) :Sound(filename) {
-	FileService& file = ServiceLocator::getFileService(mFilename.data());
+	FileService file(mFilename);
 	if (file.good()) {
 		// Do stuff
 		int fileSize;
-		if (file.extract("RIFF\\rIWAVE", &fileSize)) {
+		if (file.extract("RIFF`rIWAVE", &fileSize)) {
 			struct {
 				int cksize;
 				short wFormatTag,
@@ -60,19 +60,19 @@ FileSound::FileSound(std::string filename) :Sound(filename) {
 				int dwChannelMask;
 				long long SubFormat;*/	// Although the standard gives no indication of why these might not be present, my example file doesn't have them
 			} formatData;
-			if (file.extract("fmt \\rI\\rs\\rs\\rI\\rI\\rs\\rs", &formatData)) {
+			if (file.extract("fmt `rI`rs`rs`rI`rI`rs`rs", &formatData)) {
 				assert(formatData.wFormatTag == 0x0001);
 				assert(formatData.wBitsPerSample == 16);	// Should be reasonably straightforward to make it work with other types of data
 				mSampleRate = formatData.nSamplesPerSec;
 				mNumChannels = formatData.nChannels;
 				int dataSize;
-				if (file.extract("data\\rI", &dataSize)) {
+				if (file.extract("data`rI", &dataSize)) {
 					mNumSamples = dataSize / 2;
 					mShortData = new short[mNumSamples];
 					for (int i = 0; i < dataSize / 2; i++)
-						file.extract("\\rs", &mShortData[i]);	// Do this more efficiently with e.g. memcpy or write a bulk extraction function in FileService
+						file.extract("`rs", &mShortData[i]);	// Do this more efficiently with e.g. memcpy or write a bulk extraction function in FileService
 					if (dataSize & 0x1)
-						file.extract("\\C", NULL);
+						file.extract("`C", NULL);
 					transfer();
 				}
 			}
@@ -84,7 +84,10 @@ FileSound::FileSound(std::string filename) :Sound(filename) {
 	else {
 		ServiceLocator::getLoggingService().badFileError(mFilename);
 	}
-	file.close();
+}
+
+FileSound::~FileSound() {
+	delete[] mShortData;
 }
 
 bool ProceduralSound::sHaveGeneratedNoteTable = false;
@@ -107,34 +110,30 @@ void ProceduralSound::generateNoteTable() {
 ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 	if (!sHaveGeneratedNoteTable)
 		generateNoteTable();
-	FileService& file = ServiceLocator::getFileService(mFilename.data());
+	FileService file(mFilename);
 	if (file.good()) {
 		Envelope envelope;
 		while (file.good()) {
-			char* err;
+			auto_cstr err;
 			Point fpoint;
-			struct { float time; int note, sharp; int octave; float gain = 1.0f; } npoint;
-			struct { char* interp; char* waveform; int p1, p2; } sweep;
-			if (file.extract("//\\S\\L", NULL));
-			else if (file.extract("Point time:\\F freq:\\F", &fpoint)) {
-				if (file.extract(" gain:\\F", &fpoint.gain));
+			struct { float time; char note, sharp; int octave; float gain = 1.0f; } npoint;
+			struct { auto_cstr interp, waveform; int p1, p2; } sweep;
+			if (file.extract("//`S`L"));
+			else if (file.extract("Point time:`F freq:`F", &fpoint)) {
+				if (file.extract(" gain:`F", &fpoint.gain));
 				mPoints.push_back(fpoint);
-				if (file.extract("\\?S\\L", &err)) {
-					if (err) {
-						ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
-						delete err;
-					}
-				}
+				if (file.extract("`?S`L", &err))
+					if (err) ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
 			}
-			else if (file.extract("Point time:\\F note:\\C\\C", &npoint)) {	// How do I use extract to get either one or two characters, bounded by an int?
+			else if (file.extract("Point time:`F note:`C`C", &npoint)) {	// How do I use extract to get either one or two characters, bounded by an int?
 				if (npoint.sharp != '#' && npoint.sharp != 'b') {
 					file.putBack(npoint.sharp);
 					npoint.sharp = '\0';
 				}
 				std::string note = std::string(1, npoint.note);
 				if (npoint.sharp) note += std::string(1, npoint.sharp);
-				file.extract("\\I", &npoint.octave);
-				if (file.extract(" gain:\\F", &npoint.gain));
+				file.extract("`I", &npoint.octave);
+				if (file.extract(" gain:`F", &npoint.gain));
 				if (sNoteTable[npoint.octave].count(note)) {
 					Point p;
 					p.time = npoint.time;
@@ -144,14 +143,10 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 				}
 				else
 					ServiceLocator::getLoggingService().error("Malformed note string", note);
-				if (file.extract("\\?S\\L", &err)) {
-					if (err) {
-						ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
-						delete err;
-					}
-				}
+				if (file.extract("`?S`L", &err))
+					if (err) ServiceLocator::getLoggingService().error("Unexpected contents in point defintion", err);
 			}
-			else if (file.extract("Sweep \\S \\S \\I \\I\\L", &sweep)) {
+			else if (file.extract("Sweep `S `S `I `I`L", &sweep)) {
 				Sweep s;
 				s.adsr = envelope;
 				s.p1 = &mPoints[sweep.p1];
@@ -182,11 +177,9 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 					ServiceLocator::getLoggingService().error("Unrecognized waveform (defaulting to Sine)", sweep.waveform);
 				mSweeps.push_back(s);
 			}
-			else if (file.extract("Envelope \\F:\\F \\F:\\F \\F:\\F \\F:\\F\\L", &envelope));	// Will continue to use the envelope until another one is specified
-			else if (file.extract("\\S\\L", &err)) {
+			else if (file.extract("Envelope `F:`F `F:`F `F:`F `F:`F`L", &envelope));	// Will continue to use the envelope until another one is specified
+			else if (file.extract("`S`L", &err))
 				ServiceLocator::getLoggingService().error("Unexpected line in sound file", err);
-				delete err;
-			}
 		}
 		build();
 		transfer();
@@ -194,7 +187,6 @@ ProceduralSound::ProceduralSound(std::string filename) :Sound(filename) {
 	else {
 		ServiceLocator::getLoggingService().badFileError(mFilename);
 	}
-	file.close();
 }
 
 float interpConstant(float v1, float v2, float fac) {
@@ -209,17 +201,21 @@ float interpLogarithmic(float v1, float v2, float fac) {
 	return expf(interpLinear(logf(v1), logf(v2), fac));
 }
 
+#ifndef PI
+#define PI 3.14159f
+#endif
+
 float waveSine(float x) {
-	return sinf(x);
+	return sinf(x * 2 * PI);
 }
 
 float waveSquare(float x) {
-	return (fmodf(x, 2 * PI) < PI) ? -1.0f : 1.0f;
+	return (fmodf(x, 1.0f) < 1.0f) ? -1.0f : 1.0f;
 }
 
 float waveSawtooth(float x) {
-	x = fmodf(x, 2 * PI);
-	return x / PI - 1.0f;
+	x = fmodf(x, 1.0f) * 2.0f;
+	return x - 1.0f;
 }
 
 float waveNoise(float x) {
@@ -265,7 +261,7 @@ void ProceduralSound::build() {
 			float time = (endTime - sweep.p1->time) * (float)(i - startIndex) / (endIndex - startIndex);
 			float fac = (time - startTime) / (sweep.p2->time - startTime);
 			fac = fmax(fmin(fac, 1.0f), 0.0f);	// Clamp to [0,1]
-			mData[i] += ADSR(sweep.adsr, time, duration) * sweep.gain(sweep.p1->gain, sweep.p2->gain, fac) * sweep.wave(sweep.freq(sweep.p1->freq, sweep.p2->freq, fac) * (time+startTime) * 2 * PI + sweep.p1->phase);
+			mData[i] += ADSR(sweep.adsr, time, duration) * sweep.gain(sweep.p1->gain, sweep.p2->gain, fac) * sweep.wave(sweep.freq(sweep.p1->freq, sweep.p2->freq, fac) * (time+startTime) + sweep.p1->phase);
 		}
 	}
 	// Analyze samples to find the largest float
@@ -275,4 +271,9 @@ void ProceduralSound::build() {
 	// Use that to normalize all floats to [-1,1]	(or should I require and enforce all points at a given timecode to sum to <= 1? That gets real hard when there's unaligned points in the middle of a sweep)
 	for (int i = 0; i < mNumSamples; i++)
 		mData[i] /= mGain;
+}
+
+ProceduralSound::~ProceduralSound() {
+	mPoints.clear();
+	mSweeps.clear();
 }

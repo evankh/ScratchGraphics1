@@ -1,35 +1,35 @@
-#ifndef __EKH_SCRATCH_GRAPHICS_1_POST_PROCESSING_PIPELINE__
-#define __EKH_SCRATCH_GRAPHICS_1_POST_PROCESSING_PIPELINE__
+#ifndef __EKH_SCRATCH_GRAPHICS_1_POSTPROCESSING__
+#define __EKH_SCRATCH_GRAPHICS_1_POSTPROCESSING__
 
-#include "FrameBuffer.h"
-#include "KernelManager.h"
-#include "Program.h"
 #include <vector>
 
-struct ProcessingStage {
-	FrameBuffer* source;
+class Framebuffer;
+#include "KernelManager.h"
+class Program;
+
+struct StageData {
+	Framebuffer* input, *output;
 	Program* filter;
-	Kernel kernel;
-	FrameBuffer* target;
+	float scale;
+	std::vector<Kernel> kernels;
 };
 
-class PostProcessingPipeline {
+class PostprocessingPipeline {
 private:
-	unsigned int mWindowWidth;	// Duplicating this data in so many places is unecessary and begging for trouble, consider using a reference
-	unsigned int mWindowHeight;
-	FrameBuffer* mInputFB;
-	FrameBuffer* mOutputFB;
-	std::vector<ProcessingStage> mProcessingStages;
+	unsigned int mWindowWidth, mWindowHeight;
+	Framebuffer* mInput = nullptr, *mOutput = nullptr;
+	std::vector<StageData> mStages;
+	StageData* mCompositor = nullptr;
+	std::vector<Framebuffer*> mCompositingInputs;
 public:
-	PostProcessingPipeline();
-	~PostProcessingPipeline();
-	void init(unsigned int width, unsigned int height);
-	void attach(Program* program, Kernel kernel = Kernel{ 0,NULL }, float relativeSize = 1.0f);	// Or I suppose other types of data, but now it's just kernels
+	PostprocessingPipeline(unsigned int windowWidth, unsigned int windowHeight);
+	~PostprocessingPipeline();
+	void attach(StageData &data, bool isCompositingInput = false);
+	void attachCompositor(Program* compositor);
 	void process();
-	void draw();
 	void resize(unsigned int width, unsigned int height);
-	void enableDrawing();
-	void clear();
+	void setAsDrawTarget();
+	void setAsTextureSource();
 };
 
-#endif//__EKH_SCRATCH_GRAPHICS_1_POST_PROCESSING_PIPELINE__
+#endif//__EKH_SCRATCH_GRAPHICS_1_POSTPROCESSING__

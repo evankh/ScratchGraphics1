@@ -11,11 +11,12 @@ Source::Source(PhysicsComponent* physics, bool looping) {
 }
 
 Source::~Source() {
+	alSourceStop(mHandle);
 	alDeleteSources(1, &mHandle);
 }
 
 void Source::update() {
-	alSourcefv(mHandle, AL_POSITION, glm::value_ptr(mPhysics->getPosition()));
+	alSourcefv(mHandle, AL_POSITION, glm::value_ptr(mPhysics->getGlobalPosition()));
 	alSourcefv(mHandle, AL_VELOCITY, glm::value_ptr(mPhysics->getVelocity()));
 	alSourcei(mHandle, AL_LOOPING, mLooping);
 }
@@ -31,4 +32,8 @@ void Source::playSound(Sound* sound) {
 
 void Source::setVolume(float volume) {
 	alSourcef(mHandle, AL_GAIN, volume);
+}
+
+Source* Source::copy(PhysicsComponent* phys) const {
+	return new Source(phys, mLooping);
 }

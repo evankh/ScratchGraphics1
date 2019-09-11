@@ -4,8 +4,11 @@
 #include "Event.h"
 
 class Receiver {
+	int mIndex = 0;
 public:
 	virtual void handle(const Event event) = 0;
+	void setIndex(int i) { mIndex = i; };
+	unsigned int getIndex() const { return mIndex; };
 };
 
 struct ReceiverNode {

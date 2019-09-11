@@ -7,7 +7,7 @@ class Geometry;
 class Texture;
 class Program;
 
-struct Bounds {
+struct Bounds2D {
 	int top, bottom, left, right;
 	int layer;
 };
@@ -16,7 +16,7 @@ class Element {
 	static const Geometry* sUnitQuad;
 	static const Program* sScreenDraw;
 protected:
-	Bounds mBounds;
+	Bounds2D mBounds;
 public:
 	Element(Texture* texture);
 	~Element() {};

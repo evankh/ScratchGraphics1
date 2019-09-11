@@ -1,46 +1,53 @@
 #include "Camera.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include "GL/glew.h"
 
-PerspCamera::PerspCamera(PhysicsComponent* physics, unsigned int width, unsigned int height, float fov) {
-	mPhysicsComponent = physics;
+PerspCamera::PerspCamera(unsigned int width, unsigned int height, float fov) {
 	mWidth = width;
 	mHeight = height;
 	mFOV = glm::radians(fov);
 	mZMin = 0.01f;
 	mZMax = 100.0f;
+	glDepthRange(0.01f, 100.0f);
 	mProjectionMatrix = glm::perspective(mFOV, getAspectRatio(), mZMin, mZMax);
-	//mProjectionMatrix = glm::translate(mProjectionMatrix, glm::vec3(3.0, 0.0, 0.0));
-	glm::mat4 imm = mPhysicsComponent->getInverseModelMatrix();
-	mViewProjectionMatrix = mProjectionMatrix * imm;
+}
+
+Camera* PerspCamera::copy() const {
+	PerspCamera* ret = new PerspCamera(mWidth, mHeight, glm::degrees(mFOV));
+	ret->mProjectionMatrix = mProjectionMatrix;
+	return ret;
 }
 
 OrthoCamera::OrthoCamera(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::ortho(0.0f, (float)width, (float)height, 0.0f);
-	mViewProjectionMatrix = mProjectionMatrix*glm::inverse(glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, 1.0f)));	// I think?
 }
 
-PerspCamera::~PerspCamera() {
-	if (mPhysicsComponent) delete mPhysicsComponent;
+Camera* OrthoCamera::copy() const {
+	return new OrthoCamera(mWidth, mHeight);
 }
 
 void PerspCamera::resize(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::perspective(mFOV, getAspectRatio(), mZMin, mZMax);
-	mProjectionMatrix = glm::translate(mProjectionMatrix, glm::vec3(0.0, 0.0, 1.0));
-	glm::mat4 imm = mPhysicsComponent->getInverseModelMatrix();
-	mViewProjectionMatrix = mProjectionMatrix * imm;
 }
 
 void OrthoCamera::resize(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::ortho((float)width, 0.0f, (float)height, 0.0f);
-	mViewProjectionMatrix = mProjectionMatrix;
 }
 
-glm::mat4 & Camera::getViewProjectionMatrix() {
+glm::mat4& Camera::getProjectionMatrix() {
+	return mProjectionMatrix;
+}
+
+glm::mat4& Camera::getViewProjectionMatrix() {
 	return mViewProjectionMatrix;
+}
+
+void PerspCamera::update(PhysicsComponent* physics) {
+	mViewProjectionMatrix = mProjectionMatrix * physics->getInverseWorldTransform();
 }

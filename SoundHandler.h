@@ -15,6 +15,7 @@ public:
 	static SoundHandler& getInstance();
 	static void registerListener(PhysicsComponent* listener);
 	static void update();
+	static void setVolume(float volume);
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_SOUND_HANDLER__

@@ -1,0 +1,6 @@
+menus: "menus/"
+obj: "obj/"
+sound: "sound/"
+tex: "textures/"
+glsl: "glsl/"
+post: "glsl/post/"

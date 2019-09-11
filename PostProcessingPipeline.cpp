@@ -1,69 +1,106 @@
 #include "PostProcessingPipeline.h"
 
-PostProcessingPipeline::PostProcessingPipeline() {
-	mInputFB = mOutputFB = NULL;
+#include "FrameBuffer.h"
+#include "Geometry.h"
+#include "Program.h"
+
+PostprocessingPipeline::PostprocessingPipeline(unsigned int windowWidth, unsigned int windowHeight) {
+	mWindowWidth = windowWidth;
+	mWindowHeight = windowHeight;
+	mInput = mOutput = new Framebuffer(windowWidth, windowHeight);
+	mInput->attach(ATTACHMENT_COLOR);
+	mInput->attach(ATTACHMENT_DEPTH);
 }
 
-void PostProcessingPipeline::init(unsigned int width, unsigned int height) {
-	mWindowWidth = width;
-	mWindowHeight = height;
-	mInputFB = new FrameBuffer(mWindowWidth, mWindowHeight, 1.0);
-	mOutputFB = mInputFB;
-}
-
-PostProcessingPipeline::~PostProcessingPipeline() {
-	mProcessingStages.clear();
-}
-
-void PostProcessingPipeline::attach(Program* program, Kernel kernel, float relativeScale) {
-	if (mProcessingStages.size())
-		mProcessingStages.push_back({ mProcessingStages.back().target, program, kernel, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale) });
-	else
-		mProcessingStages.push_back({ mInputFB, program, kernel, new FrameBuffer(mWindowWidth, mWindowHeight, relativeScale) });
-	mOutputFB = mProcessingStages.back().target;
-}
-
-void PostProcessingPipeline::process() {
-	if (mProcessingStages.size() == 0)
-		return;
-	/*if (mProcessingStages.size() == 1) {
-		mOutputFB->setActive();
-		mProcessingStages[0].first->use();
-		mProcessingStages[0].first->sendUniform("pixel_width", 1.0f / mWindowWidth);
-		mProcessingStages[0].first->sendUniform("pixel_height", 1.0f / mWindowHeight);
-		if (mKernels[0].first) mProcessingStages[0].first->sendUniform("kernel", mKernels[0].first, mKernels[0].second);
-		mInputFB->draw();
-		return;
-	}*/
-	for (unsigned int i = 0; i < mProcessingStages.size(); i++) {
-		mProcessingStages[i].target->setActive();
-		mProcessingStages[i].filter->use();
-		mProcessingStages[i].filter->sendUniform("uPixWidth", 1.0f / (mProcessingStages[i].target->getRelativeScale() * mWindowWidth));
-		mProcessingStages[i].filter->sendUniform("uPixHeight", 1.0f / (mProcessingStages[i].target->getRelativeScale() * mWindowHeight));
-		if (mProcessingStages[i].kernel.samples) mProcessingStages[i].filter->sendUniform("uKernel", mProcessingStages[i].kernel.samples, mProcessingStages[i].kernel.weights);
-		mProcessingStages[i].source->draw();
+PostprocessingPipeline::~PostprocessingPipeline() {
+	delete mInput;
+	for (StageData stage : mStages) {
+		delete stage.output;
+		stage.kernels.clear();
+	}
+	mStages.clear();
+	mCompositingInputs.clear();
+	if (mCompositor) {
+		delete mCompositor->output;
+		delete mCompositor;
 	}
 }
 
-void PostProcessingPipeline::draw() {
-	// Set the active program to an ortho one
-	mOutputFB->draw();
+void PostprocessingPipeline::attach(StageData &data, bool isCompositingInput) {
+	if (mStages.size() > 0) {
+		if (mStages.back().filter->getSamplesOut() != data.filter->getSamplesIn()) throw std::invalid_argument("That stage won't fit here in this pipeline");
+		data.input = mStages.back().output;
+		data.scale *= mStages.back().scale;
+	}
+	else data.input = mInput;
+	data.output = new Framebuffer(mWindowWidth, mWindowHeight, data.scale);
+	// Assume for now that all postprocessing filters will be dealing only with colors; the integer texture will be reserved for the MouseHandler to use
+	for (int i = 0; i < data.filter->getSamplesOut(); i++)
+		data.output->attach(ATTACHMENT_COLOR);
+	data.output->attach(ATTACHMENT_DEPTH);
+	mOutput = data.output;
+	mStages.push_back(data);
+	if (isCompositingInput) mCompositingInputs.push_back(mOutput);
+	// Uniforms?
+	mOutput->validate();
 }
 
-void PostProcessingPipeline::resize(unsigned int width, unsigned int height) {
+void PostprocessingPipeline::attachCompositor(Program* compositor) {
+	if (mCompositor) {
+		delete mCompositor->output;
+		delete mCompositor;
+	}
+	mCompositor = new StageData;
+	mCompositor->filter = compositor;
+	mCompositor->scale = 1.0f;
+	mCompositor->output = new Framebuffer(mWindowWidth, mWindowHeight);
+	mOutput = mCompositor->output;
+	mOutput->attach(ATTACHMENT_COLOR);
+	mOutput->attach(ATTACHMENT_DEPTH);
+	mOutput->validate();
+}
+
+void PostprocessingPipeline::process() {
+	for (auto stage : mStages) {
+		stage.filter->use();
+		stage.input->setAsTextureSource();
+		stage.output->setAsDrawingTarget();
+		// Activate whatever uniforms. Once again this would be simpler and cleaner if Program were keeping track of its own uniforms.
+		stage.filter->sendUniform("uPixWidth", stage.input->getPixelWidth());
+		stage.filter->sendUniform("uPixHeight", stage.input->getPixelHeight());
+		if (stage.kernels.size() == 1)
+			stage.filter->sendUniform("uKernel", 1, stage.kernels[0].samples, stage.kernels[0].weights);
+		else for (unsigned int i = 0; i < stage.kernels.size(); i++)
+			stage.filter->sendUniform((std::string("uKernel") + std::to_string(i)).c_str(), 1, stage.kernels[i].samples, stage.kernels[i].weights);
+		Geometry::getScreenQuad()->render();
+	}
+	if (mCompositor) {
+		mCompositor->filter->use();
+		mCompositor->filter->sendUniform("uNumTextures", mCompositingInputs.size());
+		int texInputs = 0;
+		for (auto stage : mCompositingInputs) {
+			stage->setAsTextureSource(texInputs);
+			texInputs += stage->getNumAttachments();
+		}
+		mCompositor->output->setAsDrawingTarget();
+		Geometry::getScreenQuad()->render();
+	}
+}
+
+void PostprocessingPipeline::resize(unsigned int width, unsigned int height) {
 	mWindowWidth = width;
 	mWindowHeight = height;
-	mInputFB->resize(mWindowWidth, mWindowHeight);
-	for (auto buffer : mProcessingStages)
-		buffer.target->resize(mWindowWidth, mWindowHeight);
+	mInput->resize(width, height);
+	for (auto stage : mStages)
+		stage.output->resize(width, height);
+	if (mCompositor)
+		mCompositor->output->resize(width, height);
 }
 
-void PostProcessingPipeline::enableDrawing() {
-	mInputFB->setActive();
+void PostprocessingPipeline::setAsDrawTarget() {
+	mInput->setAsDrawingTarget();
 }
 
-void PostProcessingPipeline::clear() {
-	for (auto stage : mProcessingStages)
-		delete stage.target;
-	mProcessingStages.clear();
+void PostprocessingPipeline::setAsTextureSource() {
+	mOutput->setAsTextureSource();
 }

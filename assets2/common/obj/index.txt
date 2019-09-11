@@ -1,0 +1,2 @@
+"debug_cube":"cube.obj"
+"debug_cube_2":"cube2.obj"

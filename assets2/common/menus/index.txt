@@ -1,0 +1,6 @@
+"main_menu":"main.menu"
+"loading_screen":"loading.menu"
+"options":"options.menu"
+"gfx":"gfx.menu"
+"sfx":"sfx.menu"
+"load_save":"load.menu"
