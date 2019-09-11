@@ -7,37 +7,37 @@ PhysicsComponent::PhysicsComponent() {
 	mPosition = glm::vec3(0.0f);
 	mVelocity = glm::vec3(0.0f);
 	mAcceleration = glm::vec3(0.0f);
-	//mRotation = glm::mat4(1.0f);
-	//mAxis = glm::vec3(0.0f, 0.0f, 1.0f);
 	mAngles = mAngularVelocities = mAngularAccelerations = glm::vec3(0.0f);
 	mBounds = new Collisionless();
 }
 
+float angle(glm::vec2 val) {
+	float angle = acos(val.x / glm::length(val));
+	if (val.y >= 0.0)
+		return angle;
+	return glm::two_pi<float>() - angle;
+}
+
 PhysicsComponent::PhysicsComponent(glm::vec3 pos, glm::vec3 towards) :PhysicsComponent() {
 	mPosition = pos;
-	// That's not the rotation at all, it's the inverse model matrix
-	//mRotation = glm::inverse(glm::lookAt(glm::vec3(0.0), towards - pos, glm::vec3(0.0f, 0.0f, 1.0f)));
-	mAngles.x = glm::degrees(glm::atan((towards.y - pos.y) / (towards.x - pos.x)));
+	mAngles.x = glm::degrees(angle(glm::vec2(towards.x - pos.x, towards.y - pos.y)));
 	mAngles.y = glm::degrees(glm::asin((towards.z - pos.z) / glm::length(towards - pos)));
-	mAngles.z = 90.0f;
+	mAngles.z = -90.0f;
 }
 
-PhysicsComponent::PhysicsComponent(glm::vec3 axis, float aVel) :PhysicsComponent() {
-	/*mAxis = axis;
-	mAngularVelocity = aVel;*/
-
+PhysicsComponent::PhysicsComponent(glm::vec3 angles, glm::vec3 aVels, glm::vec3 aAccs) :PhysicsComponent() {
+	mAngles = angles;
+	mAngularVelocities = aVels;
+	mAngularAccelerations = aAccs;
 }
 
-PhysicsComponent::PhysicsComponent(Bounds* bounds, glm::vec3 vel, glm::vec3 acc, glm::vec3 axis, float aVel) :PhysicsComponent() {
-	/*if (bounds) {
-		mBounds = bounds->copy();
-	}*/
+PhysicsComponent::PhysicsComponent(Bounds* bounds, glm::vec3 vel, glm::vec3 acc, glm::vec3 angles, glm::vec3 aVels) :PhysicsComponent() {
+	delete mBounds;
 	mBounds = bounds;
 	mVelocity = vel;
 	mAcceleration = acc;
-	/*mAxis = axis;
-	mAngularVelocity = aVel;*/
-	// Euler angles?
+	mAngles = angles;
+	mAngularVelocities = aVels;
 }
 
 PhysicsComponent::~PhysicsComponent() {
@@ -51,12 +51,8 @@ float clamp(float f, float min, float max) {
 void PhysicsComponent::update(float dt) {
 	mVelocity += mAcceleration * dt;
 	mPosition += mVelocity * dt;
-	/*mAngularVelocity += mAngularAcceleration * dt;
-	mAngle += mAngularVelocity * dt;*/
-	//mAngle = fmodf(mAngle, glm::pi<float>());
 	mAngularVelocities += mAngularAccelerations * dt;
 	mAngles += mAngularVelocities * dt;
-	//mAngle = fmodf(mAngle, 360.0f);
 	mAngles.x = fmodf(mAngles.x, 360.0f);
 	mAngles.y = clamp(mAngles.y, -90.0f, 90.0f);
 	mAngles.z = fmodf(mAngles.z, 360.0f);
@@ -92,15 +88,12 @@ void PhysicsComponent::scale(glm::vec3 scale) {
 	if (mBounds) mBounds->scale(scale);
 }
 
-void PhysicsComponent::set(const PhysicsComponent* other) {
+void PhysicsComponent::copyFrom(const PhysicsComponent* other) {
 	mScale = other->mScale;
 	mPosition = other->mPosition;
 	mVelocity = other->mVelocity;
 	mAcceleration = other->mAcceleration;
 	mRotation = other->mRotation;
-	/*mAxis = other->mAxis;
-	mAngularVelocity = other->mAngularVelocity;
-	mAngle = other->mAngle;*/
 	mAngles = other->mAngles;
 	mAngularVelocities = other->mAngularVelocities;
 	mAngularAccelerations = other->mAngularAccelerations;
@@ -109,9 +102,7 @@ void PhysicsComponent::set(const PhysicsComponent* other) {
 	else mBounds = nullptr;
 }
 
-glm::mat4 PhysicsComponent::getWorldTransform() {
-	// TODO : dirty flag, caching
-	//glm::mat4 mm = glm::translate(glm::mat4(1.0), mPosition) * (mRotation * glm::scale(glm::mat4(1.0), mScale));
+glm::mat4 PhysicsComponent::getWorldTransform() const {
 	glm::mat4 mm = glm::translate(glm::mat4(1.0), mPosition) *
 		glm::rotate(
 			glm::rotate(
@@ -125,20 +116,16 @@ glm::mat4 PhysicsComponent::getWorldTransform() {
 	return mm;
 }
 
-glm::mat4 PhysicsComponent::getInverseWorldTransform() {
+glm::vec3 PhysicsComponent::getGlobalPosition() const {
+	glm::vec4 glob = getWorldTransform() * glm::vec4(0.0, 0.0, 0.0, 1.0);
+	return glm::vec3(glob.x, glob.y, glob.z);
+}
+
+glm::mat4 PhysicsComponent::getInverseWorldTransform() const {
 	return glm::inverse(getWorldTransform());
 }
 
 float* PhysicsComponent::getOrientationVectors() const {
-	/*glm::vec4 forward = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	glm::vec4 up = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	forward = mRotation * forward;
-	up = mRotation * up;
-	float* r = new float[6];
-	for (int i = 0; i < 3; i++)
-		r[i] = forward[i];
-	for (int i = 0; i < 3; i++)
-		r[i + 3] = up[i];*/
 	float* r = new float[6];
 	r[0] = cosf(mAngles.x) * cosf(mAngles.z);
 	r[1] = sinf(mAngles.y) * cosf(mAngles.z);
@@ -149,16 +136,13 @@ float* PhysicsComponent::getOrientationVectors() const {
 	return r;
 }
 
-PhysicsComponent* PhysicsComponent::copy() const {
+PhysicsComponent* PhysicsComponent::makeCopy() const {
 	PhysicsComponent* result = new PhysicsComponent();
 	result->mScale = mScale;
 	result->mPosition = mPosition;
 	result->mVelocity = mVelocity;
 	result->mAcceleration = mAcceleration;
 	result->mRotation = mRotation;
-	/*result->mAxis = mAxis;
-	result->mAngularVelocity = mAngularVelocity;
-	result->mAngle = mAngle;*/
 	result->mAngles = mAngles;
 	result->mAngularVelocities = mAngularVelocities;
 	result->mAngularAccelerations = mAngularAccelerations;

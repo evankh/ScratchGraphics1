@@ -80,7 +80,7 @@ void GameObject::render(GameObject* camera) {
 		mDisplayComponent->use();
 		if (mPhysicsComponent) mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getWorldTransform()));
 		mDisplayComponent->sendUniform("uVP", glm::value_ptr(camera->getCameraComponent()->getViewProjectionMatrix()));	// If things are sorted by Program for rendering, then all the references to Camera here can be removed!
-		mDisplayComponent->sendUniform("uCamera", 3, 1,  glm::value_ptr(camera->getPosition()));
+		mDisplayComponent->sendUniform("uCamera", 3, 1, glm::value_ptr(camera->getPhysicsComponent()->getGlobalPosition()));
 		if (mTexture) mTexture->activate(0);	// This will make a lot more sense when DisplayComponent becomes an actual Component
 		if (mHasColor) mDisplayComponent->sendUniform("uColor", 3, 1, glm::value_ptr(mColor));
 	}
@@ -105,18 +105,18 @@ void GameObject::handle(const Event e) {
 	mEventQueue.push(e);
 }
 
-GameObject* GameObject::copy() const {
+GameObject* GameObject::makeCopy() const {
 	GameObject* result = new GameObject(mGeometryComponent, mDisplayComponent, mPhysicsComponent);
 	if (mGeometryComponent) mGeometryComponent->transfer();
-	copy(result);
+	copyTo(result);
 	return result;
 }
 
-void GameObject::copy(GameObject* target) const {
+void GameObject::copyTo(GameObject* target) const {
 	target->mGeometryComponent = mGeometryComponent;
 	target->mDisplayComponent = mDisplayComponent;
 	target->mPhysicsComponent = mPhysicsComponent;
-	if (mPhysicsComponent) target->mPhysicsComponent = mPhysicsComponent->copy();
+	if (mPhysicsComponent) target->mPhysicsComponent = mPhysicsComponent->makeCopy();
 	target->mTexture = mTexture;
 	if (mHasColor) {
 		target->mHasColor = true;
@@ -127,4 +127,9 @@ void GameObject::copy(GameObject* target) const {
 	if (mState) target->setState(mState->getEntry(target));
 	if (mCameraComponent) target->mCameraComponent = mCameraComponent->copy();
 
+}
+
+void GameObject::setPhysicsComponent(PhysicsComponent* other) {
+	if (mPhysicsComponent) delete mPhysicsComponent;
+	mPhysicsComponent = other;
 }

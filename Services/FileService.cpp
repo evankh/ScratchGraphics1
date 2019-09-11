@@ -248,8 +248,8 @@ bool FileService::extract(const char* pattern, void* target) {
 				break;
 			}
 			case 'W':
-				if (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r' || in.peek() == '\n') {
-					while (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r' || in.peek() == '\n')	// Needs to check & handle EOF too
+				if (found_delim(in.peek(), DELIM_WHITESPACE, ' ')) {
+					while (found_delim(in.peek(), DELIM_WHITESPACE, ' '))	// Needs to check & handle EOF too
 						in.get();
 				}
 				else if (strictlyNecessary) {
@@ -300,9 +300,27 @@ bool FileService::putBack(const char* pattern) {	// Begging for off-by-one error
 	int length = 0;
 	std::streampos pos = in.tellg();
 	for (; pattern[length] != '\0'; length++);
-	while (length > 0) {
+	length--;
+	while (length >= 0) {
 		in.seekg(-1, in.cur);
-		if (in.peek() != pattern[--length]) {
+		if (length >=1 && pattern[length - 1] == '`') {
+			char delim = pattern[length];
+			DelimType type = DELIM_CHAR;
+			switch (delim) {
+			case 'W':
+				type = DELIM_WHITESPACE;
+				break;
+			case 'L':
+				type = DELIM_LINE;
+				break;
+			}
+			if (!found_delim(in.peek(), type, '\0')) {	// TODO: eating multiples (may not really be necessary)
+				in.seekg(pos);
+				return false;
+			}
+			length -= 2;
+		}
+		else if (in.peek() != pattern[length--]) {
 			in.seekg(pos);
 			return false;
 		}

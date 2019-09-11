@@ -1,4 +1,3 @@
-Camera "main" pos:(5.0,5.0,3.0) at:(0.0,0.0,0.0) fov:75.0
 Music "debug_background"
 // Woops, that doesn't give any sort of error message if it doesn't find it
 Object "center_cube" bounds:"AABB" geom:"debug_cube_2" prog:"debug_normal" tex:"debug" pos:(0.0,0.0,0.0) rot:(0.0,0.0,1.0) axis:(0.0,0.0,1.0) mom:45.0 input:"mouseover"
@@ -13,8 +12,10 @@ Object "Analytic sphere" bounds:"Sphere" geom:"debug_cube_2" prog:"ray_sphere" p
 // No need to do any fancy indentation parsing really, can just add a parent:"name" field
 Object "player" bounds:"AABB" geom:"debug_cube_2" prog:"debug_texcoord" pos:(3.0,2.0,0.0) input:"player"
 	Object "hat" parent:"player" geom:"debug_cube" prog:"solid_color" col:(0.0,0.5,1.0) pos:(0.25,0.25,1.5) scl:0.5
+	Camera "main_camera" pos:(0.0,-5.0,3.0) at:(0.5,0.5,1.0) fov:75.0
 Object "car" geom:"debug_cube" prog:"solid_color" col:(1.0,0.0,0.0) pos:(-2.0,2.0,1.0) scl:(1.0,1.0,1.0)
 	Object "tire1" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(1.0,1.0,-1.0)
 	Object "tire2" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(1.0,-1.0,-1.0)
 	Object "tire3" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(-1.0,1.0,-1.0)
 	Object "tire4" parent:"car" geom:"debug_cube" prog:"solid_color" col:(0.1,0.1,0.1) pos:(-1.0,-1.0,-1.0)
+Main Camera "main_camera"

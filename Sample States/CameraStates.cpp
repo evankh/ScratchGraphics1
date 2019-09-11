@@ -18,7 +18,7 @@ void CameraState::destroy() {
 CameraState* CameraState::handleEvent(Event event) {
 	switch (event.mType) {
 	case EventType::BUTTON_PRESSED:
-		mDragStart = mOwner->getPhysicsComponent()->copy();
+		mDragStart = mOwner->getPhysicsComponent()->makeCopy();
 		switch (event.mData.mouse.button) {
 		case MouseButton::EKH_MOUSE_BUTTON_LEFT:
 			mLeftDrag = true;
@@ -58,15 +58,15 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 	if (mLeftDrag) {
 		dx = current_x - mLeftDragStartPos[0];
 		dy = current_y - mLeftDragStartPos[1];
-		physics->set(mDragStart);
+		physics->copyFrom(mDragStart);
 		physics->rotateAzimuth(mSpeed * dx);
 		physics->rotateAltitude(mSpeed * dy);
 	}
 	if (mRightDrag) {
 		dx = current_x - mRightDragStartPos[0];
 		dy = current_y - mRightDragStartPos[1];
-		physics->set(mDragStart);
-		glm::vec3 diff = physics->getPosition() - mOrbitCenter;
+		physics->copyFrom(mDragStart);
+		glm::vec3 diff = physics->getLocalPosition() - mOrbitCenter;
 		physics->translate(-diff);
 		float theta, phi, r = glm::length(diff);
 		theta = atanf(diff.y / diff.x);
@@ -78,6 +78,6 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 		diff.z = r * sinf(phi);
 		physics->translate(diff);
 		physics->rotateAzimuth(-mSpeed * dx);
-		physics->rotateAltitude(mSpeed * dy);
+		physics->rotateAltitude(-mSpeed * dy);
 	}
 }

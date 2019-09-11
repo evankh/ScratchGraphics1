@@ -16,7 +16,7 @@ Source::~Source() {
 }
 
 void Source::update() {
-	alSourcefv(mHandle, AL_POSITION, glm::value_ptr(mPhysics->getPosition()));
+	alSourcefv(mHandle, AL_POSITION, glm::value_ptr(mPhysics->getGlobalPosition()));
 	alSourcefv(mHandle, AL_VELOCITY, glm::value_ptr(mPhysics->getVelocity()));
 	alSourcei(mHandle, AL_LOOPING, mLooping);
 }

@@ -5,6 +5,7 @@
 #include "MouseHandler.h"
 #include "ServiceLocator.h"
 #include "Shader.h"
+#include "Source.h"
 #include "State.h"
 #include "Window.h"
 
@@ -22,9 +23,12 @@ void Game::softReload() {
 	ServiceLocator::getLoggingService().log("===== LEVEL RESET =====");
 	// Empty everything out: already done by cleanup
 	mWorkingListSize = mCurrentLevel->getNumObjects();
-	mWorkingObjectList = mCurrentLevel->getWorkingSet();
-	mWorkingActiveCamera = mCurrentLevel->getCurrentCamera()->copy();	// I guess this is fine since it's not tied to any actual normal GameObject
+	mCurrentLevel->getWorkingSet(&mWorkingObjectList, &mWorkingPCList);
+	mWorkingActiveCamera = mWorkingObjectList + mCurrentLevel->getMainCameraIndex();
 	mSoundSystem.registerListener(mWorkingActiveCamera->getPhysicsComponent());
+	mGlobalAudio = new Source(mWorkingActiveCamera->getPhysicsComponent(), true);
+	mGlobalAudio->update();
+	mGlobalAudio->playSound(mCurrentLevel->getBackgroundMusic());
 }
 
 void Game::cleanup() {
@@ -33,11 +37,10 @@ void Game::cleanup() {
 	mLevelDirectory.clear();
 
 	delete[] mWorkingObjectList;
+	delete[] mWorkingPCList;
 	mWorkingListSize = 0;
-	if (mWorkingActiveCamera) {
-		delete mWorkingActiveCamera;
-		mWorkingActiveCamera = nullptr;
-	}
+	mWorkingActiveCamera = nullptr;
+	delete mGlobalAudio;
 
 	while (mCurrentMenu) {
 		auto top = mCurrentMenu;
@@ -203,7 +206,7 @@ void Game::render(float dt) {
 	prog->use();
 	if (mWorkingActiveCamera) {
 		prog->sendUniform("uVP", glm::value_ptr(mWorkingActiveCamera->getCameraComponent()->getViewProjectionMatrix()));
-		prog->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getPosition()));
+		prog->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getPhysicsComponent()->getGlobalPosition()));
 		for (unsigned int i = 0; i < mWorkingListSize; i++) {
 			prog->sendUniform("uObjectID", mWorkingObjectList[i].getIndex());
 			mWorkingObjectList[i].render(prog);
@@ -216,8 +219,8 @@ void Game::resize(unsigned int width, unsigned int height) {
 	mWindow->resize(width, height);
 	MouseHandler::getInstance().resize(width, height);
 	if (mCurrentLevel)
-		for (auto a : mCurrentLevel->getCameraList())
-			a.second->getCameraComponent()->resize(width, height);
+		for (auto a : mCurrentLevel->getAllCameras())
+			mWorkingObjectList[a].getCameraComponent()->resize(width, height);
 	if (mWorkingActiveCamera)
 		mWorkingActiveCamera->getCameraComponent()->resize(width, height);
 	for (auto processor : mCommonLibraries.post.pipelines)

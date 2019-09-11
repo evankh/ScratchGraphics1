@@ -14,7 +14,7 @@ PerspCamera::PerspCamera(unsigned int width, unsigned int height, float fov) {
 
 Camera* PerspCamera::copy() const {
 	PerspCamera* ret = new PerspCamera(mWidth, mHeight, glm::degrees(mFOV));
-	ret->mViewProjectionMatrix = mViewProjectionMatrix;
+	ret->mProjectionMatrix = mProjectionMatrix;
 	return ret;
 }
 
@@ -22,7 +22,6 @@ OrthoCamera::OrthoCamera(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::ortho(0.0f, (float)width, (float)height, 0.0f);
-	mViewProjectionMatrix = mProjectionMatrix;
 }
 
 Camera* OrthoCamera::copy() const {
@@ -39,7 +38,10 @@ void OrthoCamera::resize(unsigned int width, unsigned int height) {
 	mWidth = width;
 	mHeight = height;
 	mProjectionMatrix = glm::ortho((float)width, 0.0f, (float)height, 0.0f);
-	mViewProjectionMatrix = mProjectionMatrix;
+}
+
+glm::mat4& Camera::getProjectionMatrix() {
+	return mProjectionMatrix;
 }
 
 glm::mat4& Camera::getViewProjectionMatrix() {

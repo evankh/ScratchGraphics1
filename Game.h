@@ -42,6 +42,7 @@ private:
 	} mCommonLibraries;
 	// Working set of Level data
 	GameObject* mWorkingObjectList = nullptr;
+	PhysicsComponent* mWorkingPCList = nullptr;
 	unsigned int mWorkingListSize = 0;
 	GameObject* mWorkingActiveCamera;
 	// Actual game information
@@ -52,6 +53,7 @@ private:
 	Menu* mHUD = nullptr;
 	PostprocessingPipeline* mCurrentMenuPost;
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
+	Source* mGlobalAudio = nullptr;
 	const std::string mAssetBasePath = "assets2/";
 	const std::string mIndexFilename = "index.txt";
 	DebugMode mDebugMode = DEBUG_NONE;

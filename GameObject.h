@@ -43,8 +43,8 @@ public:
 	virtual void handle(const Event e);
 	void process(const Event e);
 	void setState(State* state);	// Probably should be private or something, could completely change the type of the object if given the wrong type of State
-	GameObject* copy() const;
-	void copy(GameObject* target) const;
+	GameObject* makeCopy() const;
+	void copyTo(GameObject* target) const;
 
 	// Graphics functions
 	void setTexture(Texture* tex) { mTexture = tex; };
@@ -55,8 +55,9 @@ public:
 
 	// Physics functions
 	PhysicsComponent* getPhysicsComponent() const { return mPhysicsComponent; };
+	void setPhysicsComponent(PhysicsComponent* other);
 	Bounds* getBounds() const { if (mPhysicsComponent) return mPhysicsComponent->getBounds(); return nullptr; };
-	glm::vec3 getPosition() const { if (mPhysicsComponent) return mPhysicsComponent->getPosition(); return { 0.0f,0.0f,0.0f }; };
+	//glm::vec3 getPosition() const { if (mPhysicsComponent) return mPhysicsComponent->getGlobalPosition(); return { 0.0f,0.0f,0.0f }; };
 	void translate(glm::vec3 dxyz) { if (mPhysicsComponent) mPhysicsComponent->translate(dxyz); };
 	void rotate(glm::vec3 axis, float degrees) { if (mPhysicsComponent) mPhysicsComponent->rotate(axis, degrees); };
 	void scale(glm::vec3 scale) { if (mPhysicsComponent) mPhysicsComponent->scale(scale); };
