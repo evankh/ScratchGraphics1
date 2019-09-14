@@ -1,20 +1,20 @@
 #include "SoundHandler.h"
-#include "al.h"
+#include "OpenAL/al.h"
 #include "PhysicsComponent.h"
-#include "glm\gtc\type_ptr.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
-PhysicsComponent* SoundHandler::sListener = NULL;
+PhysicsComponent* SoundHandler::sListener = nullptr;
 
 SoundHandler::SoundHandler() {
 	// Set up the OpenAL context
-	sDevice = alcOpenDevice(NULL);
-	sContext = alcCreateContext(sDevice, NULL);
+	sDevice = alcOpenDevice(nullptr);
+	sContext = alcCreateContext(sDevice, nullptr);
 	alcMakeContextCurrent(sContext);
 }
 
 SoundHandler::~SoundHandler() {
 	// Destroy OpenAL context
-	alcMakeContextCurrent(NULL);
+	alcMakeContextCurrent(nullptr);
 	alcDestroyContext(sContext);
 	alcCloseDevice(sDevice);
 }

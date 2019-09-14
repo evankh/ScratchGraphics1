@@ -2,7 +2,7 @@
 #define __EKH_SCRATCH_GRAPHICS_1_SOUND_HANDLER__
 
 class PhysicsComponent;
-#include "alc.h"
+#include "OpenAL/alc.h"
 
 class SoundHandler {
 private:

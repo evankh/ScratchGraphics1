@@ -83,17 +83,17 @@ void Game::update(float dt) {
 	if (mCurrentLevel) {
 		// A compelling reason to separate out PhysicsComponents, and possibly Bounds
 		for (unsigned int i = 0; i < mWorkingListSize; i++) {
-			GameObject& I = mWorkingObjectList[i];
+			PhysicsComponent& I = mWorkingPCList[i];
 			if (I.getBounds()) {
 				for (unsigned int j = i + 1; j < mWorkingListSize; j++) {
-					GameObject& J = mWorkingObjectList[j];
+					PhysicsComponent& J = mWorkingPCList[j];
 					if (J.getBounds()) {
 						if (collides(I.getBounds(), J.getBounds())) {
 							CollisionData collision;
-							collision.first = I.getPhysicsComponent();
-							collision.second = J.getPhysicsComponent();
-							I.handle(Event(collision));
-							J.handle(Event(collision));
+							collision.first = &I;
+							collision.second = &J;
+							mWorkingObjectList[i].handle(Event(collision));
+							mWorkingObjectList[j].handle(Event(collision));
 						}
 					}
 				}
@@ -104,7 +104,6 @@ void Game::update(float dt) {
 		KeyboardHandler::getInstance().dispatchAll();
 		//MouseHandler::getInstance().step();
 		MouseHandler::getInstance().dispatchAll();
-		mWorkingActiveCamera->update(dt);	// Hmm
 		if (!mPaused) {
 			// Object updates
 			for (unsigned int i = 0; i < mWorkingListSize; i++) {

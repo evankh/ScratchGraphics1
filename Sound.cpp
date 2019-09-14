@@ -1,5 +1,5 @@
 #include "Sound.h"
-#include "al.h"
+#include "OpenAL/al.h"
 //#include "alut.h"	// Where do I find this? I don't fancy parsing WAV files myself...
 #include "ServiceLocator.h"
 

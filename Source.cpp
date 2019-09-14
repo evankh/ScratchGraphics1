@@ -1,6 +1,6 @@
 #include "Source.h"
-#include "al.h"
-#include "glm\gtc\type_ptr.hpp"
+#include "OpenAL/al.h"
+#include "glm/gtc/type_ptr.hpp"
 #include "PhysicsComponent.h"
 #include "Sound.h"
 
