@@ -1,5 +1,5 @@
-#include "Menu.h"
-#include "UIElement.h"
+#include "UI/Menu.h"
+#include "UI/UIElement.h"
 
 Menu::Menu(Menu* parent, RootElement* contents) {
 	mParent = parent;

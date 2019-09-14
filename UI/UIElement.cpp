@@ -1,10 +1,10 @@
 #include "UIElement.h"
-#include "../Geometry.h"
-#include "../Program.h"
-#include "../ServiceLocator.h"
-#include "../Texture.h"
+#include "Components/Geometry.h"
+#include "Graphics/Program.h"
+#include "Util/ServiceLocator.h"
+#include "Graphics/Texture.h"
 
-const Geometry* Element::sUnitQuad = Geometry::getUnitQuad();
+const GeometryComponent* Element::sUnitQuad = GeometryComponent::getUnitQuad();
 const Program* Element::sScreenDraw = Program::getScreenDraw();
 
 Element::Element(Texture* texture) {

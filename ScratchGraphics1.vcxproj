@@ -74,7 +74,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;include/glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);include;include/glm</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
@@ -129,82 +129,80 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Bounds.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="FrameBuffer.cpp" />
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="Game_callbacks.cpp" />
-    <ClCompile Include="Game_init.cpp" />
-    <ClCompile Include="Game_loading.cpp" />
-    <ClCompile Include="Geometry.cpp" />
-    <ClCompile Include="Handler.cpp" />
-    <ClCompile Include="KernelManager.cpp" />
-    <ClCompile Include="KeyboardHandler.cpp" />
-    <ClCompile Include="Lamp.cpp" />
-    <ClCompile Include="Level.cpp" />
+    <ClCompile Include="Components\Collision.cpp" />
+    <ClCompile Include="Components\Geometry.cpp" />
+    <ClCompile Include="Components\Physics.cpp" />
+    <ClCompile Include="Core\Game.cpp" />
+    <ClCompile Include="Core\GameObject.cpp" />
+    <ClCompile Include="Core\Game_callbacks.cpp" />
+    <ClCompile Include="Core\Game_init.cpp" />
+    <ClCompile Include="Core\Game_loading.cpp" />
+    <ClCompile Include="Core\Level.cpp" />
+    <ClCompile Include="Core\State.cpp" />
+    <ClCompile Include="Core\Window.cpp" />
+    <ClCompile Include="Graphics\Camera.cpp" />
+    <ClCompile Include="Graphics\FrameBuffer.cpp" />
+    <ClCompile Include="Graphics\Lamp.cpp" />
+    <ClCompile Include="Graphics\PostProcessingPipeline.cpp" />
+    <ClCompile Include="Graphics\Program.cpp" />
+    <ClCompile Include="Graphics\Shader.cpp" />
+    <ClCompile Include="Graphics\Texture.cpp" />
+    <ClCompile Include="Input\Handler.cpp" />
+    <ClCompile Include="Input\KeyboardHandler.cpp" />
+    <ClCompile Include="Input\MouseHandler.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="MouseHandler.cpp" />
-    <ClCompile Include="PhysicsComponent.cpp" />
-    <ClCompile Include="PostProcessingPipeline.cpp" />
-    <ClCompile Include="Program.cpp" />
     <ClCompile Include="Sample States\CameraStates.cpp" />
     <ClCompile Include="Sample States\MouseoverStates.cpp" />
     <ClCompile Include="Sample States\PlayerStates.cpp" />
-    <ClCompile Include="ServiceLocator.cpp" />
     <ClCompile Include="Services\FileService.cpp" />
     <ClCompile Include="Services\LoggingService.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="ShaderManager.cpp" />
-    <ClCompile Include="Sound.cpp" />
-    <ClCompile Include="SoundHandler.cpp" />
-    <ClCompile Include="SoundLibrary.cpp" />
-    <ClCompile Include="Source.cpp" />
-    <ClCompile Include="State.cpp" />
-    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Sound\Sound.cpp" />
+    <ClCompile Include="Sound\SoundHandler.cpp" />
+    <ClCompile Include="Sound\Source.cpp" />
     <ClCompile Include="UI\Menu.cpp" />
     <ClCompile Include="UI\UIElement.cpp" />
-    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="Util\KernelManager.cpp" />
+    <ClCompile Include="Util\ServiceLocator.cpp" />
+    <ClCompile Include="Util\ShaderManager.cpp" />
+    <ClCompile Include="Util\SoundLibrary.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Bounds.h" />
-    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Components\Collision.h" />
+    <ClInclude Include="Components\Geometry.h" />
+    <ClInclude Include="Components\Physics.h" />
+    <ClInclude Include="Core\Game.h" />
+    <ClInclude Include="Core\GameObject.h" />
+    <ClInclude Include="Core\Level.h" />
+    <ClInclude Include="Core\State.h" />
+    <ClInclude Include="Core\Window.h" />
     <ClInclude Include="Event System\Event.h" />
     <ClInclude Include="Event System\Receiver.h" />
-    <ClInclude Include="FrameBuffer.h" />
-    <ClInclude Include="Game.h" />
-    <ClInclude Include="GameObject.h" />
-    <ClInclude Include="Geometry.h" />
-    <ClInclude Include="Handler.h" />
-    <ClInclude Include="KernelManager.h" />
-    <ClInclude Include="KeyboardHandler.h" />
-    <ClInclude Include="KeyframeManager.h" />
-    <ClInclude Include="Lamp.h" />
-    <ClInclude Include="Level.h" />
-    <ClInclude Include="MouseHandler.h" />
-    <ClInclude Include="NamedContainer.h" />
-    <ClInclude Include="NamedTree.h" />
-    <ClInclude Include="PhysicsComponent.h" />
-    <ClInclude Include="PostProcessingPipeline.h" />
-    <ClInclude Include="Program.h" />
+    <ClInclude Include="Graphics\Camera.h" />
+    <ClInclude Include="Graphics\FrameBuffer.h" />
+    <ClInclude Include="Graphics\Lamp.h" />
+    <ClInclude Include="Graphics\PostProcessingPipeline.h" />
+    <ClInclude Include="Graphics\Program.h" />
+    <ClInclude Include="Graphics\Shader.h" />
+    <ClInclude Include="Graphics\Texture.h" />
+    <ClInclude Include="Input\Handler.h" />
+    <ClInclude Include="Input\KeyboardHandler.h" />
+    <ClInclude Include="Input\MouseHandler.h" />
     <ClInclude Include="Sample States\CameraStates.h" />
     <ClInclude Include="Sample States\MouseoverStates.h" />
     <ClInclude Include="Sample States\PlayerStates.h" />
-    <ClInclude Include="ServiceLocator.h" />
     <ClInclude Include="Services\FileService.h" />
     <ClInclude Include="Services\LoggingService.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="ShaderManager.h" />
-    <ClInclude Include="Sound.h" />
-    <ClInclude Include="SoundHandler.h" />
-    <ClInclude Include="SoundLibrary.h" />
-    <ClInclude Include="Source.h" />
-    <ClInclude Include="State.h" />
-    <ClInclude Include="Texture.h" />
+    <ClInclude Include="Sound\Sound.h" />
+    <ClInclude Include="Sound\SoundHandler.h" />
+    <ClInclude Include="Sound\Source.h" />
     <ClInclude Include="UI\Menu.h" />
     <ClInclude Include="UI\UIElement.h" />
-    <ClInclude Include="Vertex.h" />
-    <ClInclude Include="Window.h" />
+    <ClInclude Include="Util\KernelManager.h" />
+    <ClInclude Include="Util\NamedContainer.h" />
+    <ClInclude Include="Util\NamedTree.h" />
+    <ClInclude Include="Util\ServiceLocator.h" />
+    <ClInclude Include="Util\ShaderManager.h" />
+    <ClInclude Include="Util\SoundLibrary.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="assets\glsl\index.txt" />

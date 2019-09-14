@@ -1,12 +1,7 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_SAMPLE_PLAYER_STATES__
 #define __EKH_SCRATCH_GRAPHICS_1_SAMPLE_PLAYER_STATES__
 
-#include "../State.h"
-class GameObject;
-
-#ifndef NULL
-#define NULL 0
-#endif//NULL
+#include "Core/State.h"
 
 class PlayerState :public State {
 	static bool sRegistered;

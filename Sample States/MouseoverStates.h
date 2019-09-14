@@ -1,8 +1,7 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_MOUSEOVER_STATES__
 #define __EKH_SCRATCH_GRAPHICS_1_MOUSEOVER_STATES__
 
-#include "../State.h"
-class GameObject;
+#include "Core/State.h"
 
 class MouseoverState :public State {
 	static bool sRegistered;

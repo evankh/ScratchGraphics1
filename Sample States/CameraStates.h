@@ -1,9 +1,8 @@
 #ifndef __EKH_SCRATCH_GRAPHICS_1_CAMERA_STATES__
 #define __EKH_SCRATCH_GRAPHICS_1_CAMERA_STATES__
 
-#include "../State.h"
+#include "Core/State.h"
 #include "glm/vec3.hpp"
-class GameObject;
 
 class CameraState :public State {
 	static bool sRegistered;

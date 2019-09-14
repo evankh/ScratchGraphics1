@@ -1,6 +1,6 @@
-#include "MouseoverStates.h"
-#include "../GameObject.h"
-#include "../MouseHandler.h"
+#include "Sample States/MouseoverStates.h"
+#include "Core/GameObject.h"
+#include "Input/MouseHandler.h"
 
 bool MouseoverState::sRegistered = State::setBaseState("mouseover", new MouseoverState(nullptr));
 

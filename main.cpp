@@ -1,5 +1,5 @@
-#include "Game.h"
-#include "ServiceLocator.h"
+#include "Core/Game.h"
+#include "Util/ServiceLocator.h"
 
 int main(int argc, char* argv[]) {
 	ServiceLocator::provideLoggingService(new ConsoleLoggingService);

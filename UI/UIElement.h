@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-class Geometry;
+class GeometryComponent;
 class Texture;
 class Program;
 
@@ -13,7 +13,7 @@ struct Bounds2D {
 };
 
 class Element {
-	static const Geometry* sUnitQuad;
+	static const GeometryComponent* sUnitQuad;
 	static const Program* sScreenDraw;
 protected:
 	Bounds2D mBounds;

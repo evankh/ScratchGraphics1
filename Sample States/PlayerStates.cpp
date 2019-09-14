@@ -1,7 +1,7 @@
-#include "PlayerStates.h"
-#include "../PhysicsComponent.h"
-#include "../GameObject.h"
-#include "../KeyboardHandler.h"
+#include "Sample States/PlayerStates.h"
+#include "Components/Physics.h"
+#include "Core/GameObject.h"
+#include "Input/KeyboardHandler.h"
 
 bool PlayerState::sRegistered = State::setBaseState("player", new PlayerOnFloor(NULL, 0.0, 0.0, 0.0));	// It's fine for this to be unowned, because it's only used to generate copies
 

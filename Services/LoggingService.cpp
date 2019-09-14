@@ -1,4 +1,4 @@
-#include "LoggingService.h"
+#include "Services/LoggingService.h"
 
 FileLoggingService::FileLoggingService(char* filename) {
 	fileout = std::ofstream(filename);

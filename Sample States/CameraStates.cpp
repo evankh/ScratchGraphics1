@@ -1,7 +1,7 @@
-#include "CameraStates.h"
-#include "../GameObject.h"
-#include "../MouseHandler.h"
-#include "../ServiceLocator.h"
+#include "Sample States/CameraStates.h"
+#include "Core/GameObject.h"
+#include "Input/MouseHandler.h"
+#include "Util/ServiceLocator.h"
 
 bool CameraState::sRegistered = State::setBaseState("camera", new CameraState(nullptr));
 
