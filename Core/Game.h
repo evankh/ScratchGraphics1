@@ -54,7 +54,7 @@ private:
 	PostprocessingPipeline* mCurrentMenuPost;
 	SoundHandler& mSoundSystem = SoundHandler::getInstance();
 	Source* mGlobalAudio = nullptr;
-	const std::string mAssetBasePath = "assets2/";
+	const std::string mAssetBasePath = "Assets/";
 	const std::string mIndexFilename = "index.txt";
 	DebugMode mDebugMode = DEBUG_NONE;
 	bool mPaused = false;

@@ -1,5 +1,6 @@
 #include "Core/Level.h"
 #include "Components/Collision.h"
+#include "Components/Graphics.h"
 #include "Graphics/Camera.h"
 #include "Util/ServiceLocator.h"
 #include "Sound/Sound.h"
@@ -118,7 +119,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			if (valid) {
 				// Construction of the actual object
 				CollisionComponent* bounds = nullptr;
-				if (!bound.empty()) {
+				if (!bound.empty() && geom) {
 					if (bound == "Sphere")
 						bounds = new BoundingSphere({ 0.0f,0.0f,0.0f }, 1.0f);
 					else if (bound == "AABB")
@@ -131,9 +132,13 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				PhysicsComponent* physics = new PhysicsComponent(bounds, { vel.x,vel.y,vel.z }, { acc.x,acc.y,acc.z }, { ang.x,ang.y,ang.z }, { mom.x,mom.y,mom.z });
 				physics->scale({ scl.x,scl.y,scl.z });
 				physics->translate({ pos.x,pos.y,pos.z });
-				GameObject* object = new GameObject(geom, program, physics);
-				if (texture) object->setTexture(texture);
-				if (hasCol) object->setColor({ col.x,col.y,col.z });
+				GraphicsComponent* graphics = nullptr;
+				if (program) {
+					graphics = new GraphicsComponent(program);
+					if (texture) graphics->addTexture(texture);
+					if (hasCol) graphics->setColor({ col.x,col.y,col.z });
+				}
+				GameObject* object = new GameObject(geom, graphics, physics);
 				if (!input.empty()) {
 					try {
 						State* state = State::getNewEntryState(input, object);

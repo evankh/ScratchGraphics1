@@ -1,8 +1,0 @@
-Game Window
-800 600
-geometry:"obj/"
-shaders:"glsl/"
-post:"glsl/post/"
-textures:"tex/"
-sounds:"sound/"
-levels:"level/"

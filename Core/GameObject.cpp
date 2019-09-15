@@ -1,15 +1,14 @@
 #include "Core/GameObject.h"
-#include "Graphics/Camera.h"
 #include "Components/Geometry.h"
-#include "Graphics/Program.h"
-#include "Sound/Source.h"
+#include "Components/Graphics.h"
 #include "Core/State.h"
-#include "Graphics/Texture.h"
+#include "Graphics/Camera.h"
+#include "Sound/Source.h"
 
-GameObject::GameObject(GeometryComponent* geometry, Program* display, PhysicsComponent* physics) {
+GameObject::GameObject(GeometryComponent* geometry, GraphicsComponent* graphics, PhysicsComponent* physics) {
 	mGeometryComponent = geometry;
 	if (mGeometryComponent) mGeometryComponent->transfer();
-	mDisplayComponent = display;
+	mGraphicsComponent = graphics;
 	mPhysicsComponent = physics;
 }
 
@@ -19,13 +18,12 @@ void GameObject::setState(State* state) {
 }
 
 GameObject::~GameObject() {
-	//if (mPhysicsComponent) delete mPhysicsComponent;	// GameObject is no longer responsible for deleting its own PC... in ~Game. In ~Level, it is.
 	if (mState) {
 		mState->destroy();
 		delete mState;
 	}
 	if (mAudioComponent) delete mAudioComponent;
-
+	if (mGraphicsComponent) delete mGraphicsComponent;
 	if (mCameraComponent) delete mCameraComponent;
 }
 
@@ -73,27 +71,13 @@ void GameObject::registerSound(std::string name, Sound* sound) {
 	mSounds.add(name, sound);
 }
 
-#include "glm\gtc\type_ptr.hpp"
 // Eventually sorting Objects for rendering based on their materials would save time on switching and let me take the stupid Camera out of here
 void GameObject::render(GameObject* camera) {
-	if (mDisplayComponent) {
-		mDisplayComponent->use();
-		if (mPhysicsComponent) mDisplayComponent->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getWorldTransform()));
-		mDisplayComponent->sendUniform("uVP", glm::value_ptr(camera->getCameraComponent()->getViewProjectionMatrix()));	// If things are sorted by Program for rendering, then all the references to Camera here can be removed!
-		mDisplayComponent->sendUniform("uCamera", 3, 1, glm::value_ptr(camera->getPhysicsComponent()->getGlobalPosition()));
-		if (mTexture) mTexture->activate(0);	// This will make a lot more sense when DisplayComponent becomes an actual Component
-		if (mHasColor) mDisplayComponent->sendUniform("uColor", 3, 1, glm::value_ptr(mColor));
+	if (mGraphicsComponent) {
+		mGraphicsComponent->activate(this, camera);
+		if (mGeometryComponent)
+			mGraphicsComponent->render(mGeometryComponent);
 	}
-	if (mGeometryComponent)
-		if (mDisplayComponent && mDisplayComponent->isTesselated())
-			mGeometryComponent->render_patches();
-		else
-			mGeometryComponent->render();
-}
-
-void GameObject::render(Program* p) {
-	if (mPhysicsComponent) p->sendUniform("uM", glm::value_ptr(mPhysicsComponent->getWorldTransform()));
-	if (mGeometryComponent) mGeometryComponent->render();
 }
 
 void GameObject::debugDraw() {
@@ -106,7 +90,7 @@ void GameObject::handle(const Event e) {
 }
 
 GameObject* GameObject::makeCopy() const {
-	GameObject* result = new GameObject(mGeometryComponent, mDisplayComponent, mPhysicsComponent);
+	GameObject* result = new GameObject(mGeometryComponent, mGraphicsComponent, mPhysicsComponent);
 	if (mGeometryComponent) mGeometryComponent->transfer();
 	copyTo(result);
 	return result;
@@ -114,14 +98,8 @@ GameObject* GameObject::makeCopy() const {
 
 void GameObject::copyTo(GameObject* target) const {
 	target->mGeometryComponent = mGeometryComponent;
-	target->mDisplayComponent = mDisplayComponent;
+	if (mGraphicsComponent) target->mGraphicsComponent = mGraphicsComponent->makeCopy();
 	target->mPhysicsComponent = mPhysicsComponent;
-	//if (mPhysicsComponent) target->mPhysicsComponent = mPhysicsComponent->makeCopy();
-	target->mTexture = mTexture;
-	if (mHasColor) {
-		target->mHasColor = true;
-		target->mColor = mColor;
-	}
 	if (mAudioComponent) target->mAudioComponent = mAudioComponent->copy(target->mPhysicsComponent);
 	target->mSounds = mSounds;
 	if (mState) target->setState(mState->getEntry(target));
@@ -130,6 +108,5 @@ void GameObject::copyTo(GameObject* target) const {
 }
 
 void GameObject::setPhysicsComponent(PhysicsComponent* other) {
-	//if (mPhysicsComponent) delete mPhysicsComponent;	// GameObject is not responsible for managing it's own PC!
 	mPhysicsComponent = other;
 }

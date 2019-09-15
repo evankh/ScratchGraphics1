@@ -1,7 +1,0 @@
-Point time:0.0 note:A4 gain:1.0
-Point time:0.0 note:A3 gain:0.0
-Point time:1.0 note:A5 gain:0.0
-Point time:1.0 note:A4 gain:1.0
-
-Sweep Logarithmic Sine 0 2
-Sweep Logarithmic Sine 1 3

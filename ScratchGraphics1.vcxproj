@@ -131,6 +131,7 @@
   <ItemGroup>
     <ClCompile Include="Components\Collision.cpp" />
     <ClCompile Include="Components\Geometry.cpp" />
+    <ClCompile Include="Components\Graphics.cpp" />
     <ClCompile Include="Components\Physics.cpp" />
     <ClCompile Include="Core\Game.cpp" />
     <ClCompile Include="Core\GameObject.cpp" />
@@ -169,6 +170,7 @@
   <ItemGroup>
     <ClInclude Include="Components\Collision.h" />
     <ClInclude Include="Components\Geometry.h" />
+    <ClInclude Include="Components\Graphics.h" />
     <ClInclude Include="Components\Physics.h" />
     <ClInclude Include="Core\Game.h" />
     <ClInclude Include="Core\GameObject.h" />

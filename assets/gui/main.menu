@@ -1,6 +1,0 @@
-Text "title" centerX:400 top:50 "Main Menu"
-Stack "options" centerX:400 top:150 bottom:550 direction:Vertical align:Center spacing:10 {
-	Button "enter" text:"Enter" level:"debug",
-	Button "settings" text:"Settings" menu:"settings",
-	Button "quit" text:"Quit"
-}

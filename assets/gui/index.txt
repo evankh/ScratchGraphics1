@@ -1,3 +1,0 @@
-HUD "debug" "debug.hud"
-Menu "main" "main.menu"
-Menu "settings" "settings.menu"

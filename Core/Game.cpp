@@ -118,16 +118,6 @@ void Game::update(float dt) {
 #include <glm/gtc/type_ptr.hpp>
 
 void Game::render(float dt) {
-	// A broad sketch of the rendering process follows:
-	//  - clear the various framebuffers and fill with an appropriate background
-	//  - render all GameObjects to an intermediate FrameBuffer
-	//  - run a post-processing pipeline, consisting of as many intermediate steps as necessary, and ultimately rendering to the window's FrameBuffer
-	//  - render the Window FrameBuffer
-	//  - render all HUD elements
-	//  - if in a menu:
-	//    - run a second post-processing step
-	//    - render all menu items
-
 	float debug_true[]{ 0.0f,1.0f,0.0f,0.5f }, debug_false[]{ 0.0f,0.0f,1.0f,0.5f };
 
 	// Set the active framebuffer to the appropriate target:
@@ -148,6 +138,7 @@ void Game::render(float dt) {
 			program->sendUniform("uM", glm::value_ptr(glm::mat4(1.0f)));
 			GeometryComponent::drawAxes();
 			for (unsigned int i = 0; i < mWorkingListSize; i++) {
+				if (mWorkingObjectList[i].getBounds() == nullptr) continue;
 				program->sendUniform("uM", glm::value_ptr(mWorkingObjectList[i].getPhysicsComponent()->getWorldTransform()));
 				GeometryComponent::drawAxes();
 			}
@@ -158,6 +149,7 @@ void Game::render(float dt) {
 			switch (mDebugMode) {
 			case DEBUG_COLLISION:
 				for (unsigned int i = 0; i < mWorkingListSize; i++) {
+					if (mWorkingObjectList[i].getBounds() == nullptr) continue;
 					if (mWorkingObjectList[i].hasCollision())
 						program->sendUniform("uDebugColor", 4, 1, debug_true);
 					else
@@ -168,6 +160,7 @@ void Game::render(float dt) {
 				break;
 			case DEBUG_MOUSE:
 				for (unsigned int i = 0; i < mWorkingListSize; i++) {
+					if (mWorkingObjectList[i].getBounds() == nullptr) continue;
 					if (mWorkingObjectList[i].hasMouseOver())
 						program->sendUniform("uDebugColor", 4, 1, debug_true);
 					else
@@ -203,6 +196,7 @@ void Game::render(float dt) {
 	mWindow->update();
 
 	// Mouse picking stuff
+	// Will need to be updated to account for menus
 	MouseHandler::getInstance().setAsDrawingTarget();
 	Program* prog = mCommonLibraries.standard.programs.get("mouse_selection");
 	prog->use();
@@ -211,7 +205,8 @@ void Game::render(float dt) {
 		prog->sendUniform("uCamera", 3, 1, glm::value_ptr(mWorkingActiveCamera->getPhysicsComponent()->getGlobalPosition()));
 		for (unsigned int i = 0; i < mWorkingListSize; i++) {
 			prog->sendUniform("uObjectID", mWorkingObjectList[i].getIndex());
-			mWorkingObjectList[i].render(prog);
+			if (mWorkingObjectList[i].getPhysicsComponent()) prog->sendUniform("uM", glm::value_ptr(mWorkingObjectList[i].getPhysicsComponent()->getWorldTransform()));
+			if (mWorkingObjectList[i].getGeometryComponent()) mWorkingObjectList[i].getGeometryComponent()->render();
 		}
 	}
 }

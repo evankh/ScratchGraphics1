@@ -1,2 +1,0 @@
-"debug_world":"debug_world.lvl"
-"world1":"world1.lvl"

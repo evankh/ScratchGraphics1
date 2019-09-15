@@ -4,26 +4,21 @@
 #include "Event System/Receiver.h"
 #include "Components/Collision.h"
 class GeometryComponent;
-class Program;
+class GraphicsComponent;
 #include "Components/Physics.h"
 class Camera;
 class State;
-class Texture;
 #include "Util/SoundLibrary.h"
 class Source;
 
 class GameObject :public Receiver {
 private:
-	// GraphicsComponent* mGraphicsComponent;
+	GraphicsComponent* mGraphicsComponent;
 	GeometryComponent* mGeometryComponent;
-	Program* mDisplayComponent;
-	Texture* mTexture = nullptr;
-	glm::vec3 mColor;
-	bool mHasColor = false;
+	PhysicsComponent* mPhysicsComponent;
 
 	Camera* mCameraComponent = nullptr;	// This will be moved somewhere else (probably GraphicsComponent?) later but for now I just want it to work
 
-	PhysicsComponent* mPhysicsComponent;
 	Source* mAudioComponent = nullptr;
 	SoundLibrary mSounds;
 	State* mState = nullptr;
@@ -32,23 +27,18 @@ private:
 	bool mHasCollision = false;
 	bool mHasMouseOver = false;
 public:
-	GameObject(GeometryComponent* geometry = nullptr, Program* display = nullptr, PhysicsComponent* physics = nullptr);
+	GameObject(GeometryComponent* geometry = nullptr, GraphicsComponent* graphics = nullptr, PhysicsComponent* physics = nullptr);
 	~GameObject();
 
 	// GameObject-y functions
 	void update(float dt);
 	void render(GameObject* camera);
-	void render(Program* p);
 	void debugDraw();
 	virtual void handle(const Event e);
 	void process(const Event e);
 	void setState(State* state);	// Probably should be private or something, could completely change the type of the object if given the wrong type of State
 	GameObject* makeCopy() const;
 	void copyTo(GameObject* target) const;
-
-	// Graphics functions
-	void setTexture(Texture* tex) { mTexture = tex; };
-	void setColor(glm::vec3 col) { mHasColor = true; mColor = col; };
 	
 	// Sound functions
 	void registerSound(std::string name, Sound* sound);
@@ -69,6 +59,8 @@ public:
 	// Camera functions
 	void setCameraComponent(Camera* cam) { mCameraComponent = cam; };
 	Camera* getCameraComponent() const { return mCameraComponent; };
+
+	GeometryComponent* getGeometryComponent() const { return mGeometryComponent; };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__
