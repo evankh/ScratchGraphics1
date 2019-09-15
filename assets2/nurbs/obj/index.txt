@@ -1,2 +1,0 @@
-"large mesh":"control.obj"
-"small mesh":"small flat.obj"

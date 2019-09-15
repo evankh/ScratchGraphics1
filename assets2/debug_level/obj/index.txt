@@ -1,2 +1,0 @@
-"spaceship":"spaceship.obj"
-"suzanne_lores":"suzanne_lores.obj"

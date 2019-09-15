@@ -1,3 +1,0 @@
-"debug_centered_cube":"centered cube.obj"
-"debug_bad_cube":"cube.obj"
-"debug_edge_cube":"cube2.obj"
