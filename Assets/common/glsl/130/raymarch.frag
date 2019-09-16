@@ -5,18 +5,19 @@ in vec3 pPosition;
 in vec3 pRay;
 
 out vec4 oFragColor;
-layout (depth_greater) out float gl_FragDepth;	// Raymarching will only move the point farther away than the existing surface
+layout (depth_less) out float gl_FragDepth;	// Raymarching will only move the point farther away than the existing surface
 
 // Scene
 const vec3 lightDirection = vec3(0.3520, 0.2304, 0.9072);
 
 uniform mat4 uM;
-uniform mat4 uMVP;
+uniform mat4 uInverseM;
+uniform mat4 uVP;
 
 // Rendering
 uniform float uEps = 0.0001;
 uniform int uMaxIterations = 500;
-uniform float uStepSize = 0.5;
+uniform float uStepSize = 0.25;
 uniform int uMaxReflections = 4;
 uniform float uFogNear = 75.0;
 uniform float uFogFar = 200.0;
@@ -36,6 +37,9 @@ void main() {
 	if (min_dist < 0.0) {
 		oFragColor.rgb = vec3(1.0, 0.0, 0.0);
 		oFragColor.a = 1.0;
+		vec4 proj = uVP * uM * uM * vec4(p, 1.0);
+		gl_FragDepth = depthNDCToWindow(proj.z / proj.w);
+		return;
 	}
 	for (int i = 0; i < uMaxIterations; i++) {
 		float this_dist = SDF(p);
@@ -45,8 +49,12 @@ void main() {
 	}
 	if (SDF(p) <= uEps) {
 		vec3 normal = Normal(p);
+		// Shading is all done in world space, so need to transform the position & normal vectors to their real coordinates
+		normal = normalize((transpose(uInverseM) * vec4(normal, 0.0)).xyz);
+		p = (uM * vec4(p, 1.0)).xyz;
+		
 		float shadeFac = clamp(dot(normal, lightDirection), 0.0, 1.0);
-		vec4 proj = uMVP * uM * vec4(p, 1.0);
+		vec4 proj = uVP * uM * vec4(p, 1.0);
 		gl_FragDepth = depthNDCToWindow(proj.z / proj.w);
 		oFragColor.rgb = vec3(shadeFac);
 		oFragColor.a = 1.0;
