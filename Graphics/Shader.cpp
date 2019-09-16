@@ -30,20 +30,6 @@ Shader::Shader(const char* shader, unsigned int type) {
 Shader::Shader(std::string filepath, unsigned int type) {
 	mFilepath = filepath;
 	mType = type;
-	// Read file
-	/*std::ifstream in(mFilepath);
-	if (in.good()) {
-		int count = 0;
-		while (!in.eof()) {
-			count++;
-			in.get();
-		}
-		char* allText = new char[count];
-		in.clear();
-		in.seekg(0);
-		in.read(allText, count);
-		in.close();
-		allText[count - 1] = '\0';*/
 	FileService file(mFilepath);
 	if (file.good()) {
 		std::string allText = file.getAll();
@@ -74,6 +60,5 @@ Shader::Shader(std::string filepath, unsigned int type) {
 }
 
 Shader::~Shader() {
-	// Maybe delete the filepath
 	glDeleteShader(mHandle);
 }

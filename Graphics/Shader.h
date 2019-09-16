@@ -13,7 +13,6 @@ private:
 public:
 	Shader(std::string filepath, unsigned int type);
 	~Shader();
-	void reload();
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_SHADER__

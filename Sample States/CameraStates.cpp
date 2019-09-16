@@ -73,11 +73,12 @@ void CameraState::update(PhysicsComponent* physics, float dt) {
 		phi = asinf(diff.z / r);
 		theta -= glm::radians(mSpeed * dx);
 		phi -= glm::radians(mSpeed * dy);
+		phi = glm::clamp(phi, -90.0f, 90.0f);
 		diff.x = r * cosf(theta) * cosf(phi);
 		diff.y = r * sinf(theta) * cosf(phi);
 		diff.z = r * sinf(phi);
 		physics->translate(diff);
 		physics->rotateAzimuth(-mSpeed * dx);
-		physics->rotateAltitude(-mSpeed * dy);
+		physics->rotateAltitude(mSpeed * dy);
 	}
 }

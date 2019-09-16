@@ -14,17 +14,19 @@ GraphicsComponent::GraphicsComponent(Program* program) {
 void GraphicsComponent::activate(GameObject* owner, GameObject* camera) {
 	mProgram->use();
 	PhysicsComponent* model = owner->getPhysicsComponent();
-	if (model)
+	if (model) {
 		mProgram->sendUniform("uM", glm::value_ptr(model->getWorldTransform()));
+		mProgram->sendUniform("uInverseM", glm::value_ptr(model->getInverseWorldTransform()));
+	}
 	mProgram->sendUniform("uVP", glm::value_ptr(camera->getCameraComponent()->getViewProjectionMatrix()));
 	model = camera->getPhysicsComponent();
 	mProgram->sendUniform("uCamera", 3, 1, glm::value_ptr(model->getGlobalPosition()));
-	for (int i = 0; i < mTextures.size(); i++)
+	for (unsigned int i = 0; i < mTextures.size(); i++)
 		mTextures[i]->activate(i);
 	if (mHasColor) mProgram->sendUniform("uColor", 3, 1, glm::value_ptr(mColor));
 }
 
-void GraphicsComponent::render(GeometryComponent* geometry) {
+void GraphicsComponent::render(GeometryComponent* geometry) const {
 	if (mProgram->isTesselated())
 		geometry->render_patches();
 	else

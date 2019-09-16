@@ -4,7 +4,7 @@
 class GameObject;
 class GeometryComponent;
 class Program;
-#include "Graphics/Texture.h"
+class Texture;
 
 #include <vector>
 #include <glm/vec3.hpp>
@@ -13,14 +13,13 @@ class GraphicsComponent {
 private:
 	Program* mProgram = nullptr;
 	std::vector<Texture*> mTextures;
-	//Texture* mTexture = nullptr;
 	bool mHasColor = false;
 	glm::vec3 mColor;
 public:
 	GraphicsComponent(Program* program);
 	~GraphicsComponent() { mTextures.clear(); };
 	void activate(GameObject* owner, GameObject* camera);
-	void render(GeometryComponent* geometry);
+	void render(GeometryComponent* geometry) const;
 	void addTexture(Texture* tex) { mTextures.push_back(tex); };
 	void setColor(glm::vec3 col) { mHasColor = true; mColor = col; };
 	GraphicsComponent* makeCopy() const;

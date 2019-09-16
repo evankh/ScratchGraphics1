@@ -6,12 +6,13 @@ out vec3 pPosition;
 out vec3 pRay;
 
 uniform mat4 uM;
+uniform mat4 uInverseM;
 uniform mat4 uVP;
 uniform vec3 uCamera;
 
 void main() {
-	vec4 worldPos = uM * vec4(iPosition, 1.0);
-	pPosition = worldPos.xyz;
-	pRay = normalize(pPosition.xyz - uCamera);
-	gl_Position = uVP * worldPos;
+	vec4 camera = uInverseM * vec4(uCamera, 1.0);
+	pPosition = iPosition.xyz;
+	pRay = normalize(pPosition - camera.xyz);
+	gl_Position = uVP * uM * vec4(iPosition, 1.0);
 }

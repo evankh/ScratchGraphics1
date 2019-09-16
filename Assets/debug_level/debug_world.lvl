@@ -8,15 +8,18 @@ Object "player2" bounds:"Sphere" geom:"spaceship" prog:"debug_normal" col:(0.0,1
 Object "moving_spaceship" bounds:"Sphere" geom:"spaceship" prog:"metal" pos:(0.0,-20.0,0.0) vel:(0.0,5.0,0.0) input:"mouseover"
 Object "Suzanne" bounds:"AABB" geom:"suzanne_lores" prog:"phong" pos:(3.0,-2.0,0.5) input:"mouseover"
 Object "ground" bounds:"Plane" geom:"plane" prog:"texture" pos:(-5.0,-5.0,0.0) scl:(10.0,10.0,1.0) input:"mouseover"
-Object "Analytic sphere" bounds:"Sphere" geom:"debug_edge_cube" prog:"ray_sphere" pos:(-0.5,1.5,0.0) scl:(1.0,1.0,0.5) input:"mouseover"
+Object "sphere1" bounds:"AABB" geom:"debug_centered_cube" prog:"ray_sphere" pos:(-0.5,1.5,0.5) scl:(1.0,1.0,0.5) input:"mouseover"
+Object "sphere2" bounds:"AABB" geom:"debug_centered_cube" prog:"ray_sphere" pos:(1.5,0.5,3.0) scl:(1.0,1.0,2.0) input:"mouseover"
+Object "sphere3" bounds:"AABB" geom:"debug_centered_cube" prog:"ray_sphere" pos:(0.0,2.5,1.0) scl:(1.0,1.0,1.0) input:"mouseover"
+Object "sphere4" bounds:"AABB" geom:"debug_centered_cube" prog:"ray_sphere" pos:(-3.5,2.5,0.0) scl:(1.0,1.0,1.0) input:"mouseover"
 // No need to do any fancy indentation parsing really, can just add a parent:"name" field
 Object "player" bounds:"AABB" geom:"debug_edge_cube" prog:"debug_texcoord" pos:(3.0,2.0,0.0) input:"player"
-	Object "hat" parent:"player" geom:"debug_centered_cube" prog:"solid_color" col:(0.0,0.5,1.0) pos:(0.5,0.5,1.25) scl:0.5
+//	Object "hat" parent:"player" geom:"debug_centered_cube" prog:"solid_color" col:(0.0,0.5,1.0) pos:(0.5,0.5,1.25) scl:0.5
 Object "car" geom:"debug_centered_cube" prog:"solid_color" col:(1.0,0.0,0.0) pos:(-2.0,2.0,0.75) scl:(1.0,1.0,1.0)
-	Object "tire1" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(0.5,-0.5,-0.5) ang:(0.0,90.0,0.0) mom:(0.0,0.0,45.0)
-	Object "tire2" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(0.5,0.5,-0.5) ang:(0.0,90.0,0.0) mom:(0.0,0.0,45.0)
-	Object "tire3" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(-0.5,-0.5,-0.5) ang:(0.0,90.0,0.0) mom:(0.0,0.0,45.0)
-	Object "tire4" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(-0.5,0.5,-0.5) ang:(0.0,90.0,0.0) mom:(0.0,0.0,45.0)
+	Object "tire1" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(0.5,-0.5,-0.5) mom:(0.0,45.0,0.0)
+	Object "tire2" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(0.5,0.5,-0.5) mom:(0.0,45.0,0.0)
+	Object "tire3" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(-0.5,-0.5,-0.5) mom:(0.0,45.0,0.0)
+	Object "tire4" parent:"car" geom:"debug_centered_cube" prog:"solid_color" col:(0.3,0.3,0.3) scl:(0.2,0.5,0.5) pos:(-0.5,0.5,-0.5) mom:(0.0,45.0,0.0)
 Camera "main_camera" pos:(5.0,5.0,3.0) at:(0.0,0.0,0.0) fov:75.0
 Camera "fly_camera" pos:(0.0,-1.5,0.75) at:(0.0,0.0,0.0) parent:"moving_spaceship" fov:150.0
 Main Camera "main_camera"

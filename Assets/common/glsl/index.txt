@@ -19,8 +19,11 @@ Fragment "rimjob" 130:"130/rim.frag"
 Fragment "mouse_selection" 150:"130/mouse_selection.frag"
 Fragment "raymarch_base" 130:"130/raymarch.frag"
 
-Fragment "ray_sphere" 130:"Analytic/sphere.frag"
-Fragment "ray_sierpinski" 130:"Analytic/sierpinski.frag"
+Fragment "numerical_normal" 130:"Analytic/numerical_normal.frag"
+Fragment "no_texcoord" 130:"Analytic/no_texcoord.frag"
+
+Fragment "dist_sphere" 130:"Analytic/sphere.frag"
+Fragment "dist_sierpinski" 130:"Analytic/sierpinski.frag"
 
 Program "debug_position" Vertex:"mvp" Fragment:"debug_position"
 Program "debug_normal" Vertex:"mvp" Fragment:"debug_normal"
@@ -37,5 +40,5 @@ Program "control_grid" Vertex:"mvp" Geometry:"wireframe" Fragment:"solid"
 Program "nurbs_phong" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"phong"
 Program "nurbs_grid" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Geometry:"wireframe" Fragment:"solid"
 
-Program "ray_sphere" Vertex:"raymarch+mvp" Fragment:"raymarch" Fragment:"ray_sphere"
-Program "ray_sierpinski" Vertex:"raymarch+mvp" Fragment:"raymarch" Fragment:"ray_sierpinski"
+Program "ray_sphere" Vertex:"raymarch+mvp" Fragment:"raymarch_base" Fragment:"dist_sphere"
+Program "ray_sierpinski" Vertex:"raymarch+mvp" Fragment:"raymarch_base" Fragment:"dist_sierpinski" Fragment:"numerical_normal" Fragment:"no_texcoord"

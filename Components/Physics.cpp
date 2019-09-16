@@ -20,8 +20,9 @@ float angle(glm::vec2 val) {
 
 PhysicsComponent::PhysicsComponent(glm::vec3 pos, glm::vec3 towards) :PhysicsComponent() {
 	mPosition = pos;
-	mAngles.x = glm::degrees(angle(glm::vec2(towards.x - pos.x, towards.y - pos.y)));
-	mAngles.y = glm::degrees(glm::asin((towards.z - pos.z) / glm::length(towards - pos)));
+	glm::vec3 diff = towards - pos;
+	mAngles.x = glm::degrees(angle(glm::vec2(diff.x, diff.y)));
+	mAngles.y = glm::degrees(glm::atan(diff.z / glm::length(glm::vec2(diff.x,diff.y)))) + 90.0f;
 	mAngles.z = -90.0f;
 }
 
@@ -54,7 +55,7 @@ void PhysicsComponent::update(float dt) {
 	mAngularVelocities += mAngularAccelerations * dt;
 	mAngles += mAngularVelocities * dt;
 	mAngles.x = fmodf(mAngles.x, 360.0f);
-	mAngles.y = clamp(mAngles.y, -90.0f, 90.0f);
+	mAngles.y = fmodf(mAngles.y, 360.0f);
 	mAngles.z = fmodf(mAngles.z, 360.0f);
 	if (mBounds) mBounds->translate(mVelocity * dt);
 	//if (mBounds) mBounds->rotate(mAxis, mAngularVelocity * dt);
@@ -109,7 +110,7 @@ glm::mat4 PhysicsComponent::getWorldTransform() const {
 				glm::rotate(
 					glm::scale(glm::mat4(1.0), mScale),
 					glm::radians(mAngles.x), glm::vec3(0.0, 0.0, 1.0)),
-				glm::radians(mAngles.y), glm::vec3(0.0, 1.0, 0.0)),
+				glm::radians(mAngles.y), glm::vec3(0.0, -1.0, 0.0)),
 			glm::radians(mAngles.z), glm::vec3(0.0, 0.0, 1.0));
 	if (mParent)
 		return mParent->getWorldTransform() * mm;
