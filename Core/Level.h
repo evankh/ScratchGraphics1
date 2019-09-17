@@ -24,14 +24,14 @@ struct StandardLibraries {
 };
 class Level {
 private:
-	std::vector<std::string> mSceneCameras;
-	NamedTree<GameObject*> mSceneGraph;
-	std::string mMainCamera;
+	std::vector<std::string> mSceneCameras;	// A list of all the names of Camera GameObjects in the level
+	NamedTree<GameObject*> mSceneGraph;		// A hierarchy of all the GameObjects in the level
+	std::string mMainCamera;				// The name of the camera object to start viewing through
 	//Source* mSceneAudio;	// And then each menu or HUD could have its own Source just like this, because presumably each will only be playing one sound at a time
-	Sound* mBackgroundMusic;
-	StandardLibraries& mSharedLibraries;
-	StandardLibraries& mOwnLibraries;
-	std::vector<PhysicsComponent*> mPCs;
+	Sound* mBackgroundMusic;				// The primary sound playing all the time
+	StandardLibraries& mSharedLibraries;	// Libraries of assets shared between all levels
+	StandardLibraries& mOwnLibraries;		// Libraries of assets unique to this level
+	std::vector<PhysicsComponent*> mPCs;	// This exists solely to delete the PCs that GameObject is no longer responsible for
 public:
 	Level(std::string filepath, StandardLibraries& sharedLibraries, StandardLibraries& ownLibraries);
 	~Level();

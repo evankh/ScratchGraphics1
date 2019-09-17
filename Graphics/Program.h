@@ -45,10 +45,11 @@ struct ProgramData {
 };
 
 class Program {
-	static Program* sScreenDraw;
-	static void generateScreenDrawProgram();
+	//static Program* sScreenDraw;
+	//static void generateScreenDrawProgram();
 private:
-	Program(const char* vs, const char* fs);
+	Program(Shader* vs, Shader* fs);
+	//Program(const char* vs, const char* fs);
 	unsigned int mHandle;
 	ShaderNode* mVS = nullptr;
 	ShaderNode* mTCS = nullptr;
@@ -61,13 +62,10 @@ private:
 	NamedContainer<unsigned int> mUniformLocations;
 public:
 	Program();
-	Program(Shader* vs, Shader* fs);
 	Program(Shader* vs, Shader* fs, int in, int out);
-	Program(Shader* vs, Shader* gs, Shader* fs);
-	Program(char* vsFilepath, char* fsFilepath);
 	~Program();
 	void attach(Shader* shader, unsigned int type);
-	void attach(Shader* vs, Shader* fs);
+	//void attach(Shader* vs, Shader* fs);
 	void detachAll();
 	void removeAll();
 	void removeAll(unsigned int type);
@@ -82,7 +80,7 @@ public:
 	void sendUniform(const char* name, const int value) const;
 	void sendUniform(const char* name, const unsigned int value) const;
 	void sendUniform(const char* name, const int count, const unsigned int* values) const;
-	static const Program* getScreenDraw() { return sScreenDraw; };
+//	static const Program* getScreenDraw() { return sScreenDraw; };
 	int getSamplesIn() const { return mSamplesIn; };
 	int getSamplesOut() const { return mSamplesOut; };
 	bool isTesselated() const { return mTES != nullptr; };

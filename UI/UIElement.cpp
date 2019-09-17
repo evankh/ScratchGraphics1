@@ -5,14 +5,14 @@
 #include "Graphics/Texture.h"
 
 const GeometryComponent* Element::sUnitQuad = GeometryComponent::getUnitQuad();
-const Program* Element::sScreenDraw = Program::getScreenDraw();
+//const Program* Element::sScreenDraw = Program::getScreenDraw();
 
 Element::Element(Texture* texture) {
 
 }
 
 void Element::draw() {
-	sScreenDraw->use();
+//	sScreenDraw->use();
 	// Send uniforms of some sort
 	sUnitQuad->render();
 }

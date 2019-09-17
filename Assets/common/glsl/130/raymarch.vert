@@ -13,6 +13,6 @@ uniform vec3 uCamera;
 void main() {
 	vec4 camera = uInverseM * vec4(uCamera, 1.0);
 	pPosition = iPosition.xyz;
-	pRay = normalize(pPosition - camera.xyz);
+	pRay = pPosition - camera.xyz;	// Causes tiny, subtle artifacts if it's normalized here
 	gl_Position = uVP * uM * vec4(iPosition, 1.0);
 }

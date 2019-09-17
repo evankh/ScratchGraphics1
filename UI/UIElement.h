@@ -14,7 +14,7 @@ struct Bounds2D {
 
 class Element {
 	static const GeometryComponent* sUnitQuad;
-	static const Program* sScreenDraw;
+//	static const Program* sScreenDraw;
 protected:
 	Bounds2D mBounds;
 public:

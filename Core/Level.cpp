@@ -164,8 +164,10 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 					else
 						ServiceLocator::getLoggingService().error("Sound not found", sound);
 				}
-				if (!parent.empty()) mSceneGraph.add(objectName, parent, object);
-				else mSceneGraph.add(objectName, object);
+				if (!parent.empty())
+					mSceneGraph.add(objectName, parent, object);
+				else
+					mSceneGraph.add(objectName, object);
 				mPCs.push_back(physics);
 			}
 		}
@@ -275,7 +277,7 @@ void Level::getWorkingSet(GameObject** workingSet, PhysicsComponent** workingPCs
 		(*workingPCs)[i].copyFrom(mSceneGraph.get(name)->getPhysicsComponent());
 		if (mSceneGraph.hasParent(name)) {
 			std::string parentName = mSceneGraph.getParent(name);
-			(*workingPCs)[i].setParent(*workingPCs + index(objectNames, parentName));
+			(*workingPCs)[i].setParent((*workingPCs) + index(objectNames, parentName));
 		}
 		i++;
 	}

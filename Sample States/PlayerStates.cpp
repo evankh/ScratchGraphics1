@@ -80,7 +80,7 @@ PlayerState* PlayerOnFloor::handleEvent(Event event) {
 			break;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 PlayerState* PlayerJumping::handleEvent(Event event) {
@@ -120,10 +120,10 @@ PlayerState* PlayerJumping::handleEvent(Event event) {
 			dx += 1.0f;
 			break;
 		case 's':
-			dx -= 1.0f;
+			dy += 1.0f;
 			break;
 		case 'd':
-			dy += 1.0f;
+			dx -= 1.0f;
 			break;
 		case 'e':
 			dz += 1.0f;
@@ -133,7 +133,7 @@ PlayerState* PlayerJumping::handleEvent(Event event) {
 			break;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void PlayerOnFloor::enter(PhysicsComponent* physics) {
