@@ -3,7 +3,6 @@
 uniform float uWiggleAmplitude = 0.15;
 uniform float uWiggleFrequency = 3.0;
 uniform float uRadius = 0.5;
-uniform float uEps;
 
 float ScalarField(vec3 p) {
 	float freq = uWiggleFrequency * radians(360.0);

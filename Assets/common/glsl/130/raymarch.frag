@@ -61,10 +61,10 @@ void main() {
 	}
 	else {
 		// Other, better options include setting the alpha
-		vec4 proj = uVP * uM * vec4(p, 1.0);
+		/*vec4 proj = uVP * uM * vec4(p, 1.0);
 		gl_FragDepth = depthNDCToWindow(proj.z / proj.w);
-		oFragColor = vec4(0.0, 0.0, 1.0, 0.5);
-//		discard;
+		oFragColor = vec4(0.0, 0.0, 1.0, 0.5);*/
+		discard;
 	}
 	// To do eventually: depth testing against the back of the volume to cancel the ray marching
 }
