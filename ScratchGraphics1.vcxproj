@@ -207,9 +207,67 @@
     <ClInclude Include="Util\SoundLibrary.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="assets\glsl\index.txt" />
-    <Text Include="assets\glsl\post\index.txt" />
-    <Text Include="assets\index.txt" />
+    <None Include="Assets\common\glsl\130\debug_axes.frag" />
+    <None Include="Assets\common\glsl\130\debug_bbs.frag" />
+    <None Include="Assets\common\glsl\130\debug_normal.frag" />
+    <None Include="Assets\common\glsl\130\debug_position.frag" />
+    <None Include="Assets\common\glsl\130\debug_texcoord.frag" />
+    <None Include="Assets\common\glsl\130\metal.frag" />
+    <None Include="Assets\common\glsl\130\mouse_selection.frag" />
+    <None Include="Assets\common\glsl\130\mvp.vert" />
+    <None Include="Assets\common\glsl\130\nurbs.tesc" />
+    <None Include="Assets\common\glsl\130\nurbs.tese" />
+    <None Include="Assets\common\glsl\130\phong.frag" />
+    <None Include="Assets\common\glsl\130\raymarch.frag" />
+    <None Include="Assets\common\glsl\130\raymarch.vert" />
+    <None Include="Assets\common\glsl\130\rim.frag" />
+    <None Include="Assets\common\glsl\130\solid.frag" />
+    <None Include="Assets\common\glsl\130\texture.frag" />
+    <None Include="Assets\common\glsl\130\wireframe.geom" />
+    <None Include="Assets\common\glsl\Analytic\no_texcoord.frag" />
+    <None Include="Assets\common\glsl\Analytic\numerical_normal.frag" />
+    <None Include="Assets\common\glsl\Analytic\screwball.frag" />
+    <None Include="Assets\common\glsl\Analytic\sierpinski.frag" />
+    <None Include="Assets\common\glsl\Analytic\sphere.frag" />
+    <None Include="Assets\common\glsl\post\Processors\abs.frag" />
+    <None Include="Assets\common\glsl\post\Processors\high_pass.frag" />
+    <None Include="Assets\common\glsl\post\Processors\invert.frag" />
+    <None Include="Assets\common\glsl\post\Processors\kernel11.frag" />
+    <None Include="Assets\common\glsl\post\Processors\kernel3.frag" />
+    <None Include="Assets\common\glsl\post\Processors\kernel5.frag" />
+    <None Include="Assets\common\glsl\post\Processors\kernel7.frag" />
+    <None Include="Assets\common\glsl\post\Processors\kernel9.frag" />
+    <None Include="Assets\common\glsl\post\Processors\none.frag" />
+    <None Include="Assets\common\glsl\post\Processors\selection.frag" />
+    <None Include="Assets\common\glsl\post\Processors\Sobel.frag" />
+    <None Include="Assets\common\glsl\post\Samplers\11x1.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\1x11.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\1x3.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\1x5.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\1x7.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\1x9.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\3x1.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\3x3.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\5x1.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\7x1.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\9x1.vert" />
+    <None Include="Assets\common\glsl\post\Samplers\one.vert" />
+    <None Include="Assets\debug_level\debug_world.lvl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\common\glsl\index.txt" />
+    <Text Include="Assets\common\glsl\post\index.txt" />
+    <Text Include="Assets\common\index.txt" />
+    <Text Include="Assets\common\obj\index.txt" />
+    <Text Include="Assets\debug_level\index.txt" />
+    <Text Include="Assets\debug_level\obj\index.txt" />
+    <Text Include="Assets\index.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Assets\common\obj\centered cube.obj" />
+    <Object Include="Assets\common\obj\cube.obj" />
+    <Object Include="Assets\common\obj\cube2.obj" />
+    <Object Include="Assets\debug_level\obj\spaceship.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
