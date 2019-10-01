@@ -107,7 +107,14 @@ void PhysicsComponent::copyFrom(const PhysicsComponent* other) {
 
 glm::mat4 PhysicsComponent::getWorldTransform() const {
 	glm::mat4 mm;
-	if (!mUsingQuatRotation) {
+	if (mUsingQuatRotation) {
+		glm::quat t = mQuatRotation;
+		float temp = t.z;
+		t.z = t.y;
+		t.y = temp;
+		mm = glm::translate(glm::mat4(1.0), mPosition) * glm::mat4_cast(t);
+	}
+	else {
 		mm = glm::translate(glm::mat4(1.0), mPosition) *
 			glm::scale(
 				glm::rotate(
@@ -119,8 +126,6 @@ glm::mat4 PhysicsComponent::getWorldTransform() const {
 					glm::radians(mAngles.z), glm::vec3(0.0, 0.0, 1.0)),
 				mScale);
 	}
-	else
-		mm = glm::translate(glm::mat4(1.0), mPosition) * glm::mat4_cast(mQuatRotation);
 	if (mParent)
 		return mParent->getWorldTransform() * mm;
 	return mm;

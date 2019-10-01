@@ -19,7 +19,7 @@ ArcballState* ArcballState::handleEvent(Event event) {
 		glm::vec2 click = MouseHandler::getInstance().getAspectCorrectedNDC();
 		float z;
 		if (glm::length(click) >= 1.0f) {
-			glm::normalize(click);
+			click = glm::normalize(click);
 			z = 0.0f;
 		}
 		else z = glm::sqrt(1 - click.x * click.x - click.y * click.y);
@@ -40,7 +40,7 @@ void ArcballState::update(PhysicsComponent* physics, float dt) {
 		glm::vec2 click = MouseHandler::getInstance().getAspectCorrectedNDC();
 		float z;
 		if (glm::length(click) >= 1.0f) {
-			glm::normalize(click);
+			click = glm::normalize(click);
 			z = 0.0f;
 		}
 		else z = glm::sqrt(1 - click.x * click.x - click.y * click.y);
@@ -54,7 +54,7 @@ void ArcballState::update(PhysicsComponent* physics, float dt) {
 		delta.x = axis.x;
 		delta.y = axis.y;
 		delta.z = axis.z;
-		physics->setQuaternionRotation(delta * mStartingOrientation /* glm::conjugate(delta)*/);
+		physics->setQuaternionRotation(delta * mStartingOrientation /* glm::conjugate(delta)/**/);
 	}
 }
 void ArcballState::destroy() {
