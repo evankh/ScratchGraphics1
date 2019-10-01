@@ -3,6 +3,7 @@
 
 #include "glm/matrix.hpp"
 #include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
 class CollisionComponent;
 
 class PhysicsComponent {
@@ -15,6 +16,8 @@ private:
 	glm::mat4 mRotation;
 	// Euler Angles
 	glm::vec3 mAngles, mAngularVelocities, mAngularAccelerations;
+	glm::quat mQuatRotation = glm::quat();
+	bool mUsingQuatRotation = false;
 	// This thing reeeaaally needs quaternions or something
 	CollisionComponent* mBounds = nullptr;
 	PhysicsComponent* mParent = nullptr;
@@ -41,6 +44,8 @@ public:
 	glm::vec3 getGlobalPosition() const;
 	glm::vec3 getVelocity() const { return mVelocity; };
 	CollisionComponent* getBounds() const { return mBounds; };
+	glm::quat getQuaternionRotation() const { return mQuatRotation; };
+	void setQuaternionRotation(glm::quat rotation) { mUsingQuatRotation = true; mQuatRotation = rotation; };
 	float* getOrientationVectors() const;
 	PhysicsComponent* makeCopy() const;
 	void copyFrom(const PhysicsComponent* other);

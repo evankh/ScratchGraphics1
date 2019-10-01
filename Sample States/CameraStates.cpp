@@ -18,6 +18,7 @@ void CameraState::destroy() {
 CameraState* CameraState::handleEvent(Event event) {
 	switch (event.mType) {
 	case EventType::BUTTON_PRESSED:
+		break;
 		mDragStart = mOwner->getPhysicsComponent()->makeCopy();
 		switch (event.mData.mouse.button) {
 		case MouseButton::EKH_MOUSE_BUTTON_LEFT:

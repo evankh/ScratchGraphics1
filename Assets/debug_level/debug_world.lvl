@@ -22,6 +22,7 @@ Object "sphere3" bounds:"AABB" geom:"debug_centered_cube" prog:"ray_sphere" pos:
 Object "sphere4" bounds:"AABB" geom:"debug_centered_cube" prog:"ray_sphere" pos:(-3.5,2.5,0.0) scl:(1.0,1.0,1.0) input:"mouseover"
 Object "screwball" bounds:"AABB" geom:"debug_centered_cube" prog:"ray_screwball" pos:(-3.5,-3.0,2.0) scl:(2.0,1.0,1.0) input:"mouseover" mom:(0.0,30.0,0.0)
 Object "Sierpinski" bounds:"AABB" geom:"debug_edge_cube" prog:"ray_sierpinski" pos:(0.0,4.0,0.0) input:"mouseover" scl:(1.0,1.0,1.0)
+Object "Arcball" bounds:"Sphere" geom:"suzanne_lores" prog:"debug_normal" pos:(2.0,2.0,1.2) input:"arcball"
 Camera "main_camera" pos:(5.0,5.0,3.0) at:(0.0,0.0,0.0) fov:75.0
 Camera "fly_camera" pos:(0.0,-1.5,0.75) at:(0.0,0.0,0.0) parent:"moving_spaceship" fov:150.0
 Main Camera "main_camera"

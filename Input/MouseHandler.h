@@ -4,6 +4,7 @@
 #include "Graphics/FrameBuffer.h"
 #include "Input/Handler.h"
 #include <vector>
+#include "glm/glm/vec2.hpp"
 
 enum MouseButton {
 	EKH_MOUSE_BUTTON_LEFT = 0,
@@ -39,6 +40,7 @@ public:
 	bool getButtonStatus(MouseButton button) const { return mButtonStatus[button]; };
 	int getMouseX() const { return mMousePosition[0]; };
 	int getMouseY() const { return mMousePosition[1]; };
+	glm::vec2 getAspectCorrectedNDC() const;
 	int const* getDragStartPosition(MouseButton button) const;
 	void registerReceiver(bool interested[EKH_MOUSE_NUM_BUTTONS], Receiver* receiver);
 	void registerReceiver(MouseButton button, Receiver* receiver);

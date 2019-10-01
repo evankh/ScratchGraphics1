@@ -74,7 +74,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);include;include/glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);include/;include/glm</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
@@ -152,6 +152,7 @@
     <ClCompile Include="Input\KeyboardHandler.cpp" />
     <ClCompile Include="Input\MouseHandler.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Sample States\ArcballStates.cpp" />
     <ClCompile Include="Sample States\CameraStates.cpp" />
     <ClCompile Include="Sample States\MouseoverStates.cpp" />
     <ClCompile Include="Sample States\PlayerStates.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="Input\Handler.h" />
     <ClInclude Include="Input\KeyboardHandler.h" />
     <ClInclude Include="Input\MouseHandler.h" />
+    <ClInclude Include="Sample States\ArcballStates.h" />
     <ClInclude Include="Sample States\CameraStates.h" />
     <ClInclude Include="Sample States\MouseoverStates.h" />
     <ClInclude Include="Sample States\PlayerStates.h" />
@@ -264,10 +266,18 @@
     <Text Include="Assets\index.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Object Include="Assets\common\obj\centered cube.obj" />
-    <Object Include="Assets\common\obj\cube.obj" />
-    <Object Include="Assets\common\obj\cube2.obj" />
-    <Object Include="Assets\debug_level\obj\spaceship.obj" />
+    <Text Include="Assets\common\obj\centered cube.obj">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\common\obj\cube.obj">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\common\obj\cube2.obj">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\debug_level\obj\spaceship.obj">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

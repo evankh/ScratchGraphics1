@@ -132,3 +132,11 @@ void MouseHandler::setAsDrawingTarget() const {
 void MouseHandler::setAsTextureSource() const {
 	if (mFramebuffer) mFramebuffer->setAttachmentAsTextureSource(1, 0);
 }
+
+glm::vec2 MouseHandler::getAspectCorrectedNDC() const {
+	glm::vec2 result;
+	result.x = (float)mMousePosition[0] / (float)mWindowHeight;
+	result.y = (float)mMousePosition[1] / (float)mWindowHeight;
+	return result * 2.0f - 1.0f;
+	//return result;
+}

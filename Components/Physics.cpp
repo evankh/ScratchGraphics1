@@ -9,6 +9,8 @@ PhysicsComponent::PhysicsComponent() {
 	mAcceleration = glm::vec3(0.0f);
 	mAngles = mAngularVelocities = mAngularAccelerations = glm::vec3(0.0f);
 	mBounds = new Collisionless();
+	mQuatRotation.x = mQuatRotation.y = mQuatRotation.z = mQuatRotation.w = 0.0f;
+	mQuatRotation.w = 1.0f;
 }
 
 float angle(glm::vec2 val) {
@@ -104,16 +106,21 @@ void PhysicsComponent::copyFrom(const PhysicsComponent* other) {
 }
 
 glm::mat4 PhysicsComponent::getWorldTransform() const {
-	glm::mat4 mm = glm::translate(glm::mat4(1.0), mPosition) *
-		glm::scale(
-			glm::rotate(
+	glm::mat4 mm;
+	if (!mUsingQuatRotation) {
+		mm = glm::translate(glm::mat4(1.0), mPosition) *
+			glm::scale(
 				glm::rotate(
 					glm::rotate(
-						glm::mat4(1.0),
-						glm::radians(mAngles.x), glm::vec3(0.0, 0.0, 1.0)),
-					glm::radians(mAngles.y), glm::vec3(0.0, -1.0, 0.0)),
-				glm::radians(mAngles.z), glm::vec3(0.0, 0.0, 1.0)),
-			mScale);
+						glm::rotate(
+							glm::mat4(1.0),
+							glm::radians(mAngles.x), glm::vec3(0.0, 0.0, 1.0)),
+						glm::radians(mAngles.y), glm::vec3(0.0, -1.0, 0.0)),
+					glm::radians(mAngles.z), glm::vec3(0.0, 0.0, 1.0)),
+				mScale);
+	}
+	else
+		mm = glm::translate(glm::mat4(1.0), mPosition) * glm::mat4_cast(mQuatRotation);
 	if (mParent)
 		return mParent->getWorldTransform() * mm;
 	return mm;
