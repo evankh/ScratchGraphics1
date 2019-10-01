@@ -135,8 +135,8 @@ void MouseHandler::setAsTextureSource() const {
 
 glm::vec2 MouseHandler::getAspectCorrectedNDC() const {
 	glm::vec2 result;
-	result.x = (float)mMousePosition[0] / (float)mWindowHeight;
-	result.y = (float)mMousePosition[1] / (float)mWindowHeight;
-	return result * 2.0f - 1.0f;
+	result.x = (float)mMousePosition[0] - (float)mWindowWidth * 0.5f;
+	result.y = (float)mMousePosition[1] - (float)mWindowHeight * 0.5f;
+	return result * 2.0f / (float)mWindowHeight;
 	//return result;
 }

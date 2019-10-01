@@ -52,9 +52,9 @@ void ArcballState::update(PhysicsComponent* physics, float dt) {
 		delta.w = glm::dot(current, mStartingClickVector);
 		glm::vec3 axis = glm::cross(current, mStartingClickVector);
 		delta.x = axis.x;
-		delta.y = axis.y;
+		delta.y = -axis.y;
 		delta.z = axis.z;
-		physics->setQuaternionRotation(delta * mStartingOrientation /* glm::conjugate(delta)/**/);
+		physics->setQuaternionRotation(delta * mStartingOrientation);
 	}
 }
 void ArcballState::destroy() {
