@@ -31,16 +31,6 @@ unsigned int* GeometryComponent::sQuadTris = new unsigned int[6] { 0,1,2, 2,1,3 
 GeometryComponent GeometryComponent::sScreenSpaceQuad = GeometryComponent(4, screenQuadData, 2, sQuadTris, { A_POSITION,A_TEXCOORD0 });
 GeometryComponent GeometryComponent::sUnitQuad = GeometryComponent(4, unitQuadData, 2, sQuadTris, { A_TEXCOORD0 });
 
-GeometryComponent::GeometryComponent() {
-	mNumVerts = 0;
-	mVertexData = NULL;
-	mNumTris = 0;
-	mTriData = NULL;
-	mProperties = {};
-	mHandles.good = false;
-	mBoundingBox = NULL;
-}
-
 GeometryComponent::GeometryComponent(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) {
 	mNumVerts = numverts;
 	mVertexData = vertexData;
@@ -53,7 +43,7 @@ GeometryComponent::GeometryComponent(unsigned int numverts, float* vertexData, u
 	mBoundingBox = NULL;
 }
 
-GeometryComponent::GeometryComponent(std::string filename) :GeometryComponent() {
+GeometryComponent::GeometryComponent(std::string filename) {
 	// Load a .OBJ file into the internal Geometry format
 	FileService file(filename);
 	if (file.good()) {
@@ -64,11 +54,11 @@ GeometryComponent::GeometryComponent(std::string filename) :GeometryComponent() 
 		// First counting pass
 		int numpos = 0, numnorm = 0, numtex = 0, numface = 0;
 		while (file.good()) {
-			if (file.extract("v `S`L", NULL)) numpos++;
-			else if (file.extract("vn `S`L", NULL)) numnorm++;
-			else if (file.extract("vt `S`L", NULL)) numtex++;
-			else if (file.extract("f `S`L", NULL)) numface++;
-			else if (file.extract("`?S`L", NULL));
+			if (file.extract("v `S`L")) numpos++;
+			else if (file.extract("vn `S`L")) numnorm++;
+			else if (file.extract("vt `S`L")) numtex++;
+			else if (file.extract("f `S`L")) numface++;
+			else if (file.extract("`?S`L"));
 		}
 		// Second reading pass
 		file.restart();
@@ -87,12 +77,12 @@ GeometryComponent::GeometryComponent(std::string filename) :GeometryComponent() 
 			}
 			else if (file.extract("vn `F `F `F`L", &normals[normiter])) normiter++;
 			else if (file.extract("vt `F `F`L", &texcoords[texiter])) texiter++;
-			else if (file.extract("#`S`L", NULL));
-			else if (file.extract("o `S`L", NULL));	// It's nice of you to offer me a name for the object, but I've got it covered
-			else if (file.extract("s `S`L", NULL));	// No idea what that does, but it's part of the standard so I shouldn't throw an error
-			else if (file.extract("mtllib `S`L", NULL));
-			else if (file.extract("usemtl `S`L", NULL));
-			else if (file.extract("f", NULL)) {
+			else if (file.extract("#`S`L"));
+			else if (file.extract("o `S`L"));	// It's nice of you to offer me a name for the object, but I've got it covered
+			else if (file.extract("s `S`L"));	// No idea what that does, but it's part of the standard so I shouldn't throw an error
+			else if (file.extract("mtllib `S`L"));
+			else if (file.extract("usemtl `S`L"));
+			else if (file.extract("f")) {
 				// Assumes (possibly dangerously?) that all vertices have already been loaded
 				int i = 0;
 				while (file.extract(" `?I/`?I/`?I", &faces[faceiter].vertices[i])) i++;
@@ -240,6 +230,70 @@ GeometryComponent* GeometryComponent::getNewQuad() {
 	return new GeometryComponent(4, positions, 2, tris, { A_POSITION, A_TEXCOORD0, A_NORMAL });
 }
 
+GeometryComponent* GeometryComponent::getNewIcosahedron() {
+	float* positions = new float[3 * 12 * 2];
+
+	float longitude = 0.0f;
+	float latitude = PI / 2.0f;
+	positions[0] = sinf(longitude) * cosf(latitude);
+	positions[1] = cosf(longitude) * cosf(latitude);
+	positions[2] = sinf(latitude);
+
+	latitude = atanf(0.5);
+	for (int i = 1; i <= 5; i++) {
+		longitude = (float)i * PI * 2.0f / 5.0f;
+		positions[3 * i + 0] = sinf(longitude) * cosf(latitude);
+		positions[3 * i + 1] = cosf(longitude) * cosf(latitude);
+		positions[3 * i + 2] = sinf(latitude);
+	}
+
+	latitude = -atanf(0.5);
+	for (int i = 6; i <= 10; i++) {
+		longitude = (float)i * PI * 2.0f / 5.0f + PI / 5.0f;
+		positions[3 * i + 0] = sinf(longitude) * cosf(latitude);
+		positions[3 * i + 1] = cosf(longitude) * cosf(latitude);
+		positions[3 * i + 2] = sinf(latitude);
+	}
+
+	latitude = -PI / 2.0f;
+	positions[33] = sinf(longitude) * cosf(latitude);
+	positions[34] = cosf(longitude) * cosf(latitude);
+	positions[35] = sinf(latitude);
+
+	for (int i = 3*12*2-6; i >= 0; i -= 6) {
+		for (int j = 0; j < 6; j++)
+			positions[i + j] = positions[i / 2 + j % 3];
+	}
+
+	// This could be done a whole lot easier with 2 trifans and a tristrip, but it's not set up to handle that. It probably should be.
+	unsigned int* tris = new unsigned int[3 * 20];
+	for (int i = 0; i < 5; i++) {
+		tris[3*i] = 0;
+		tris[3 * i + 1] = i + 1;
+		tris[3 * i + 2] = i + 2;
+	}
+	tris[14] = 1;
+	for (int i = 0; i < 5; i++) {
+		tris[6 * i + 15] = i + 1;
+		tris[6 * i + 16] = i + 6;
+		tris[6 * i + 17] = i + 2;
+
+		tris[6 * i + 18] = i + 1;
+		tris[6 * i + 19] = i + 5;
+		tris[6 * i + 20] = i + 6;
+	}
+	tris[41] = 1;
+	tris[19] = 10;
+	for (int i = 0; i < 5; i++) {
+		tris[3 * i + 45] = i + 6;
+		tris[3 * i + 46] = 11;
+		tris[3 * i + 47] = i + 7;
+	}
+	tris[59] = 6;
+
+	return new GeometryComponent(12, positions, 20, tris, { A_POSITION, A_NORMAL });
+}
+
 void GeometryComponent::drawUnitQuad() {
 	sUnitQuad.transfer();
 	sUnitQuad.render();
@@ -328,6 +382,8 @@ void GeometryComponent::drawSphere(glm::vec3 center, float radius) {
 	}
 	// Proceed to draw
 	// Create & transfer a uniform matrix containing the size & location information...
+
+	// Oh sure, let's just throw a bunch of random rendering into the geometry file! Encapsulation, what is that?
 	glBindVertexArray(handles.vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.indexHandle);
 	glDrawElements(GL_TRIANGLE_FAN, fansize, GL_UNSIGNED_INT, 0);
@@ -439,4 +495,18 @@ void GeometryComponent::drawAxes() {
 	glBindVertexArray(handles.vaoHandle);
 	glDrawArrays(GL_LINES, 0, 6);
 	glBindVertexArray(0);
+}
+
+GeometryComponent* subdivide(const GeometryComponent* geom) {
+	unsigned int numNewVerts = 2 * geom->mNumVerts;
+	unsigned int numNewTris = 4 * geom->mNumTris;
+	float* newVerts = new float[geom->mVertexSize * numNewVerts];
+	unsigned int* newTris = new unsigned int[3 * numNewTris];
+	for (int i = 0; i < geom->mNumTris; i += 3) {
+		auto v1 = geom->mTriData[i];
+		auto v2 = geom->mTriData[i + 1];
+		auto v3 = geom->mTriData[i + 2];
+		
+	}
+	return nullptr;
 }

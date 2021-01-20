@@ -13,7 +13,7 @@ class Source;
 
 class GameObject :public Receiver {
 private:
-	GraphicsComponent* mGraphicsComponent;
+	std::vector<GraphicsComponent*> mGraphicsComponents;
 	GeometryComponent* mGeometryComponent;
 	PhysicsComponent* mPhysicsComponent;
 
@@ -61,6 +61,7 @@ public:
 	Camera* getCameraComponent() const { return mCameraComponent; };
 
 	GeometryComponent* getGeometryComponent() const { return mGeometryComponent; };
+	void addGraphicsComponent(GraphicsComponent* graphics) { mGraphicsComponents.push_back(graphics); };
 };
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GAME_OBJECT__

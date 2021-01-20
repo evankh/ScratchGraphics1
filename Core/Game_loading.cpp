@@ -10,6 +10,7 @@
 void Game::load() {
 	// Load certain very important objects (Shaders?)
 	mCommonLibraries.standard.geometries.add("plane", GeometryComponent::getNewQuad());
+	mCommonLibraries.standard.geometries.add("icosahedron", GeometryComponent::getNewIcosahedron());
 	// Load everything else from file
 	FileService baseIndex(mAssetBasePath + mIndexFilename);
 	if (!baseIndex.good()) throw "Asset file could not be opened.";

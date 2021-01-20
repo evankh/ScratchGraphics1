@@ -41,18 +41,18 @@ class GeometryComponent {
 	static unsigned int* sQuadTris;
 	static GeometryComponent sScreenSpaceQuad;
 	static GeometryComponent sUnitQuad;
+	friend GeometryComponent* subdivide(const GeometryComponent*);
 private:
 	unsigned int mNumVerts = 0;
-	float* mVertexData;
+	float* mVertexData = nullptr;
 	unsigned int mNumTris = 0;
-	unsigned int* mTriData;
+	unsigned int* mTriData = nullptr;
 	std::vector<ATTRIB_INDEX> mProperties;
 	unsigned int mVertexSize = 0;
 	mutable GeometryHandles mHandles;	// That's not cheating, is it? It makes sense that external code doesn't care whether the Geometry's been transferred or not, right?
-	AABB* mBoundingBox;
+	AABB* mBoundingBox = nullptr;
 public:
-	GeometryComponent() [[deprecated("probably")]];
-	GeometryComponent(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties) [[deprecated("probably")]];
+	GeometryComponent(unsigned int numverts, float* vertexData, unsigned int numtris, unsigned int* triData, std::vector<ATTRIB_INDEX> properties);
 	GeometryComponent(std::string filename);
 	~GeometryComponent();
 	void transfer() const;
@@ -63,14 +63,17 @@ public:
 	static const GeometryComponent* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const GeometryComponent* getUnitQuad() { return &sUnitQuad; };
 	static GeometryComponent* getNewQuad();
+	static GeometryComponent* getNewIcosahedron();	// These really need to be non-member functions
 	static void drawUnitQuad();
 	static void drawCenteredQuad();
 	static void drawUnitSphere();
-	static void drawSphere(glm::vec3 center, float radius);
+	static void drawSphere(glm::vec3 center, float radius);	// This thing should go; only used in drawing collision boxes
 	static void drawUnitCylinder();
 	static void drawUnitBox();
 	static void drawBox(glm::vec3 min, glm::vec3 max);
 	static void drawAxes();
 };
+
+GeometryComponent* subdivide(const GeometryComponent* geom);
 
 #endif//__EKH_SCRATCH_GRAPHICS_1_GEOMETRY_COMPONENT__

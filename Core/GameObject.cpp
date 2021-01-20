@@ -8,7 +8,7 @@
 GameObject::GameObject(GeometryComponent* geometry, GraphicsComponent* graphics, PhysicsComponent* physics) {
 	mGeometryComponent = geometry;
 	if (mGeometryComponent) mGeometryComponent->transfer();
-	mGraphicsComponent = graphics;
+	if (graphics) mGraphicsComponents.push_back(graphics);
 	mPhysicsComponent = physics;
 }
 
@@ -23,7 +23,8 @@ GameObject::~GameObject() {
 		delete mState;
 	}
 	if (mAudioComponent) delete mAudioComponent;
-	if (mGraphicsComponent) delete mGraphicsComponent;
+	for (GraphicsComponent* i : mGraphicsComponents) delete i;
+	mGraphicsComponents.clear();
 	if (mCameraComponent) delete mCameraComponent;
 }
 
@@ -73,10 +74,16 @@ void GameObject::registerSound(std::string name, Sound* sound) {
 
 // Eventually sorting Objects for rendering based on their materials would save time on switching and let me take the stupid Camera out of here
 void GameObject::render(GameObject* camera) {
-	if (mGraphicsComponent) {
+	/*if (mGraphicsComponent) {
 		mGraphicsComponent->activate(this, camera);
 		if (mGeometryComponent)
 			mGraphicsComponent->render(mGeometryComponent);
+	}*/
+	if (mGeometryComponent) {
+		for (GraphicsComponent* i : mGraphicsComponents) {
+			i->activate(this, camera);
+			i->render(mGeometryComponent);
+		}
 	}
 }
 
@@ -90,7 +97,8 @@ void GameObject::handle(const Event e) {
 }
 
 GameObject* GameObject::makeCopy() const {
-	GameObject* result = new GameObject(mGeometryComponent, mGraphicsComponent, mPhysicsComponent);
+	GameObject* result = new GameObject(mGeometryComponent, nullptr, mPhysicsComponent);
+	for (GraphicsComponent* i : mGraphicsComponents) result->addGraphicsComponent(i);
 	if (mGeometryComponent) mGeometryComponent->transfer();
 	copyTo(result);
 	return result;
@@ -98,7 +106,10 @@ GameObject* GameObject::makeCopy() const {
 
 void GameObject::copyTo(GameObject* target) const {
 	target->mGeometryComponent = mGeometryComponent;
-	if (mGraphicsComponent) target->mGraphicsComponent = mGraphicsComponent->makeCopy();
+	if (!mGraphicsComponents.empty()) {
+		for (GraphicsComponent* i : mGraphicsComponents)
+			target->mGraphicsComponents.push_back(i->makeCopy());
+	}
 	target->mPhysicsComponent = mPhysicsComponent;
 	if (mAudioComponent) target->mAudioComponent = mAudioComponent->copy(target->mPhysicsComponent);
 	target->mSounds = mSounds;

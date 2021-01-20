@@ -22,11 +22,13 @@ void Source::update() {
 }
 
 void Source::playSound(Sound* sound) {
-	alGetSourcei(mHandle, AL_SOURCE_STATE, &mState);
-	if (mState != AL_PLAYING) {
-		alSourcef(mHandle, AL_GAIN, mGain * sound->getGain());
-		alSourcei(mHandle, AL_BUFFER, sound->getBuffer());
-		alSourcePlay(mHandle);
+	if (sound) {
+		alGetSourcei(mHandle, AL_SOURCE_STATE, &mState);
+		if (mState != AL_PLAYING) {
+			alSourcef(mHandle, AL_GAIN, mGain * sound->getGain());
+			alSourcei(mHandle, AL_BUFFER, sound->getBuffer());
+			alSourcePlay(mHandle);
+		}
 	}
 }
 

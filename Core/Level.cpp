@@ -22,7 +22,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			struct { float x = 0.0f, y = 0.0f, z = 0.0f; } pos, vel, acc, scl, col, ang, mom;
 			scl.x = scl.y = scl.z = 1.0f;
 			GeometryComponent* geom = nullptr;
-			Program* program = nullptr;
+			std::vector<Program*> programs;
 			Texture* texture = nullptr;
 			std::vector<std::string> sounds;
 			bool valid = true, hasCol = false;
@@ -61,10 +61,10 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				else if (file.extract(" prog:\"`S\"", &progName)) {
 					try {
 						try {
-							program = mOwnLibraries.programs.get(progName);
+							programs.push_back(mOwnLibraries.programs.get(progName));
 						}
 						catch (std::out_of_range) {
-							program = mSharedLibraries.programs.get(progName);
+							programs.push_back(mSharedLibraries.programs.get(progName));
 						}
 					}
 					catch (std::out_of_range e) {
@@ -132,13 +132,14 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 				PhysicsComponent* physics = new PhysicsComponent(bounds, { vel.x,vel.y,vel.z }, { acc.x,acc.y,acc.z }, { ang.x,ang.y,ang.z }, { mom.x,mom.y,mom.z });
 				physics->scale({ scl.x,scl.y,scl.z });
 				physics->translate({ pos.x,pos.y,pos.z });
+				GameObject* object = new GameObject(geom, nullptr, physics);
 				GraphicsComponent* graphics = nullptr;
-				if (program) {
+				for (Program* program : programs) {
 					graphics = new GraphicsComponent(program);
 					if (texture) graphics->addTexture(texture);
 					if (hasCol) graphics->setColor({ col.x,col.y,col.z });
+					object->addGraphicsComponent(graphics);
 				}
-				GameObject* object = new GameObject(geom, graphics, physics);
 				if (!input.empty()) {
 					try {
 						State* state = State::getNewEntryState(input, object);
@@ -202,6 +203,7 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			}
 			PhysicsComponent* phys = new PhysicsComponent({ pos.x,pos.y,pos.z }, { at.x,at.y,at.z });
 			PerspCamera* camera = new PerspCamera(800, 600, fov);	// How do I get these values in here?
+			// Is that related to why resizing the window then soft-reloading stretches things out? Probably
 			camera->update(phys);
 			GameObject* camera_object = new GameObject(nullptr, nullptr, phys);
 			camera_object->setCameraComponent(camera);
@@ -242,6 +244,14 @@ Level::Level(std::string filepath, StandardLibraries& sharedLibraries, StandardL
 			if (objectName)
 				ServiceLocator::getLoggingService().error("Unrecognized line in level file", objectName);
 		}
+	}
+	if (mMainCamera.empty()) {
+		// Find a fallback camera in case one wasn't defined
+		if (std::find(mSceneCameras.begin(), mSceneCameras.end(), "main") != mSceneCameras.end())
+			mMainCamera = "main";	// If there's one called "main", use that
+		else if (mSceneCameras.size() >= 1)
+			mMainCamera = mSceneCameras[0];	// Otherwise, use the first one defined, as long as there is one
+		ServiceLocator::getLoggingService().error("Main Camera not declared, falling back on", mMainCamera);
 	}
 }
 
