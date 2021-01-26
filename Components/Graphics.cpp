@@ -27,10 +27,7 @@ void GraphicsComponent::activate(GameObject* owner, GameObject* camera) {
 }
 
 void GraphicsComponent::render(GeometryComponent* geometry) const {
-	if (mProgram->isTesselated())
-		geometry->render_patches();
-	else
-		geometry->render();
+	geometry->render();
 }
 
 GraphicsComponent* GraphicsComponent::makeCopy() const {

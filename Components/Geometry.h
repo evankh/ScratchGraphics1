@@ -46,7 +46,12 @@ private:
 	unsigned int mNumVerts = 0;
 	float* mVertexData = nullptr;
 	unsigned int mNumTris = 0;
+	unsigned int mNumQuads = 0;
+	unsigned int mNumPatches = 0;
+	unsigned int* mAllIndexData = nullptr;
 	unsigned int* mTriData = nullptr;
+	unsigned int* mQuadData = nullptr;
+	unsigned int* mPatchData = nullptr;
 	std::vector<ATTRIB_INDEX> mProperties;
 	unsigned int mVertexSize = 0;
 	mutable GeometryHandles mHandles;	// That's not cheating, is it? It makes sense that external code doesn't care whether the Geometry's been transferred or not, right?
@@ -58,7 +63,6 @@ public:
 	void transfer() const;
 	void cleanup();
 	void render() const;
-	void render_patches() const;
 	AABB* getBoundingBox() const { return mBoundingBox; };
 	static const GeometryComponent* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const GeometryComponent* getUnitQuad() { return &sUnitQuad; };

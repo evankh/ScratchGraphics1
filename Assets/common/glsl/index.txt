@@ -2,7 +2,9 @@ Vertex "mvp" 130:"130/mvp.vert"
 Vertex "raymarch+mvp" 130:"130/raymarch.vert"
 
 Tessellation Control "nurbs_control" 130:"130/nurbs.tesc"
+Tessellation Control "quads_control" 130:"130/quads.tesc"
 Tessellation Evaluation "nurbs_eval" 130:"130/nurbs.tese"
+Tessellation Evaluation "quads_eval" 130:"130/quads.tese"
 
 Geometry "wireframe" 130:"130/wireframe.geom"
 
@@ -12,6 +14,7 @@ Fragment "debug_texcoord" 130:"130/debug_texcoord.frag"
 Fragment "texture" 130:"130/texture.frag"
 Fragment "metal" 130:"130/metal.frag"
 Fragment "solid" 130:"130/solid.frag"
+Fragment "vertex_color" 130:"130/vertex_color.frag"
 Fragment "phong" 130:"130/phong.frag"
 Fragment "debug_bbs" 130:"130/debug_bbs.frag"
 Fragment "debug_axes" 130:"130/debug_axes.frag"
@@ -37,9 +40,12 @@ Program "texture" Vertex:"mvp" Fragment:"texture"
 Program "solid_color" Vertex:"mvp" Fragment:"solid"
 Program "mouse_selection" Vertex:"mvp" Fragment:"mouse_selection"
 
-Program "control_grid" Vertex:"mvp" Geometry:"wireframe" Fragment:"solid"
-Program "nurbs_phong" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"phong"
-Program "nurbs_grid" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Geometry:"wireframe" Fragment:"solid"
+Program "wireframe" Vertex:"mvp" Geometry:"wireframe" Fragment:"solid"
+
+Program "nurbs_phong" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"vertex_color"
+Program "nurbs_wireframe" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Geometry:"wireframe" Fragment:"solid"
+Program "quads" Vertex:"mvp" Tessellation Control:"quads_control" Tessellation Evaluation:"quads_eval" Fragment:"solid"
+Program "quads_wireframe" Vertex:"mvp" Tessellation Control:"quads_control" Tessellation Evaluation:"quads_eval" Geometry:"wireframe" Fragment:"solid"
 
 Program "ray_sphere" Vertex:"raymarch+mvp" Fragment:"raymarch_base" Fragment:"dist_sphere"
 Program "ray_screwball" Vertex:"raymarch+mvp" Fragment:"raymarch_base" Fragment:"dist_screwball" Fragment:"numerical_normal" Fragment:"no_texcoord"

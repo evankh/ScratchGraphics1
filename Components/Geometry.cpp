@@ -35,12 +35,15 @@ GeometryComponent::GeometryComponent(unsigned int numverts, float* vertexData, u
 	mNumVerts = numverts;
 	mVertexData = vertexData;
 	mNumTris = numtris;
-	mTriData = triData;
+	mAllIndexData = triData;
+	mTriData = mAllIndexData;
+	mQuadData = mTriData + 3 * mNumTris;	// Why do the things I put here affect the rendering of the geometry (e.g. Suzanne) that's being loaded from the file?
+	mPatchData = mQuadData + 4 * mNumTris;
 	mProperties = properties;
 	mHandles.good = false;
 	for (auto attrib : mProperties)
 		mVertexSize += ATTRIB_SIZES[(int)attrib];
-	mBoundingBox = NULL;
+	mBoundingBox = nullptr;
 }
 
 GeometryComponent::GeometryComponent(std::string filename) {
@@ -79,22 +82,32 @@ GeometryComponent::GeometryComponent(std::string filename) {
 			else if (file.extract("vt `F `F`L", &texcoords[texiter])) texiter++;
 			else if (file.extract("#`S`L"));
 			else if (file.extract("o `S`L"));	// It's nice of you to offer me a name for the object, but I've got it covered
-			else if (file.extract("s `S`L"));	// No idea what that does, but it's part of the standard so I shouldn't throw an error
+			else if (file.extract("s `S`L"));
 			else if (file.extract("mtllib `S`L"));
 			else if (file.extract("usemtl `S`L"));
 			else if (file.extract("f")) {
 				// Assumes (possibly dangerously?) that all vertices have already been loaded
 				int i = 0;
 				while (file.extract(" `?I/`?I/`?I", &faces[faceiter].vertices[i])) i++;
-				faces[faceiter++].numVerts = i;
-				mNumVerts += 3*i-2;
-				mNumTris += i - 2;
+				faces[faceiter].numVerts = i;
+				if (faces[faceiter].numVerts == 4) {
+					mNumVerts += 4;
+					mNumQuads++;
+				}
+				else {
+					mNumVerts += 3*(i-2);
+					mNumTris += i - 2;
+				}
+				faceiter++;
 				if (file.extract("`?S`L", &err)) {
 					if (err) {
 						ServiceLocator::getLoggingService().error("Something's fucky at the end of a face line", err);
 						delete err;
 					}
 				}
+			}
+			else if (file.extract("cstype")) {
+
 			}
 			else if (file.extract("`?S`L", &err)) {
 				if (err) {
@@ -108,28 +121,55 @@ GeometryComponent::GeometryComponent(std::string filename) {
 		for (auto prop : mProperties)
 			mVertexSize += ATTRIB_SIZES[prop];
 		mVertexData = new float[mNumVerts * mVertexSize];
-		mTriData = new unsigned int[mNumTris * 3];
-		int vertiter = 0, triiter = 0;
+		mAllIndexData = new unsigned int[mNumTris * 3 + mNumQuads * 4];
+		mTriData = mAllIndexData;
+		mQuadData = mAllIndexData + mNumTris * 3;
+		int vertiter = 0, triiter = 0, quaditer = 0;
 		for (int face = 0; face < numface; face++) {
-			for (int j = 1; j < faces[face].numVerts - 1; j++) {
-				mTriData[triiter++] = vertiter / mVertexSize;
-				// Copy over vertex 0
-				memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[0].pos - 1], 3 * sizeof(float));
-				vertiter += 3;
-				memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[0].tex - 1], 2 * sizeof(float));
-				vertiter += 2;
-				memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[0].norm - 1], 3 * sizeof(float));
-				vertiter += 3;
-				for (int i = 0; i < 2; i++) {
+			if (faces[face].numVerts == 3) {	// Quick mode: Tris
+				for (int i = 0; i < faces[face].numVerts; i++) {
 					mTriData[triiter++] = vertiter / mVertexSize;
-					// Copy over vertex j + i
-					// Good opportunity for three memcpy's, or some pointer magic to assign a V2/3 to a float[]
-					memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[j + i].pos - 1], 3 * sizeof(float));
-					vertiter += 3;
-					memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[j + i].tex - 1], 2 * sizeof(float));
-					vertiter += 2;
-					memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[j + i].norm - 1], 3 * sizeof(float));
-					vertiter += 3;
+					memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[i].pos - 1], ATTRIB_SIZES[A_POSITION] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_POSITION];
+					memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[i].tex - 1], ATTRIB_SIZES[A_TEXCOORD0] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_TEXCOORD0];
+					memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[i].norm - 1], ATTRIB_SIZES[A_NORMAL] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_NORMAL];
+				}
+			}
+			else if (faces[face].numVerts == 4) {	// Quick mode: Quads
+				for (int i = 0; i < faces[face].numVerts; i++) {
+					mQuadData[quaditer++] = vertiter / mVertexSize;
+					memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[i].pos - 1], ATTRIB_SIZES[A_POSITION] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_POSITION];
+					memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[i].tex - 1], ATTRIB_SIZES[A_TEXCOORD0] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_TEXCOORD0];
+					memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[i].norm - 1], ATTRIB_SIZES[A_NORMAL] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_NORMAL];
+				}
+			}
+			else {	// Special mode: Triangulate n-gons
+				for (int j = 1; j < faces[face].numVerts - 1; j++) {
+					// For all but the first and last vertex of the face...
+					// (So a tri does this for j=1 [0,1,2], and a quad does it for j=1 [0,1,2] and j=2 [0,2,3]. Pent would be j=1,2,3 [0,1,2] [0,2,3] [0,3,4].)
+					mTriData[triiter++] = vertiter / mVertexSize;
+					// Always start with vertex 0 of the face
+					memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[0].pos - 1], ATTRIB_SIZES[A_POSITION] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_POSITION];
+					memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[0].tex - 1], ATTRIB_SIZES[A_TEXCOORD0] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_TEXCOORD0];
+					memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[0].norm - 1], ATTRIB_SIZES[A_NORMAL] * sizeof(float));
+					vertiter += ATTRIB_SIZES[A_NORMAL];
+					for (int i = 0; i < 2; i++) {
+						mTriData[triiter++] = vertiter / mVertexSize;
+						// Then do 1 & 2, then 2 & 3, then 3 & 4...
+						memcpy(&mVertexData[vertiter], &positions[faces[face].vertices[j + i].pos - 1], ATTRIB_SIZES[A_POSITION] * sizeof(float));
+						vertiter += ATTRIB_SIZES[A_POSITION];
+						memcpy(&mVertexData[vertiter], &texcoords[faces[face].vertices[j + i].tex - 1], ATTRIB_SIZES[A_TEXCOORD0] * sizeof(float));
+						vertiter += ATTRIB_SIZES[A_TEXCOORD0];
+						memcpy(&mVertexData[vertiter], &normals[faces[face].vertices[j + i].norm - 1], ATTRIB_SIZES[A_NORMAL] * sizeof(float));
+						vertiter += ATTRIB_SIZES[A_NORMAL];
+					}
 				}
 			}
 		}
@@ -155,7 +195,7 @@ void GeometryComponent::transfer() const {
 		glBindBuffer(GL_ARRAY_BUFFER, mHandles.vboHandle);
 		glBufferData(GL_ARRAY_BUFFER, mNumVerts * mVertexSize * sizeof(float), mVertexData, GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mHandles.indexHandle);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mNumTris * 3 * sizeof(unsigned int), mTriData, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, (mNumTris * 3 + mNumQuads * 4 + mNumPatches * 16) * sizeof(unsigned int), mAllIndexData, GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		/*glNamedBufferData(mHandles.vboHandle, mNumVerts*mVertexSize*sizeof(float), mVertexData, GL_STATIC_DRAW);
 		glNamedBufferData(mHandles.indexHandle, mNumTris * 3 * sizeof(unsigned int), mTriData, GL_STATIC_DRAW);*/
@@ -181,12 +221,15 @@ void GeometryComponent::transfer() const {
 void GeometryComponent::cleanup() {
 	if (mVertexData) {
 		delete[] mVertexData;
-		mVertexData = NULL;
+		mVertexData = nullptr;
 	}
-	if (mTriData && mTriData != sQuadTris) {
-		delete[] mTriData;
-		mTriData = NULL;
+	if (mAllIndexData) {
+		delete[] mAllIndexData;
+		mAllIndexData = nullptr;
 	}
+	mTriData = nullptr;
+	mQuadData = nullptr;
+	mPatchData = nullptr;
 	if (mHandles.good) {
 		glDeleteBuffers(2, (unsigned int*)&mHandles);
 		glDeleteVertexArrays(1, &mHandles.vaoHandle);
@@ -199,17 +242,12 @@ void GeometryComponent::render() const {
 	glBindVertexArray(mHandles.vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mHandles.indexHandle);
 	glDrawElements(GL_TRIANGLES, 3 * mNumTris, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-void GeometryComponent::render_patches() const {
-	if (!mHandles.good)
-		transfer();
-	glBindVertexArray(mHandles.vaoHandle);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mHandles.indexHandle);
-	glPatchParameteri(GL_PATCH_VERTICES, 3);
-	glDrawElements(GL_PATCHES, 3 * mNumTris, GL_UNSIGNED_INT, 0);
+	// How do I make quads work if the shader isn't using tessellation? There's just no way to know from here. Default tes shaders?
+	glDrawElements(GL_QUADS, 4 * mNumQuads, GL_UNSIGNED_INT, (void*)(3 * mNumTris));
+	glPatchParameteri(GL_PATCH_VERTICES, 4);
+	glDrawElements(GL_PATCHES, 4 * mNumQuads, GL_UNSIGNED_INT, (void*)(3 * mNumTris));
+	glPatchParameteri(GL_PATCH_VERTICES, 16);
+	glDrawElements(GL_PATCHES, 16 * mNumPatches, GL_UNSIGNED_INT, (void*)(3 * mNumTris + 4 * mNumQuads));
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
