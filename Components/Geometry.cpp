@@ -54,24 +54,27 @@ GeometryComponent::GeometryComponent(std::string filename) {
 		struct V2 { float x, y; };
 		struct V { int pos, tex, norm; };
 		struct Face { V vertices[4]; int numVerts; };	// Setting this array to <n> should make it support up to <n>-gons
-		// First counting pass
-		int numpos = 0, numnorm = 0, numtex = 0, numface = 0;
+		struct Patch { int vertices[16]; };
+		// First: counting pass
+		int numpos = 0, numnorm = 0, numtex = 0, numface = 0, numpatch = 0;
 		while (file.good()) {
 			if (file.extract("v `S`L")) numpos++;
 			else if (file.extract("vn `S`L")) numnorm++;
 			else if (file.extract("vt `S`L")) numtex++;
 			else if (file.extract("f `S`L")) numface++;
+			else if (file.extract("patch `S`L")) numpatch++;
 			else if (file.extract("`?S`L"));
 		}
-		// Second reading pass
+		// Second: reading pass
 		file.restart();
-		int positer = 0, normiter = 0, texiter = 0, faceiter = 0;
+		int positer = 0, normiter = 0, texiter = 0, faceiter = 0, patchiter = 0;
 		char* err;
 		mBoundingBox = new AABB();
 		V3* positions = new V3[numpos];
 		V3* normals = new V3[numnorm];
 		V2* texcoords = new V2[numtex];
 		Face* faces = new Face[numface];
+		Patch* patches = new Patch[numpatch];
 		while (file.good()) {
 			if (file.extract("v `F `F `F`L", &positions[positer])) {
 				// The BB update could/should offer some sort of symmetry around X/Y (box) or all (sphere) axes
@@ -107,7 +110,31 @@ GeometryComponent::GeometryComponent(std::string filename) {
 				}
 			}
 			else if (file.extract("cstype")) {
-
+				// To-do: read actual standard-compliant bezier curves
+				while (!file.extract("end`L")) {
+					file.extract("`S`L");
+				}
+			}
+			else if (file.extract("patch")) {
+				// custom simpler bezier curves
+				int i = 0;
+				while (file.extract(" `I", &patches[patchiter].vertices[i])) i++;
+				if (i == 16) {
+					mNumVerts += 16;
+					mNumPatches++;
+					patchiter++;
+				}
+				else {
+					file.extract("`?S`L", &err);
+					ServiceLocator::getLoggingService().error("Not enough vertices specified in patch", err);
+					delete err;
+				}
+				if (file.extract("`?S`L", &err)) {
+					if (err) {
+						ServiceLocator::getLoggingService().error("Extra data in patch definition", err);
+						delete err;
+					}
+				}
 			}
 			else if (file.extract("`?S`L", &err)) {
 				if (err) {
@@ -121,9 +148,10 @@ GeometryComponent::GeometryComponent(std::string filename) {
 		for (auto prop : mProperties)
 			mVertexSize += ATTRIB_SIZES[prop];
 		mVertexData = new float[mNumVerts * mVertexSize];
-		mAllIndexData = new unsigned int[mNumTris * 3 + mNumQuads * 4];
+		mAllIndexData = new unsigned int[mNumTris * 3 + mNumQuads * 4 + mNumPatches * 16];
 		mTriData = mAllIndexData;
 		mQuadData = mAllIndexData + mNumTris * 3;
+		mPatchData = mQuadData + mNumQuads * 4;
 		int vertiter = 0, triiter = 0, quaditer = 0;
 		for (int face = 0; face < numface; face++) {
 			if (faces[face].numVerts == 3) {	// Quick mode: Tris
@@ -173,11 +201,22 @@ GeometryComponent::GeometryComponent(std::string filename) {
 				}
 			}
 		}
+		for (int patch = 0; patch < numpatch; patch++) {
+			for (int i = 0; i < 16; i++) {
+				//mPatchData[16 * patch + i] = patches[patch].vertices[i] - 1;
+				mPatchData[16 * patch + i] = 16 * patch + i;	// Won't be good enough for patches mixed with other types
+				mVertexData[vertiter+0] = positions[patches[patch].vertices[i] - 1].x;
+				mVertexData[vertiter+1] = positions[patches[patch].vertices[i] - 1].y;
+				mVertexData[vertiter+2] = positions[patches[patch].vertices[i] - 1].z;
+				vertiter += ATTRIB_SIZES[A_POSITION] + ATTRIB_SIZES[A_TEXCOORD0] + ATTRIB_SIZES[A_NORMAL];
+			}
+		}
 		// Cleanup
-		delete positions;
-		delete normals;
-		delete texcoords;
-		delete faces;
+		delete[] positions;
+		delete[] normals;
+		delete[] texcoords;
+		delete[] faces;
+		delete[] patches;
 	} else {
 		throw std::exception(filename.data());
 	}
@@ -224,7 +263,7 @@ void GeometryComponent::cleanup() {
 		mVertexData = nullptr;
 	}
 	if (mAllIndexData) {
-		delete[] mAllIndexData;
+		delete[] mAllIndexData;	// Crashes on close when the same vertex list is used for multiple objects (e.g. unit quads)
 		mAllIndexData = nullptr;
 	}
 	mTriData = nullptr;
@@ -268,7 +307,7 @@ GeometryComponent* GeometryComponent::getNewQuad() {
 	return new GeometryComponent(4, positions, 2, tris, { A_POSITION, A_TEXCOORD0, A_NORMAL });
 }
 
-GeometryComponent* GeometryComponent::getNewIcosahedron() {
+GeometryComponent* GeometryComponent::getNewIcosahedron(unsigned int subdiv) {
 	float* positions = new float[3 * 12 * 2];
 
 	float longitude = 0.0f;
@@ -329,7 +368,72 @@ GeometryComponent* GeometryComponent::getNewIcosahedron() {
 	}
 	tris[59] = 6;
 
-	return new GeometryComponent(12, positions, 20, tris, { A_POSITION, A_NORMAL });
+	unsigned int numTris = 20;
+	unsigned int numVerts = 12;
+
+	for (unsigned int s = 0; s < subdiv; s++) {
+		unsigned int* new_tris = new unsigned int[numTris * 4 * 3];
+		float* new_verts = new float[(numVerts + 3 * numTris) * 3 * 2];	// Each vert is 3 floats for position, then 3 for normal
+		for (unsigned int i = 0; i < numVerts; i++)	// Copy over all the old vertices, they are unchanged
+			for (unsigned int j = 0; j < 6; j++)
+				new_verts[6 * i + j] = positions[6 * i + j];
+		unsigned int added = 0;
+		for (unsigned int i = 0; i < numTris; i++) {
+			// subdivide this triangle
+			unsigned int v1 = tris[3 * i + 0], v2 = tris[3 * i + 1], v3 = tris[3 * i + 2];
+			// add three new verts at the midpoints
+			new_verts[6 * (numVerts + added) +  0] = positions[v1 * 6 + 0] + positions[v2 * 6 + 0];
+			new_verts[6 * (numVerts + added) +  1] = positions[v1 * 6 + 1] + positions[v2 * 6 + 1];
+			new_verts[6 * (numVerts + added) +  2] = positions[v1 * 6 + 2] + positions[v2 * 6 + 2];
+			new_verts[6 * (numVerts + added) +  6] = positions[v2 * 6 + 0] + positions[v3 * 6 + 0];
+			new_verts[6 * (numVerts + added) +  7] = positions[v2 * 6 + 1] + positions[v3 * 6 + 1];
+			new_verts[6 * (numVerts + added) +  8] = positions[v2 * 6 + 2] + positions[v3 * 6 + 2];
+			new_verts[6 * (numVerts + added) + 12] = positions[v3 * 6 + 0] + positions[v1 * 6 + 0];
+			new_verts[6 * (numVerts + added) + 13] = positions[v3 * 6 + 1] + positions[v1 * 6 + 1];
+			new_verts[6 * (numVerts + added) + 14] = positions[v3 * 6 + 2] + positions[v1 * 6 + 2];
+			// Normalize positions
+			for (unsigned int j = 0; j < 3; j++) {
+				float mag = 0.0f;
+				for (unsigned int k = 0; k < 3; k++)
+					mag += new_verts[6 * (numVerts + added + j) + k] * new_verts[6 * (numVerts + added + j) + k];
+				mag = sqrtf(mag);
+				for (unsigned int k = 0; k < 3; k++)
+					new_verts[6 * (numVerts + added + j) + k] /= mag;
+			}
+			// Add normals, same as positions
+			for (unsigned int j = 0; j < 3; j++) {
+				for (unsigned int k = 0; k < 3; k++) {
+					new_verts[6 * (numVerts + added + j) + k + 3] = new_verts[6 * (numVerts + added + j) + k];
+				}
+			}
+			// add four new triangles
+			new_tris[i * 12 + 0] = v1;
+			new_tris[i * 12 + 1] = numVerts + added + 0;
+			new_tris[i * 12 + 2] = numVerts + added + 2;
+
+			new_tris[i * 12 + 3] = v2;
+			new_tris[i * 12 + 4] = numVerts + added + 1;
+			new_tris[i * 12 + 5] = numVerts + added + 0;
+
+			new_tris[i * 12 + 6] = v3;
+			new_tris[i * 12 + 7] = numVerts + added + 2;
+			new_tris[i * 12 + 8] = numVerts + added + 1;
+
+			new_tris[i * 12 + 9] = numVerts + added + 0;
+			new_tris[i * 12 + 10] = numVerts + added + 1;
+			new_tris[i * 12 + 11] = numVerts + added + 2;
+
+			added += 3;
+		}
+		numVerts += 3 * numTris;
+		numTris *= 4;
+		delete[] tris;
+		tris = new_tris;
+		delete[] positions;
+		positions = new_verts;
+	}
+
+	return new GeometryComponent(numVerts, positions, numTris, tris, { A_POSITION, A_NORMAL });
 }
 
 void GeometryComponent::drawUnitQuad() {

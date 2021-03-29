@@ -1,9 +1,8 @@
 Vertex "mvp" 130:"130/mvp.vert"
 Vertex "raymarch+mvp" 130:"130/raymarch.vert"
 
-Tessellation Control "nurbs_control" 130:"130/nurbs.tesc"
 Tessellation Control "quads_control" 130:"130/quads.tesc"
-Tessellation Evaluation "nurbs_eval" 130:"130/nurbs.tese"
+
 Tessellation Evaluation "quads_eval" 130:"130/quads.tese"
 
 Geometry "wireframe" 130:"130/wireframe.geom"
@@ -42,8 +41,6 @@ Program "mouse_selection" Vertex:"mvp" Fragment:"mouse_selection"
 
 Program "wireframe" Vertex:"mvp" Geometry:"wireframe" Fragment:"solid"
 
-Program "nurbs_phong" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"vertex_color"
-Program "nurbs_wireframe" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Geometry:"wireframe" Fragment:"solid"
 Program "quads" Vertex:"mvp" Tessellation Control:"quads_control" Tessellation Evaluation:"quads_eval" Fragment:"solid"
 Program "quads_wireframe" Vertex:"mvp" Tessellation Control:"quads_control" Tessellation Evaluation:"quads_eval" Geometry:"wireframe" Fragment:"solid"
 

@@ -152,6 +152,7 @@
     <ClCompile Include="Input\KeyboardHandler.cpp" />
     <ClCompile Include="Input\MouseHandler.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Sample States\ArcballStates.cpp" />
     <ClCompile Include="Sample States\CameraStates.cpp" />
     <ClCompile Include="Sample States\MouseoverStates.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="Input\Handler.h" />
     <ClInclude Include="Input\KeyboardHandler.h" />
     <ClInclude Include="Input\MouseHandler.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="Sample States\ArcballStates.h" />
     <ClInclude Include="Sample States\CameraStates.h" />
     <ClInclude Include="Sample States\MouseoverStates.h" />
@@ -201,6 +203,7 @@
     <ClInclude Include="Sound\Source.h" />
     <ClInclude Include="UI\Menu.h" />
     <ClInclude Include="UI\UIElement.h" />
+    <ClInclude Include="Util\KDTree.h" />
     <ClInclude Include="Util\KernelManager.h" />
     <ClInclude Include="Util\NamedContainer.h" />
     <ClInclude Include="Util\NamedTree.h" />

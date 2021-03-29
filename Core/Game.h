@@ -62,7 +62,6 @@ private:
 	Level* loadLevel(std::string path);
 	void parseGeometryIndex(std::string path, NamedContainer<GeometryComponent*> &geomLibrary);
 	void parseShaderIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &progLibrary);
-	//void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostProcessingPipeline*> &pipelineLibrary);
 	void parsePostprocessingIndex(std::string path, ShaderManager &shaderLibrary, NamedContainer<Program*> &filterLibrary, KernelManager &kernelLibrary, NamedContainer<PostprocessingPipeline*> &pipelineLibrary);
 	void parseSoundIndex(std::string path, SoundLibrary &soundLibrary);
 	void parseMenuIndex(std::string path, NamedContainer<RootElement*> &menuLibrary);

@@ -67,7 +67,7 @@ public:
 	static const GeometryComponent* getScreenQuad() { return &sScreenSpaceQuad; };
 	static const GeometryComponent* getUnitQuad() { return &sUnitQuad; };
 	static GeometryComponent* getNewQuad();
-	static GeometryComponent* getNewIcosahedron();	// These really need to be non-member functions
+	static GeometryComponent* getNewIcosahedron(unsigned int subdiv = 0);	// These really need to be non-member functions
 	static void drawUnitQuad();
 	static void drawCenteredQuad();
 	static void drawUnitSphere();

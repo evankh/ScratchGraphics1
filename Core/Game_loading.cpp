@@ -11,6 +11,9 @@ void Game::load() {
 	// Load certain very important objects (Shaders?)
 	mCommonLibraries.standard.geometries.add("plane", GeometryComponent::getNewQuad());
 	mCommonLibraries.standard.geometries.add("icosahedron", GeometryComponent::getNewIcosahedron());
+	mCommonLibraries.standard.geometries.add("icosphere1", GeometryComponent::getNewIcosahedron(1));
+	mCommonLibraries.standard.geometries.add("icosphere2", GeometryComponent::getNewIcosahedron(2));
+	mCommonLibraries.standard.geometries.add("icosphere3", GeometryComponent::getNewIcosahedron(3));
 	// Load everything else from file
 	FileService baseIndex(mAssetBasePath + mIndexFilename);
 	if (!baseIndex.good()) throw "Asset file could not be opened.";
@@ -107,6 +110,7 @@ void Game::load() {
 
 Level* Game::loadLevel(std::string path) {
 	StandardLibraries* levelLibraries = new StandardLibraries();
+	levelLibraries->shaders.setGLVersion(mWindow->getGLVersion());
 	FileService index(path + mIndexFilename);
 	// Load any additional data into the new libraries
 	// Level index files can add new geometry, shaders, programs, textures, and sounds.
@@ -263,27 +267,45 @@ void Game::parseShaderIndex(std::string path, ShaderManager &shaderLibrary, Name
 			Program* prog = new Program();
 			for (auto& i : vert) {
 				try { prog->attach(shaderLibrary.get(i), GL_VERTEX_SHADER); }
-				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Vertex shader named but not present", i); }
+				catch (std::out_of_range) {
+					try { prog->attach(mCommonLibraries.standard.shaders.get(i), GL_VERTEX_SHADER); }
+					catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Vertex shader named but not present", i); }
+				}
 			}
 			for (auto& i : tesc) {
 				try { prog->attach(shaderLibrary.get(i), GL_TESS_CONTROL_SHADER); }
-				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Tessellation Control shader named but not present", i); }
+				catch (std::out_of_range) {
+					try { prog->attach(mCommonLibraries.standard.shaders.get(i), GL_TESS_CONTROL_SHADER); }
+					catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Tessellation Control shader named but not present", i); }
+				}
 			}
 			for (auto& i : tese) {
 				try { prog->attach(shaderLibrary.get(i), GL_TESS_EVALUATION_SHADER); }
-				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Tessellation Evaluation shader named but not present", i); }
+				catch (std::out_of_range) {
+					try { prog->attach(mCommonLibraries.standard.shaders.get(i), GL_TESS_EVALUATION_SHADER); }
+					catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Tessellation Evaluation shader named but not present", i); }
+				}
 			}
 			for (auto& i : geom) {
 				try { prog->attach(shaderLibrary.get(i), GL_GEOMETRY_SHADER); }
-				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Geometry shader named but not present", i); }
+				catch (std::out_of_range) {
+					try { prog->attach(mCommonLibraries.standard.shaders.get(i), GL_GEOMETRY_SHADER); }
+					catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Geometry shader named but not present", i); }
+				}
 			}
 			for (auto& i : frag) {
 				try { prog->attach(shaderLibrary.get(i), GL_FRAGMENT_SHADER); }
-				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Fragment shader named but not present", i); }
+				catch (std::out_of_range) {
+					try { prog->attach(mCommonLibraries.standard.shaders.get(i), GL_FRAGMENT_SHADER); }
+					catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Fragment shader named but not present", i); }
+				}
 			}
 			for (auto& i : comp) {
 				try { prog->attach(shaderLibrary.get(i), GL_COMPUTE_SHADER); }
-				catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Compute shader named but not present", i); }
+				catch (std::out_of_range) {
+					try { prog->attach(mCommonLibraries.standard.shaders.get(i), GL_COMPUTE_SHADER); }
+					catch (std::out_of_range) { ServiceLocator::getLoggingService().error("Compute shader named but not present", i); }
+				}
 			}
 			if (prog->link() && prog->validate()) {
 				progLibrary.add(progData.name, prog);

@@ -1,0 +1,6 @@
+Tessellation Control "nurbs_control" 400:"400/nurbs.tesc"
+Tessellation Evaluation "nurbs_eval" 400:"400/nurbs.tese"
+
+Program "nurbs" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"debug_texcoord"
+Program "nurbs_phong" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Fragment:"vertex_color"
+Program "nurbs_wireframe" Vertex:"mvp" Tessellation Control:"nurbs_control" Tessellation Evaluation:"nurbs_eval" Geometry:"wireframe" Fragment:"solid"
